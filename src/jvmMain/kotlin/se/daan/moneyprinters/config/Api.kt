@@ -17,7 +17,12 @@ fun main(args: Array<String>) {
 
 data class Config(
     val port: Int,
+    val security: Security,
     val game: Game
+)
+
+data class Security(
+    val googleClientId: String
 )
 
 data class Game(

@@ -1,24 +1,23 @@
 package se.daan.moneyprinters
 
-import rxjs.*
+import rxjs.ajax.AjaxError
+import se.daan.moneyprinters.security.Security
+import se.daan.moneyprinters.web.api.CreateGame
+
+fun createAndStart(): MoneyPrinters {
+    val security = Security()
+    val moneyPrinters = MoneyPrinters(security)
+    moneyPrinters.start()
+    return moneyPrinters
+}
 
 fun start() {
-    val ee = false
-    val observable = if (ee) throwError("aa") else of("aa")
-
-    observable.subscribe(object: NextObserver<Any>, ErrorObserver<Any>, CompletionObserver<Any> {
-            override fun next(value: Any) {
-                println("next $value")
-            }
-
-            override fun error(err: Any) {
-                println("err: $err")
-            }
-
-            override fun complete() {
-                println("complete")
-            }
+    createGame("test", CreateGame("a", null, null))
+        .subscribe({v ->
+            println(v)
+        }, { err: AjaxError<dynamic> ->
+            println(err.status)
+            println(err.response)
         })
-    println("Hello2")
 }
 

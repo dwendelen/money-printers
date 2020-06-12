@@ -65,6 +65,7 @@ kotlin {
         val jsMain by getting {
             dependencies {
                 implementation(npm("rxjs"))
+                implementation(npm("uuid"))
                 implementation(kotlin("stdlib-js"))
             }
         }
