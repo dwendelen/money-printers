@@ -1,0 +1,59 @@
+<html>
+<head>
+    <title>Money Printers Mini</title>
+    <link rel="stylesheet" type="text/css" href="money-printers.css">
+    <script src="money-printers-mini.js"></script>
+
+</head>
+<body>
+    <h1>Economy: <span id="economySpan"></span></h1>
+    <h1>Players</h1>
+    <table id="playersTable">
+        <thead><tr>
+            <th>&nbsp;</th>
+            <th>Money</th>
+            <th>Assets</th>
+            <th>Debt</th>
+            <th>Start</th>
+        </tr></thead>
+        <tbody>
+        </tbody>
+    </table>
+    <input id="playerNameInput" type="text"><button onclick="add()">Add</button>
+    <h1 id="actionHeader">&nbsp;</h1>
+    <h2>Receive</h2>
+    <table>
+        <tr><td>From</td><td><select id="receiveFrom"><option value="">Board</option></select></td></tr>
+        <tr><td>Price</td><td><input id="receivePrice"></td></tr>
+        <tr><td>&nbsp;</td><td><button onclick="receive()">Receive</button></td></tr>
+    </table>
+    <h2>Pay</h2>
+    <table>
+        <tr><td>To</td><td><select id="payTo"><option value="">Board</option></select></td></tr>
+        <tr><td>Price</td><td><input id="payPrice"></td></tr>
+        <tr><td>&nbsp;</td><td><button onclick="pay()">Pay</button></td></tr>
+    </table>
+    <h2>Buy asset</h2>
+    <table>
+        <tr><td>From</td><td><select id="buyFrom"><option value="">Board</option></select></td></tr>
+        <tr><td>Price</td><td><input id="buyPrice" onblur="priceChange()"></td></tr>
+        <tr><td>Borrow</td><td><input id="buyBorrow"></td></tr>
+        <tr><td>Asset value</td><td><input id="buyValue"></td></tr>
+        <tr><td>Original value</td><td><input id="buyOriginal"></td></tr>
+        <tr><td>&nbsp;</td><td><button onclick="buy()">Buy</button></td></tr>
+    </table>
+    <h2>Pay back debt</h2>
+    <table>
+        <tr><td>Amount</td><td><input id="payBackPrice"></td></tr>
+        <tr><td>&nbsp;</td><td><button onclick="payBack()">Pay back</button></td></tr>
+    </table>
+    <h1>Settings</h1>
+    <table id="settingsTable">
+        <tr><td>Start money</td><td id="startMoney" class="settingValue"></td><td><input id="startMoneyInput" class="settingInput"></td></tr>
+        <tr><td>Interest rate</td><td id="interestRate" class="settingValue"></td><td><input id="interest" class="settingInput"></td></tr>
+        <tr><td>Return rate</td><td id="returnRate" class="settingValue"></td><td><input id="return" class="settingInput"></td></tr>
+        <tr><td>&nbsp;</td><td>&nbsp;</td><td><button onclick="setValues()">Set values</button></td></tr>
+    </table>
+    <script>render();</script>
+</body>
+</html>
