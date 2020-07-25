@@ -1,0 +1,1 @@
+fun loginPage() = "Login page"
