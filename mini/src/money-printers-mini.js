@@ -56,6 +56,14 @@ function add() {
         startCell
     );
 
+    let startButtonCell = row.insertCell(-1);
+    let startButton = document.createElement("button");
+    startButton.textContent = "Receive start money";
+    startButton.addEventListener("click", ()  => {
+        receiveStartMoney(player);
+    });
+    startButtonCell.appendChild(startButton);
+
     row.addEventListener("click", () => {
         currentPlayer = player;
         render();
@@ -75,6 +83,18 @@ function add() {
     
     players.push(player);
     
+    render();
+}
+
+function receiveStartMoney(player) {
+    let startMoney = player.calcStart();
+    player.money += startMoney;
+    economy -= startMoney;
+
+    console.log(player.name +
+        " received " + startMoney + " start money"
+    );
+
     render();
 }
 
@@ -109,7 +129,6 @@ function receive() {
             " from " + other.name
         );
     }
-
 
     render();
 }
