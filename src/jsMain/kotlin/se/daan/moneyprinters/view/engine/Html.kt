@@ -1,31 +1,40 @@
 package se.daan.moneyprinters.view.engine
 
+import observed.Publisher
+import observed.Subscriber
+import observed.create
 import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.Node
-import rxjs.Observable
-import rxjs.Subject
-import rxjs.operators.share
-import rxjs.operators.shareReplay
 import kotlin.browser.document
 import kotlin.browser.window
 import kotlin.dom.clear
 
-private val hashObservable = Observable<String>{ sub ->
-    sub.next(window.location.hash)
+private val hashObservable = create<String>{ sub ->
+    sub.onNext(window.location.hash)
     window.onhashchange = {
-        sub.next(window.location.hash)
+        sub.onNext(window.location.hash)
     }
-}.pipe(shareReplay(1))
+}.cache()
 
-fun hash(): Observable<String> {
+fun hash(): Publisher<String> {
     return hashObservable
 }
 
-fun changeHash(newhash: Observable<String>) {
-    newhash.subscribe {
-        window.location.hash = it
-    }
+fun changeHash(newhash: Publisher<String>) {
+    newhash.subscribe(object : Subscriber<String>{
+        override fun onNext(t: String) {
+            window.location.hash = t
+        }
+
+        override fun onError(t: Throwable) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onComplete() {
+            TODO("Not yet implemented")
+        }
+    })
 }
 
 fun render(children: Any) {
@@ -40,12 +49,16 @@ fun clazz(className: String): (HTMLElement) -> Unit {
     return { e -> e.className = className }
 }
 
+fun data(key: String, value: String): (HTMLElement) -> Unit {
+    return { e -> e.setAttribute("data-$key", value) }
+}
+
 /*
  * Can only be used once per element
  */
-fun click(observer: Subject<Nothing?>): (HTMLElement) -> Unit {
+fun click(observer: Subscriber<Nothing?>): (HTMLElement) -> Unit {
     return { e ->
-        e.onclick = { observer.next(null) }
+        e.onclick = { observer.onNext(null) }
     }
 }
 
@@ -64,11 +77,21 @@ private fun addChildren(elem: HTMLElement, children: Any) {
         is String -> {
             elem.textContent = children;
         }
-        is Observable<*> -> {
-            children.subscribe {
-                elem.clear()
-                addChildren(elem, it!!)
-            }
+        is Publisher<*> -> {
+            children.subscribe(object: Subscriber<Any?> {
+                override fun onNext(t: Any?) {
+                        elem.clear()
+                        addChildren(elem, t!!)
+                }
+
+                override fun onError(t: Throwable) {
+                    TODO("Not yet implemented")
+                }
+
+                override fun onComplete() {
+                    TODO("Not yet implemented")
+                }
+            })
         }
         is Iterable<*> -> {
             children.forEach {

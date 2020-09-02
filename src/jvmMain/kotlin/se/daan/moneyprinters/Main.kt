@@ -28,6 +28,11 @@ fun main(args: Array<String>) {
                 .get("/") { _, res ->
                     res.send(Flux.just(indexHtml.retain()))
                 }
+                .get("/config") {_, res ->
+                    val config1 = se.daan.moneyprinters.web.api.Config(config.security.googleClientId)
+                    val json = objectMapper.writeValueAsBytes(config1)
+                    res.send(Flux.just(Unpooled.wrappedBuffer(json)))
+                }
                 .get("/money-printers.js") { _, res ->
                     res.send(Flux.just(javascript.retain()))
                 }

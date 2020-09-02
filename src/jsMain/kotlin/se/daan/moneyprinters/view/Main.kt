@@ -1,21 +1,23 @@
 package se.daan.moneyprinters.view
 
-import loginPage
-import rxjs.Observable
-import rxjs.operators.map
+import observed.Publisher
+import se.daan.moneyprinters.view.pages.loginPage
+import se.daan.moneyprinters.security.Security
 import se.daan.moneyprinters.view.engine.clazz
 import se.daan.moneyprinters.view.engine.div
 import se.daan.moneyprinters.view.pages.errorPage
 import se.daan.moneyprinters.view.pages.gamePage
+import se.daan.moneyprinters.view.pages.gamesPage
 
 
-fun mainPage(routes: Observable<Route>) =
+fun mainPage(routes: Publisher<Route>, security: Security) =
     div(listOf(clazz("money-printers")),
-        routes.pipe(map<Route, Any> { route ->
+        routes.map<Any> { route ->
             when (route) {
-                is Login -> loginPage()
+                is Login -> loginPage(security)
+                is Games -> gamesPage()
                 is Game -> gamePage()
                 ErrorPage -> errorPage()
             }
-        })
+        }
     )

@@ -1,13 +1,11 @@
 package se.daan.moneyprinters
 
-import rxjs.Observable
-import rxjs.ajax.ajax
-import rxjs.operators.map
+
+import http.put
+import observed.Publisher
 import se.daan.moneyprinters.web.api.CreateGame
 
 
-fun createGame(uuid: String, createGame: CreateGame): Observable<Any> {
-    return ajax.put<Any>("/games/$uuid", createGame).pipe(
-        map { vl -> vl.response}
-    )
+fun createGame(uuid: String, createGame: CreateGame): Publisher<Any> {
+    return put("/games/$uuid", createGame)
 }

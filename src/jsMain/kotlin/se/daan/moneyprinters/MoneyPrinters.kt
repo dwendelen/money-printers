@@ -6,7 +6,7 @@ import se.daan.moneyprinters.security.Session
 
 class MoneyPrinters(
     private val security: Security
-) {
+) {/*
     @JsName("start")
     fun start() {
         security.sessions
@@ -26,5 +26,5 @@ class MoneyPrinters(
     @JsName("login")
     fun login(id: String, token: String) {
         security.login(id, token)
-    }
+    }*/
 }

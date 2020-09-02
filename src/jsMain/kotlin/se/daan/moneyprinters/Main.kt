@@ -1,9 +1,7 @@
 package se.daan.moneyprinters
 
-import rxjs.ajax.AjaxError
-import rxjs.combineLatest
-import rxjs.operators.distinctUntilChanged
-import rxjs.operators.map
+
+import observed.combineLatest
 import se.daan.moneyprinters.security.MaybeSession
 import se.daan.moneyprinters.security.Security
 import se.daan.moneyprinters.view.engine.changeHash
@@ -14,6 +12,7 @@ import se.daan.moneyprinters.view.engine.render
 import se.daan.moneyprinters.view.route
 import kotlin.browser.document
 
+/*
 fun createAndStart(): MoneyPrinters {
     val security = Security()
     val moneyPrinters = MoneyPrinters(security)
@@ -29,19 +28,20 @@ fun start() {
             println(err.status)
             println(err.response)
         })
-}
+}*/
 
 fun main() {
+
     val security = Security()
 
     document.addEventListener("DOMContentLoaded", {
         val sessions = security.sessions
         val routed = combineLatest(sessions, hash()) { s, h ->
             route(s, h)
-        }.pipe(distinctUntilChanged { x, y -> x == y })
+        }.distinct()
 
-        changeHash(routed.pipe(map{r -> r.hash().joinToString("/")}))
-        render(mainPage(routed))
+        changeHash(routed.map{r -> r.hash().joinToString("/")})
+        render(mainPage(routed, security))
     })
 }
 
