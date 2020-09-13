@@ -1,3 +1,5 @@
 package se.daan.moneyprinters.view.pages
 
-fun gamePage() = "game page"
+import se.daan.moneyprinters.view.engine.div
+
+fun gamePage() = div(listOf(),"game page")

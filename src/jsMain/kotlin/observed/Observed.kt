@@ -314,12 +314,20 @@ fun <A, B, C> combineLatest(
         override fun subscribe(subscriber: Subscriber<C>) {
             var has1 = false
             var last1: A? = null
+            var complete1 = false
             var has2 = false
             var last2: B? = null
+            var complete2 = false
 
             fun trigger() {
                 if(has1 && has2) {
                     subscriber.onNext(fn(last1!!, last2!!))
+                }
+            }
+
+            fun triggerComplete() {
+                if(complete1 && complete2) {
+                    subscriber.onComplete()
                 }
             }
 
@@ -337,7 +345,8 @@ fun <A, B, C> combineLatest(
                 }
 
                 override fun onComplete() {
-                    subscriber.onComplete()
+                    complete1 = true
+                    triggerComplete()
                 }
             })
             o2.subscribe(object: Subscriber<B> {
@@ -354,13 +363,40 @@ fun <A, B, C> combineLatest(
                 }
 
                 override fun onComplete() {
-                    subscriber.onComplete()
+                    complete2 = true
+                    triggerComplete()
                 }
             })
         }
     }.clean()
 }
 
+fun <O> merge(vararg ps: Publisher<O>): Publisher<O> {
+    return object: UncleanPublisher<O> {
+        override fun subscribe(subscriber: Subscriber<O>) {
+            var nbOpen = ps.size
+            for (p in ps) {
+                p.subscribe(object: Subscriber<O> {
+                    override fun onNext(t: O) {
+                        subscriber.onNext(t)
+                    }
+
+                    override fun onError(t: Throwable) {
+                        nbOpen = 0
+                        subscriber.onError(t)
+                    }
+
+                    override fun onComplete() {
+                        nbOpen--
+                        if(nbOpen == 0) {
+                            subscriber.onComplete()
+                        }
+                    }
+                })
+            }
+        }
+    }.clean();
+}
 
 private class DefaultSubject<T> : Subject<T> {
     private var lastException: Throwable? = null

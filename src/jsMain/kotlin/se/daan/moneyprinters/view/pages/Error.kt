@@ -1,3 +1,5 @@
 package se.daan.moneyprinters.view.pages
 
-fun errorPage() = "Error"
+import se.daan.moneyprinters.view.engine.div
+
+fun errorPage() = div(listOf(),"Error")

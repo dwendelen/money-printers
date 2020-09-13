@@ -1,84 +1,49 @@
 package se.daan.moneyprinters.security
 
-import gapi.auth2.GoogleAuth
-import gapi.auth2.GoogleUser
+import gapi.Gapi
+import gapi.auth2.Auth2
 import http.get
 import observed.*
-import org.w3c.dom.HTMLDivElement
-import se.daan.moneyprinters.view.engine.clazz
-import se.daan.moneyprinters.view.engine.data
-import se.daan.moneyprinters.view.engine.div
-import se.daan.moneyprinters.view.pages.security
 import se.daan.moneyprinters.web.api.Config
 import kotlin.browser.window
+import gapi.gapi as gapigapi
 
-private val gapiLoaded: Publisher<Any> = create { sub ->
+private val gapi: Publisher<Gapi> = create { sub ->
     window.asDynamic()["onGapiLoad"] = {
-        sub.onNext("")
+        sub.onNext(gapigapi)
+        sub.onComplete()
     }
 }
-
-private fun loadAuth2(): Publisher<Any> = create { sub ->
-    gapi.load("auth2") { sub.onNext("") }
-}
-
-private fun initAuth2(clientId: String): GoogleAuth {
-    val params: dynamic = object {}
-    params["clientId"] = clientId
-    return gapi.auth2.init(params)
-}
-
-private val auth2Initialised = gapiLoaded
-    .flatMap { loadAuth2() }
-
 private val config: Publisher<Config> = get("/config")
 
-private val auth2: Publisher<GoogleAuth> =
-    combineLatest(auth2Initialised, config) { _, c ->
-        initAuth2(c.googleClientId)
-    }
-        .cache()
+val signIn = subject<Any>()
+val signOut = subject<Any>()
+val sessions = combineLatest(gapi, config) { g, c ->
+        sessions(g, c.googleClientId, signIn, signOut)
+    }.flatMap { it }
+    .cache()
 
-fun signIn(googleAuth: GoogleAuth): Publisher<GoogleUser> {
-    return from(googleAuth.signIn())
-}
-
-fun signOut(googleAuth: GoogleAuth): Publisher<dynamic> {
-    return from(googleAuth.signOut())
-}
-
-
-/*
-gapi.load("auth2") {
-
-            val googleAuth = gapi.auth2.init(params)
-            googleAuth.
+fun sessions(gapi: Gapi, clientId: String, signIn: Publisher<Any>, signOut: Publisher<Any>): Publisher<MaybeSession> {
+    val googleAuth = create<Auth2> { sub ->
+        gapi.load("auth2") {
+            sub.onNext(gapi.auth2)
+            sub.onComplete()
         }
- */
+    }.map { c ->
+        val params: dynamic = object {}
+        params["client_id"] = clientId
+        c.init(params)
+    }.cache()
 
+    val signedIn = combineLatest(googleAuth, signIn) { ga, _ -> ga }
+        .flatMap { from(it.signIn()) }
+        .map { Session(it.getId(), it.getAuthResponse().id_token) }
 
-fun loginPage(sec: Security): HTMLDivElement {
-    security = sec
+    val signedOut = combineLatest(googleAuth, signOut) { ga, _ -> ga }
+        .flatMap { from(it.signOut()) }
+        .map { NoSession }
 
-    return div(listOf(clazz("g-signin2"), data("onsuccess", "onLogin")), listOf<Any>())
-}
-
-private fun onLogin(user: GoogleUser) {
-    security.login(user.getId(), user.getAuthResponse().id_token)
-}
-
-
-class Security {
-    private val _sessions: Subject<MaybeSession> = subject()
-    val sessions: Publisher<MaybeSession> = _sessions.cache()
-
-    init {
-        _sessions.onNext(NoSession)
-    }
-
-    fun login(id: String, token: String) {
-        _sessions.onNext(Session(id, token))
-    }
+    return merge(from(NoSession), signedIn, signedOut).distinct()
 }
 
 sealed class MaybeSession

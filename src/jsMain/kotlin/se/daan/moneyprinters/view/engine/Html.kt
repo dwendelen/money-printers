@@ -3,6 +3,7 @@ package se.daan.moneyprinters.view.engine
 import observed.Publisher
 import observed.Subscriber
 import observed.create
+import org.w3c.dom.HTMLButtonElement
 import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.Node
@@ -28,11 +29,12 @@ fun changeHash(newhash: Publisher<String>) {
         }
 
         override fun onError(t: Throwable) {
-            TODO("Not yet implemented")
+            console.error(t)
+            //TODO("Not yet implemented")
         }
 
         override fun onComplete() {
-            TODO("Not yet implemented")
+            //TODO("Not yet implemented")
         }
     })
 }
@@ -56,9 +58,17 @@ fun data(key: String, value: String): (HTMLElement) -> Unit {
 /*
  * Can only be used once per element
  */
-fun click(observer: Subscriber<Nothing?>): (HTMLElement) -> Unit {
+fun click(onClick: () -> Unit): (HTMLElement) -> Unit {
     return { e ->
-        e.onclick = { observer.onNext(null) }
+        e.onclick = { onClick() }
+    }
+}
+/*
+ * Can only be used once per element
+ */
+fun click(onClick: Subscriber<Any>): (HTMLElement) -> Unit {
+    return { e ->
+        e.onclick = { onClick.onNext("") }
     }
 }
 
@@ -67,6 +77,13 @@ fun div(mods: Iterable<(HTMLElement) -> Unit>, children: Any): HTMLDivElement {
     mods.forEach { it(div) }
     addChildren(div, children)
     return div
+}
+
+fun button(mods: Iterable<(HTMLElement) -> Unit>, text: String): HTMLButtonElement {
+    val button = document.createElement("button") as HTMLButtonElement
+    mods.forEach { it(button) }
+    button.textContent = text
+    return button
 }
 
 private fun addChildren(elem: HTMLElement, children: Any) {
@@ -85,11 +102,12 @@ private fun addChildren(elem: HTMLElement, children: Any) {
                 }
 
                 override fun onError(t: Throwable) {
-                    TODO("Not yet implemented")
+                    console.error(t)
+                    //TODO("Not yet implemented")
                 }
 
                 override fun onComplete() {
-                    TODO("Not yet implemented")
+                    //TODO("Not yet implemented")
                 }
             })
         }

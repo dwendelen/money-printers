@@ -1,5 +1,6 @@
 package gapi.auth2
 
-external fun init(params: dynamic): GoogleAuth
-
-external fun getAuthInstance(): GoogleAuth
+external interface Auth2 {
+    fun init(params: dynamic): GoogleAuth
+    fun getAuthInstance(): GoogleAuth
+}

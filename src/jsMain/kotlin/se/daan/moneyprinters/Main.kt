@@ -3,7 +3,7 @@ package se.daan.moneyprinters
 
 import observed.combineLatest
 import se.daan.moneyprinters.security.MaybeSession
-import se.daan.moneyprinters.security.Security
+import se.daan.moneyprinters.security.sessions
 import se.daan.moneyprinters.view.engine.changeHash
 import se.daan.moneyprinters.view.engine.hash
 import se.daan.moneyprinters.web.api.CreateGame
@@ -32,16 +32,15 @@ fun start() {
 
 fun main() {
 
-    val security = Security()
 
     document.addEventListener("DOMContentLoaded", {
-        val sessions = security.sessions
+        val sessions = sessions
         val routed = combineLatest(sessions, hash()) { s, h ->
             route(s, h)
         }.distinct()
 
         changeHash(routed.map{r -> r.hash().joinToString("/")})
-        render(mainPage(routed, security))
+        render(mainPage(routed, sessions))
     })
 }
 
