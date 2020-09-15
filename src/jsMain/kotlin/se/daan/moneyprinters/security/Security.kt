@@ -2,6 +2,8 @@ package se.daan.moneyprinters.security
 
 import gapi.Gapi
 import gapi.auth2.Auth2
+import gapi.auth2.GoogleAuth
+import gapi.auth2.GoogleUser
 import http.get
 import observed.*
 import se.daan.moneyprinters.web.api.Config
@@ -11,7 +13,6 @@ import gapi.gapi as gapigapi
 private val gapi: Publisher<Gapi> = create { sub ->
     window.asDynamic()["onGapiLoad"] = {
         sub.onNext(gapigapi)
-        sub.onComplete()
     }
 }
 private val config: Publisher<Config> = get("/config")
@@ -27,7 +28,6 @@ fun sessions(gapi: Gapi, clientId: String, signIn: Publisher<Any>, signOut: Publ
     val googleAuth = create<Auth2> { sub ->
         gapi.load("auth2") {
             sub.onNext(gapi.auth2)
-            sub.onComplete()
         }
     }.map { c ->
         val params: dynamic = object {}
@@ -35,15 +35,37 @@ fun sessions(gapi: Gapi, clientId: String, signIn: Publisher<Any>, signOut: Publ
         c.init(params)
     }.cache()
 
-    val signedIn = combineLatest(googleAuth, signIn) { ga, _ -> ga }
-        .flatMap { from(it.signIn()) }
-        .map { Session(it.getId(), it.getAuthResponse().id_token) }
+    val session = googleAuth
+        .flatMap { go ->
+            create<GoogleUser> { sub ->
+                go.currentUser.listen {
+                    sub.onNext(it)
+                }
+            }
+        }
+        .map { user ->
+            if(user.isSignedIn()) {
+                Session(user.getId(), user.getAuthResponse().id_token)
+            } else {
+                NoSession
+            }
+        }
 
-    val signedOut = combineLatest(googleAuth, signOut) { ga, _ -> ga }
-        .flatMap { from(it.signOut()) }
-        .map { NoSession }
+    combineLatest(googleAuth, signIn) { ga, _ -> ga }
+        .subscribe(object: Subscriber<GoogleAuth> {
+            override fun onNext(t: GoogleAuth) {
+                t.signIn()
+            }
+        })
 
-    return merge(from(NoSession), signedIn, signedOut).distinct()
+    combineLatest(googleAuth, signOut) { ga, _ -> ga }
+        .subscribe(object: Subscriber<GoogleAuth> {
+            override fun onNext(t: GoogleAuth) {
+                t.signOut()
+            }
+        })
+
+    return merge(from(NoSession), session).distinct()
 }
 
 sealed class MaybeSession

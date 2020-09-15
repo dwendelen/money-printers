@@ -47,9 +47,8 @@ private fun <O> handleResponse(
             if (http.status < 400.toShort()) {
                 val obj: O = JSON.parse(http.responseText)
                 subscriber.onNext(obj)
-                subscriber.onComplete()
             } else {
-                subscriber.onError(Error("HTTP call failed: ${http.status}: ${http.responseText}"))
+                throw Error("HTTP call failed: ${http.status}: ${http.responseText}")
             }
         }
     }

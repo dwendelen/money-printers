@@ -4,19 +4,17 @@ import kotlin.js.Promise
 
 interface Subscriber<in T> {
     fun onNext(t: T)
-    fun onError(t: Throwable)
-    fun onComplete()
 }
 
 interface Publisher<out T> {
     fun subscribe(subscriber: Subscriber<T>)
 
     fun <O> map(fn: (T) -> O): Publisher<O> {
-        return MapPublisher(this, fn).clean()
+        return MapPublisher(this, fn)
     }
 
     fun <O> flatMap(fn: (T) -> Publisher<O>): Publisher<O> {
-        return FlatMapPublisher(this, fn).clean()
+        return FlatMapPublisher(this, fn)
     }
 
     /**
@@ -27,77 +25,21 @@ interface Publisher<out T> {
     }
 
     fun distinct(): Publisher<T> {
-        return DistinctPublisher(this).clean()
+        return DistinctPublisher(this)
     }
 }
 
 interface Subject<T>: Publisher<T>, Subscriber<T>
 
-private interface UncleanPublisher<out T> {
-    fun subscribe(subscriber: Subscriber<T>)
-
-    fun clean(): Publisher<T> {
-        return CleaningPublisher(this)
-    }
-}
-
-private class CleaningPublisher<T>(
-    private val source: UncleanPublisher<T>
-) : Publisher<T> {
-    override fun subscribe(subscriber: Subscriber<T>) {
-        var open = true
-        source.subscribe(object : Subscriber<T> {
-            override fun onNext(t: T) {
-                if (open) {
-                    try {
-                        subscriber.onNext(t)
-                    } catch (e: Throwable) {
-                        this.onError(e)
-                    }
-                }
-            }
-
-            override fun onError(t: Throwable) {
-                if (open) {
-                    open = false
-                    try {
-                        subscriber.onError(t)
-                    } catch (t: Throwable) {
-                        // Eat
-                    }
-                }
-            }
-
-            override fun onComplete() {
-                if (open) {
-                    open = false
-                    try {
-                        subscriber.onComplete()
-                    } catch (t: Throwable) {
-                        //Eat
-                    }
-                }
-            }
-        })
-    }
-}
 
 private class MapPublisher<I, out O>(
     private val source: Publisher<I>,
     private val fn: (I) -> O
-) : UncleanPublisher<O> {
+) : Publisher<O> {
     override fun subscribe(subscriber: Subscriber<O>) {
         source.subscribe(object : Subscriber<I> {
             override fun onNext(t: I) {
                 subscriber.onNext(fn(t))
-            }
-
-            override fun onError(t: Throwable) {
-                subscriber.onError(t)
-            }
-
-            override fun onComplete() {
-                subscriber.onComplete()
             }
         })
     }
@@ -106,45 +48,16 @@ private class MapPublisher<I, out O>(
 private class FlatMapPublisher<T, O>(
     private val source: Publisher<T>,
     private val fn: (T) -> Publisher<O>
-) : UncleanPublisher<O> {
+) : Publisher<O> {
     override fun subscribe(subscriber: Subscriber<O>) {
         source.subscribe(object : Subscriber<T> {
-            var nbOpen = 1
-
             override fun onNext(t: T) {
-                nbOpen++
                 val obs = fn(t)
                 obs.subscribe(object : Subscriber<O> {
                     override fun onNext(t: O) {
                         subscriber.onNext(t)
                     }
-
-                    override fun onError(t: Throwable) {
-                        nbOpen--
-                        subscriber.onError(t)
-                    }
-
-                    override fun onComplete() {
-                        nbOpen--
-                        checkComplete()
-                    }
                 })
-            }
-
-            override fun onError(t: Throwable) {
-                nbOpen--
-                subscriber.onError(t)
-            }
-
-            override fun onComplete() {
-                nbOpen--
-                checkComplete()
-            }
-
-            private fun checkComplete() {
-                if (nbOpen == 0) {
-                    subscriber.onComplete()
-                }
             }
         })
     }
@@ -155,8 +68,6 @@ private class DefaultCachedPublisher<T>(
 ) : Publisher<T> {
     private var hasResult = false
     private var lastValue: T? = null
-    private var lastException: Throwable? = null
-    private var complete = false
 
     private val subscribers = ArrayList<Subscriber<T>>()
 
@@ -171,67 +82,24 @@ private class DefaultCachedPublisher<T>(
                     onNext(it, t)
                 }
             }
-
-            override fun onError(t: Throwable) {
-                lastException = t
-                subscribers.forEach {
-                    onError(it, t)
-                }
-                subscribers.clear()
-            }
-
-            override fun onComplete() {
-                complete = true
-                subscribers.forEach {
-                    onComplete(it)
-                }
-                subscribers.clear()
-            }
         })
     }
 
     override fun subscribe(subscriber: Subscriber<T>) {
-        val le = lastException
-        if (le != null) {
-            onError(subscriber, le)
-        } else if (complete) {
-            onComplete(subscriber)
-        } else {
-            subscribers.add(subscriber)
-            if (hasResult) {
-                onNext(subscriber, lastValue!!)
-            }
+        subscribers.add(subscriber)
+        if (hasResult) {
+            onNext(subscriber, lastValue!!)
         }
     }
 
     private fun onNext(subscriber: Subscriber<T>, t: T) {
-        try {
-            subscriber.onNext(t)
-        } catch (t: Throwable) {
-            onError(subscriber, t)
-        }
-    }
-
-    private fun onError(subscriber: Subscriber<T>, t: Throwable) {
-        try {
-            subscriber.onError(t)
-        } catch (t: Throwable) {
-            // Eat
-        }
-    }
-
-    private fun onComplete(subscriber: Subscriber<T>) {
-        try {
-            subscriber.onComplete()
-        } catch (t: Throwable) {
-            // Eat
-        }
+        subscriber.onNext(t)
     }
 }
 
 private class DistinctPublisher<T>(
     private val source: Publisher<T>
-): UncleanPublisher<T> {
+): Publisher<T> {
     override fun subscribe(subscriber: Subscriber<T>) {
         source.subscribe(object : Subscriber<T> {
             var hasValue = false
@@ -249,14 +117,6 @@ private class DistinctPublisher<T>(
                     }
                 }
             }
-
-            override fun onError(t: Throwable) {
-                subscriber.onError(t)
-            }
-
-            override fun onComplete() {
-                subscriber.onComplete()
-            }
         })
     }
 }
@@ -264,45 +124,39 @@ private class DistinctPublisher<T>(
 fun <T> subject(): Subject<T> = DefaultSubject()
 
 fun <T> create(fn: (Subscriber<T>) -> Unit): Publisher<T> {
-    return object : UncleanPublisher<T> {
+    return object : Publisher<T> {
         override fun subscribe(subscriber: Subscriber<T>) {
             fn(subscriber)
         }
-    }.clean()
+    }
 }
 
 fun <T> from(t: T): Publisher<T> {
-    return object : UncleanPublisher<T> {
+    return object : Publisher<T> {
         override fun subscribe(subscriber: Subscriber<T>) {
             subscriber.onNext(t)
-            subscriber.onComplete()
         }
-    }.clean()
+    }
 }
 
 fun <T> from(factory: () -> T): Publisher<T> {
-    return object : UncleanPublisher<T> {
+    return object : Publisher<T> {
         override fun subscribe(subscriber: Subscriber<T>) {
             val t = factory()
             subscriber.onNext(t)
-            subscriber.onComplete()
         }
-    }.clean()
+    }
 }
 
 fun <T> from(promise: Promise<T>): Publisher<T> {
-    return object : UncleanPublisher<T> {
+    return object: Publisher<T> {
         override fun subscribe(subscriber: Subscriber<T>) {
             promise
                 .then {
                     subscriber.onNext(it)
-                    subscriber.onComplete()
-                }
-                .catch {
-                    subscriber.onError(it)
                 }
         }
-    }.clean()
+    }
 }
 
 fun <A, B, C> combineLatest(
@@ -310,24 +164,16 @@ fun <A, B, C> combineLatest(
     o2: Publisher<B>,
     fn: (A, B) -> C
 ): Publisher<C> {
-    return object : UncleanPublisher<C> {
+    return object : Publisher<C> {
         override fun subscribe(subscriber: Subscriber<C>) {
             var has1 = false
             var last1: A? = null
-            var complete1 = false
             var has2 = false
             var last2: B? = null
-            var complete2 = false
 
             fun trigger() {
                 if(has1 && has2) {
                     subscriber.onNext(fn(last1!!, last2!!))
-                }
-            }
-
-            fun triggerComplete() {
-                if(complete1 && complete2) {
-                    subscriber.onComplete()
                 }
             }
 
@@ -339,15 +185,6 @@ fun <A, B, C> combineLatest(
                     last1 = t
                     trigger()
                 }
-
-                override fun onError(t: Throwable) {
-                    subscriber.onError(t)
-                }
-
-                override fun onComplete() {
-                    complete1 = true
-                    triggerComplete()
-                }
             })
             o2.subscribe(object: Subscriber<B> {
                 override fun onNext(t: B) {
@@ -357,62 +194,30 @@ fun <A, B, C> combineLatest(
                     last2 = t
                     trigger()
                 }
-
-                override fun onError(t: Throwable) {
-                    subscriber.onError(t)
-                }
-
-                override fun onComplete() {
-                    complete2 = true
-                    triggerComplete()
-                }
             })
         }
-    }.clean()
+    }
 }
 
 fun <O> merge(vararg ps: Publisher<O>): Publisher<O> {
-    return object: UncleanPublisher<O> {
+    return object: Publisher<O> {
         override fun subscribe(subscriber: Subscriber<O>) {
-            var nbOpen = ps.size
             for (p in ps) {
                 p.subscribe(object: Subscriber<O> {
                     override fun onNext(t: O) {
                         subscriber.onNext(t)
                     }
-
-                    override fun onError(t: Throwable) {
-                        nbOpen = 0
-                        subscriber.onError(t)
-                    }
-
-                    override fun onComplete() {
-                        nbOpen--
-                        if(nbOpen == 0) {
-                            subscriber.onComplete()
-                        }
-                    }
                 })
             }
         }
-    }.clean();
+    }
 }
 
 private class DefaultSubject<T> : Subject<T> {
-    private var lastException: Throwable? = null
-    private var complete = false
-
     private val subscribers = ArrayList<Subscriber<T>>()
 
     override fun subscribe(subscriber: Subscriber<T>) {
-        val le = lastException
-        if (le != null) {
-            onError(subscriber, le)
-        } else if (complete) {
-            onComplete(subscriber)
-        } else {
-            subscribers.add(subscriber)
-        }
+        subscribers.add(subscriber)
     }
 
     override fun onNext(t: T) {
@@ -421,41 +226,7 @@ private class DefaultSubject<T> : Subject<T> {
         }
     }
 
-    override fun onError(t: Throwable) {
-        lastException = t
-        subscribers.forEach {
-            onError(it, t)
-        }
-    }
-
-    override fun onComplete() {
-        complete = true
-        subscribers.forEach {
-            onComplete(it)
-        }
-    }
-
     private fun onNext(subscriber: Subscriber<T>, t: T) {
-        try {
-            subscriber.onNext(t)
-        } catch (t: Throwable) {
-            onError(subscriber, t)
-        }
-    }
-
-    private fun onError(subscriber: Subscriber<T>, t: Throwable) {
-        try {
-            subscriber.onError(t)
-        } catch (t: Throwable) {
-            // Eat
-        }
-    }
-
-    private fun onComplete(subscriber: Subscriber<T>) {
-        try {
-            subscriber.onComplete()
-        } catch (t: Throwable) {
-            // Eat
-        }
+        subscriber.onNext(t)
     }
 }

@@ -14,6 +14,7 @@ external class GoogleAuth {
 
 interface Thing<T> {
     fun get(): T
+    @JsName("listen")
     fun listen(callback: (T) -> Unit)
 }
 
