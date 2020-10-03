@@ -1,76 +1,69 @@
 package se.daan.moneyprinters.security
 
-import gapi.Gapi
 import gapi.auth2.Auth2
 import gapi.auth2.GoogleAuth
-import gapi.auth2.GoogleUser
 import http.get
-import observed.*
 import se.daan.moneyprinters.web.api.Config
 import kotlin.browser.window
-import gapi.gapi as gapigapi
+import kotlin.js.Promise
 
-private val gapi: Publisher<Gapi> = create { sub ->
-    window.asDynamic()["onGapiLoad"] = {
-        sub.onNext(gapigapi)
+
+private val config: Promise<Config> = get("/config")
+
+class Security(private val auth: GoogleAuth) {
+    var state: LoginState = LoggedOut
+
+    fun init() {
+        auth.currentUser.listen { user ->
+            state = if(user.isSignedIn()) {
+                LoggedIn(user.getId(), user.getAuthResponse().id_token)
+            } else {
+                LoggedOut
+            }
+        }
+
+        state = LoggedOut
+    }
+
+    fun login() {
+        auth.signIn()
+    }
+
+    fun logout() {
+        auth.signOut()
     }
 }
-private val config: Publisher<Config> = get("/config")
 
-val signIn = subject<Any>()
-val signOut = subject<Any>()
-val sessions = combineLatest(gapi, config) { g, c ->
-        sessions(g, c.googleClientId, signIn, signOut)
-    }.flatMap { it }
-    .cache()
+sealed class LoginState
+object LoggedOut: LoginState()
+data class LoggedIn(
+    val id: String,
+    val token: String
+): LoginState()
 
-fun sessions(gapi: Gapi, clientId: String, signIn: Publisher<Any>, signOut: Publisher<Any>): Publisher<MaybeSession> {
-    val googleAuth = create<Auth2> { sub ->
-        gapi.load("auth2") {
-            sub.onNext(gapi.auth2)
-        }
-    }.map { c ->
-        val params: dynamic = object {}
-        params["client_id"] = clientId
-        c.init(params)
-    }.cache()
 
-    val session = googleAuth
-        .flatMap { go ->
-            create<GoogleUser> { sub ->
-                go.currentUser.listen {
-                    sub.onNext(it)
+class SecurityFactory {
+    fun create(): Promise<Security> {
+        return Promise.all(arrayOf(config, loadAuth2()))
+            .then {
+                val config: Config = it[0] as Config
+                val auth2: Auth2 = it[1] as Auth2
+
+                val params: dynamic = object {}
+                params["client_id"] = config.googleClientId
+
+                val newAuth = auth2.init(params)
+                Security(newAuth)
+            }
+    }
+
+    private fun loadAuth2(): Promise<Auth2> {
+        return Promise {res, _ ->
+            window.asDynamic()["onGapiLoad"] = {
+                gapi.gapi.load("auth2") {
+                    res(gapi.gapi.auth2)
                 }
             }
         }
-        .map { user ->
-            if(user.isSignedIn()) {
-                Session(user.getId(), user.getAuthResponse().id_token)
-            } else {
-                NoSession
-            }
-        }
-
-    combineLatest(googleAuth, signIn) { ga, _ -> ga }
-        .subscribe(object: Subscriber<GoogleAuth> {
-            override fun onNext(t: GoogleAuth) {
-                t.signIn()
-            }
-        })
-
-    combineLatest(googleAuth, signOut) { ga, _ -> ga }
-        .subscribe(object: Subscriber<GoogleAuth> {
-            override fun onNext(t: GoogleAuth) {
-                t.signOut()
-            }
-        })
-
-    return merge(from(NoSession), session).distinct()
+    }
 }
-
-sealed class MaybeSession
-object NoSession : MaybeSession()
-data class Session(
-    val id: String,
-    val token: String
-) : MaybeSession()

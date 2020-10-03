@@ -2,14 +2,15 @@ package se.daan.moneyprinters
 
 
 import observed.combineLatest
-import se.daan.moneyprinters.security.MaybeSession
-import se.daan.moneyprinters.security.sessions
+//import se.daan.moneyprinters.security.MaybeSession
+import se.daan.moneyprinters.security.SecurityFactory
+//import se.daan.moneyprinters.security.sessions
 import se.daan.moneyprinters.view.engine.changeHash
 import se.daan.moneyprinters.view.engine.hash
 import se.daan.moneyprinters.web.api.CreateGame
-import se.daan.moneyprinters.view.mainPage
+//import se.daan.moneyprinters.view.mainPage
 import se.daan.moneyprinters.view.engine.render
-import se.daan.moneyprinters.view.route
+//import se.daan.moneyprinters.view.route
 import kotlin.browser.document
 
 /*
@@ -31,9 +32,9 @@ fun start() {
 }*/
 
 fun main() {
-
-
     document.addEventListener("DOMContentLoaded", {
+       Application(SecurityFactory()).start()
+        /*
         val sessions = sessions
         val routed = combineLatest(sessions, hash()) { s, h ->
             route(s, h)
@@ -41,6 +42,8 @@ fun main() {
 
         changeHash(routed.map{r -> r.hash().joinToString("/")})
         render(mainPage(routed, sessions))
+
+        */
     })
 }
 

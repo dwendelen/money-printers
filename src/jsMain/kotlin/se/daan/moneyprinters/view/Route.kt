@@ -1,5 +1,6 @@
 package se.daan.moneyprinters.view
 
+/*
 import se.daan.moneyprinters.security.MaybeSession
 import se.daan.moneyprinters.security.NoSession
 import se.daan.moneyprinters.security.Session
@@ -70,3 +71,5 @@ private fun route(
         }
     }
 }
+
+ */

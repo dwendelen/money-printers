@@ -1,7 +1,9 @@
 package se.daan.moneyprinters
 
+/*
 import se.daan.moneyprinters.security.NoSession
 import se.daan.moneyprinters.security.Session
+*/
 
 class MoneyPrinters(
 ) {/*

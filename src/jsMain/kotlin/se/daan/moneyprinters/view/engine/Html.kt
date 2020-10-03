@@ -121,3 +121,18 @@ private fun addChildren(elem: HTMLElement, children: Any) {
         }
     }
 }
+
+class Element<I>(
+    mods: Iterable<Attribute<I>>,
+    children: Iterable<ChildElement<I, *>>,
+    elem: HTMLElement
+)
+
+class ChildElement<I, O>(
+    fn: (I) -> O
+)
+
+class Attribute<I>(
+    fn: (I) -> String,
+    value: String
+)
