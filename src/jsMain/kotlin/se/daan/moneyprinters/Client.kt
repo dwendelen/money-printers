@@ -2,7 +2,6 @@ package se.daan.moneyprinters
 
 
 import http.put
-import observed.Publisher
 import se.daan.moneyprinters.web.api.CreateGame
 import kotlin.js.Promise
 

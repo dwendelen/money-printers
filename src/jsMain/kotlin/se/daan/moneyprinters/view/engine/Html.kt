@@ -1,43 +1,19 @@
 package se.daan.moneyprinters.view.engine
 
-import observed.Publisher
-import observed.Subscriber
-import observed.create
+
 import org.w3c.dom.HTMLButtonElement
 import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.Node
 import kotlin.browser.document
 import kotlin.browser.window
-import kotlin.dom.clear
 
-private val hashObservable = create<String>{ sub ->
-    sub.onNext(window.location.hash)
+fun bla() {
     window.onhashchange = {
-        sub.onNext(window.location.hash)
+        window.location.hash
     }
-}.cache()
-
-fun hash(): Publisher<String> {
-    return hashObservable
 }
 
-fun changeHash(newhash: Publisher<String>) {
-    newhash.subscribe(object : Subscriber<String>{
-        override fun onNext(t: String) {
-            window.location.hash = t
-        }
-
-        override fun onError(t: Throwable) {
-            console.error(t)
-            //TODO("Not yet implemented")
-        }
-
-        override fun onComplete() {
-            //TODO("Not yet implemented")
-        }
-    })
-}
 
 fun render(children: Any) {
     addChildren(document.body!!, children)
@@ -63,14 +39,8 @@ fun click(onClick: () -> Unit): (HTMLElement) -> Unit {
         e.onclick = { onClick() }
     }
 }
-/*
- * Can only be used once per element
- */
-fun click(onClick: Subscriber<Any>): (HTMLElement) -> Unit {
-    return { e ->
-        e.onclick = { onClick.onNext("") }
-    }
-}
+
+
 
 fun div(mods: Iterable<(HTMLElement) -> Unit>, children: Any): HTMLDivElement {
     val div = document.createElement("div") as HTMLDivElement
@@ -94,23 +64,6 @@ private fun addChildren(elem: HTMLElement, children: Any) {
         is String -> {
             elem.textContent = children;
         }
-        is Publisher<*> -> {
-            children.subscribe(object: Subscriber<Any?> {
-                override fun onNext(t: Any?) {
-                        elem.clear()
-                        addChildren(elem, t!!)
-                }
-
-                override fun onError(t: Throwable) {
-                    console.error(t)
-                    //TODO("Not yet implemented")
-                }
-
-                override fun onComplete() {
-                    //TODO("Not yet implemented")
-                }
-            })
-        }
         is Iterable<*> -> {
             children.forEach {
                 elem.appendChild(it as Node)
@@ -122,17 +75,3 @@ private fun addChildren(elem: HTMLElement, children: Any) {
     }
 }
 
-class Element<I>(
-    mods: Iterable<Attribute<I>>,
-    children: Iterable<ChildElement<I, *>>,
-    elem: HTMLElement
-)
-
-class ChildElement<I, O>(
-    fn: (I) -> O
-)
-
-class Attribute<I>(
-    fn: (I) -> String,
-    value: String
-)

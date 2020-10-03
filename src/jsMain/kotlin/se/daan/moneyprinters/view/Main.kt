@@ -1,6 +1,5 @@
 package se.daan.moneyprinters.view
 
-import observed.Publisher
 //import se.daan.moneyprinters.security.MaybeSession
 //import se.daan.moneyprinters.view.pages.loginPage
 //import se.daan.moneyprinters.security.signOut

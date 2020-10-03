@@ -1,12 +1,9 @@
 package se.daan.moneyprinters
 
 
-import observed.combineLatest
 //import se.daan.moneyprinters.security.MaybeSession
 import se.daan.moneyprinters.security.SecurityFactory
 //import se.daan.moneyprinters.security.sessions
-import se.daan.moneyprinters.view.engine.changeHash
-import se.daan.moneyprinters.view.engine.hash
 import se.daan.moneyprinters.web.api.CreateGame
 //import se.daan.moneyprinters.view.mainPage
 import se.daan.moneyprinters.view.engine.render
