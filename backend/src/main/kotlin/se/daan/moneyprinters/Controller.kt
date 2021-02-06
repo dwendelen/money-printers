@@ -1,28 +1,33 @@
 package se.daan.moneyprinters
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
 import se.daan.moneyprinters.config.GameConfig
-import se.daan.moneyprinters.config.SecurityConfig
+import se.daan.moneyprinters.config.GameProperties
+import se.daan.moneyprinters.config.SecurityProperties
 import se.daan.moneyprinters.web.api.*
 import se.daan.moneyprinters.web.api.Player
+import java.io.FileInputStream
 import java.util.concurrent.ConcurrentHashMap
 
 @RestController
 @RequestMapping("/api")
 class Controller(
-        private val gameConfig: GameConfig,
-        private val securityConfig: SecurityConfig
+        private val securityProperties: SecurityProperties,
+        gameProperties: GameProperties,
+        objectMapper: ObjectMapper
 ) {
+    private val gameConfig: GameConfig = objectMapper.readValue(FileInputStream(gameProperties.configFile))
+
     private val games = ConcurrentHashMap<String, Game>()
 
     @GetMapping("/config", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getConfig(): Config {
-        return Config(securityConfig.googleClientId)
+        return Config(securityProperties.googleClientId)
     }
 
     @GetMapping("/games/{gameId}")
