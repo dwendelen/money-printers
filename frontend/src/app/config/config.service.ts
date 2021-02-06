@@ -12,7 +12,7 @@ export class ConfigService {
   private readonly config: Promise<Config>;
 
   constructor(http: HttpClient) {
-      this.config = http.get<Config>('/config')
+      this.config = http.get<Config>('/api/config')
         .toPromise();
   }
 

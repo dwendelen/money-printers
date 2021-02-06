@@ -1,2 +1,6 @@
-<app-login *ngIf="getLoginPage()|async"></app-login>
-<app-games *ngIf="getGamesPage()|async" [user]="(getGamesPage()|async)?.loggedInUser"></app-games>
+<ul class="errors" *ngFor="let error of errors">
+  <li>{{error}}</li>
+</ul>
+<app-login *ngIf="getLoginPage()"></app-login>
+<app-games *ngIf="getGamesPage()" [user]="user!" (gameToJoin)="joinGame($event)"></app-games>
+<app-game *ngIf="getGamePage()" [user]="user!" [gameInfo]="getGamePage()!.gameInfo"></app-game>

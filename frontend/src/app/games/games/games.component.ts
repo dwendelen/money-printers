@@ -1,5 +1,7 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {LoggedInUser, LoginService} from '../../login/login.service';
+import {GameService} from '../game.service';
+import {GameInfo} from '../api/api';
 
 @Component({
   selector: 'app-games',
@@ -8,16 +10,24 @@ import {LoggedInUser, LoginService} from '../../login/login.service';
 })
 export class GamesComponent implements OnInit {
 
-  constructor(private readonly loginService: LoginService) {
+  constructor(
+    private readonly loginService: LoginService,
+    private readonly gameService: GameService
+  ) {
   }
 
   @Input()
-  user: LoggedInUser | undefined;
-  name: string | undefined;
-  gameId: string | undefined;
+  user!: LoggedInUser;
+  @Output()
+  gameToJoin = new EventEmitter<GameInfo>();
+
+  name = '';
+  gameId = '';
+
+  errors: string[] = [];
 
   ngOnInit(): void {
-    this.name = this.user?.getName();
+    this.name = this.user.getName();
   }
 
   logout(): void {
@@ -25,10 +35,14 @@ export class GamesComponent implements OnInit {
   }
 
   newGame(): void {
-    console.log(`New game with name ${this.name}`);
+    this.gameService.newGame(this.user.getId(), this.name, this.user.getToken())
+      .then(game => this.gameToJoin.emit(game))
+      .catch(() => this.errors.push('Could not create new game'));
   }
 
   joinGame(): void {
-    console.log(`Join ${this.gameId} with name ${this.name}`);
+    this.gameService.joinGame(this.gameId, this.user.getId(), this.user.getName(), this.user.getToken())
+      .then(game => this.gameToJoin.emit(game))
+      .catch(() => this.errors.push('Could not join new game'));
   }
 }

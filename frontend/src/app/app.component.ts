@@ -1,52 +1,73 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {LoggedInUser, LoginService} from './login/login.service';
-import {filter, flatMap, map, mergeMap, shareReplay} from 'rxjs/operators';
-import {merge, Observable, of} from 'rxjs';
+import {Subscription} from 'rxjs/internal/Subscription';
+import {GameInfo} from './games/api/api';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
-  page: Observable<{}> | undefined;
+export class AppComponent implements OnInit, OnDestroy {
+  page: any = new LoginPage();
+  user!: LoggedInUser | null;
+  errors: string[] = [];
+
+  loginSubscription!: Subscription;
 
   constructor(private login: LoginService) {
   }
 
   ngOnInit(): void {
-    this.page = this.login.getLoggedInUser()
-      .pipe(
-        map(user => user ? new GamesPage(user) : new LoginPage()),
-      );
+    this.loginSubscription = this.login.getLoggedInUser()
+      .subscribe(user => {
+        if (user == null) {
+          this.page = new LoginPage();
+        } else {
+          this.user = user;
+          this.page = new GamesPage();
+        }
+      }, (err) => {
+        this.errors.push(err);
+      });
   }
 
-  getLoginPage(): Observable<LoginPage | null> {
+  joinGame(game: GameInfo): void {
+    this.page = new GamePage(game);
+  }
+
+  getLoginPage(): LoginPage | null {
     return this.getPage(LoginPage);
   }
 
-  getGamesPage(): Observable<GamesPage | null> {
+  getGamesPage(): GamesPage | null {
     return this.getPage(GamesPage);
   }
 
-  private getPage<T>(clazz: any): Observable<T | null> {
-    return this.page?.pipe(
-      mergeMap(p => {
-        if (p instanceof clazz) {
-          return of(p as T);
-        } else {
-          return of(null);
-        }
-      }),
-    ) || of(null);
+  getGamePage(): GamePage | null {
+    return this.getPage(GamePage);
+  }
+
+  private getPage<T>(clazz: any): T | null {
+    if (this.page instanceof clazz) {
+      return this.page as T;
+    } else {
+      return null;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.loginSubscription.unsubscribe();
   }
 }
-
 
 class LoginPage {
 }
 
 class GamesPage {
-  constructor(public loggedInUser: LoggedInUser) {
+}
+
+class GamePage {
+  constructor(public gameInfo: GameInfo) {
   }
 }

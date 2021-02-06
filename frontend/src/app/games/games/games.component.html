@@ -1,5 +1,17 @@
-Welkom <input type="text" [(ngModel)]="name">
+<ul class="errors" *ngFor="let error of errors">
+  <li>{{error}}</li>
+</ul>
 
-<button (click)="newGame()">Start new game</button>
-Join game <input type="text" [(ngModel)]="gameId">
-<button (click)="joinGame()">Join</button>
+<p>
+  Welkom <input type="text" [(ngModel)]="name">
+</p>
+
+<p>
+  Join game
+  <input type="text" [(ngModel)]="gameId" (keydown.enter)="joinGame()">
+  <button (click)="joinGame()">Join</button>
+</p>
+
+<p>
+  <button (click)="newGame()">Start new game</button>
+</p>

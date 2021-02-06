@@ -1,0 +1,6 @@
+clock:
+  zone: "Europe/Brussels"
+
+logging:
+  level:
+    root: DEBUG

@@ -1,17 +1,18 @@
 import {Injectable, NgZone} from '@angular/core';
 import {Config, ConfigService} from '../config/config.service';
 import {Observable, from} from 'rxjs';
-import {map, shareReplay} from 'rxjs/operators';
+import {map, mergeMap, shareReplay} from 'rxjs/operators';
 import GoogleAuth = gapi.auth2.GoogleAuth;
-import {flatMap} from 'rxjs/internal/operators';
 import GoogleUser = gapi.auth2.GoogleUser;
 
-export interface LoginService {
-  getLoggedInUser(): Observable<LoggedInUser>;
-  logout(): void;
+@Injectable({providedIn: 'root'})
+export abstract class LoginService {
+  abstract getLoggedInUser(): Observable<LoggedInUser | null>;
+  abstract logout(): void;
 }
 
 export interface LoggedInUser {
+  getId(): string;
   getName(): string;
   getToken(): string;
 }
@@ -19,13 +20,14 @@ export interface LoggedInUser {
 @Injectable({
   providedIn: 'root'
 })
-export class LoginService implements LoginService {
+export class GoogleLoginService implements LoginService {
   constructor(configService: ConfigService, private ngZone: NgZone) {
-    this.googleAuth = Promise.all([configService.getConfig(), LoginService.apiLoaded()])
-      .then(arr => LoginService.initAuth(arr[0]));
+    this.googleAuth = Promise.all([configService.getConfig(), GoogleLoginService.apiLoaded()])
+      .then(arr => GoogleLoginService.initAuth(arr[0]))
+      .catch(() => Promise.reject('Could not load google api'));
 
     this.user = from(this.googleAuth).pipe(
-      flatMap(ga => LoginService.loggedInUser(ga, ngZone)),
+      mergeMap(ga => GoogleLoginService.loggedInUser(ga, ngZone)),
       map(gu => gu ? new GoogleLoggedInUser(gu) : null),
       shareReplay()
     );
@@ -37,7 +39,10 @@ export class LoginService implements LoginService {
   private static initAuth(config: Config): Promise<GoogleAuth> {
     return gapi.auth2.init({
       client_id: config.googleClientId
-    }).then(ga => ga);
+    }).then(
+      ga => ga,
+        err => Promise.reject(err.error)
+    );
   }
 
   private static loggedInUser(auth: GoogleAuth, ngZone: NgZone): Observable<GoogleUser | null> {
@@ -57,7 +62,7 @@ export class LoginService implements LoginService {
     return new Promise((res, rej) => {
         gapi.load('auth2', {
           callback: () => res(),
-          onerror: () => rej()
+          onerror: () => rej('Could not load google api')
         });
     });
   }
@@ -77,6 +82,10 @@ export class LoginService implements LoginService {
 
 class GoogleLoggedInUser implements LoggedInUser {
   constructor(private googleUser: GoogleUser) {  }
+
+  getId(): string {
+    return this.googleUser.getBasicProfile().getId();
+  }
 
   getName(): string {
     return this.googleUser.getBasicProfile().getGivenName();
