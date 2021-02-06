@@ -18,24 +18,24 @@ fun main(args: Array<String>) {
     objectMapper.registerKotlinModule()
     val config = objectMapper.readValue<Config>(FileInputStream(args[0]))
 
-    val indexHtml = Unpooled.wrappedBuffer(loadIndexPage(config.security.googleClientId))
-    val javascript = Unpooled.wrappedBuffer(load("/static/money-printers.js"))
+//    val indexHtml = Unpooled.wrappedBuffer(loadIndexPage(config.security.googleClientId))
+//    val javascript = Unpooled.wrappedBuffer(load("/static/money-printers.js"))
 
     HttpServer.create()
         .port(config.port)
         .route { routes ->
             routes
-                .get("/") { _, res ->
-                    res.send(Flux.just(indexHtml.retain()))
-                }
+//                .get("/") { _, res ->
+//                    res.send(Flux.just(indexHtml.retain()))
+//                }
                 .get("/config") {_, res ->
                     val config1 = se.daan.moneyprinters.web.api.Config(config.security.googleClientId)
                     val json = objectMapper.writeValueAsBytes(config1)
                     res.send(Flux.just(Unpooled.wrappedBuffer(json)))
                 }
-                .get("/money-printers.js") { _, res ->
-                    res.send(Flux.just(javascript.retain()))
-                }
+//                .get("/money-printers.js") { _, res ->
+//                    res.send(Flux.just(javascript.retain()))
+//                }
                 .put("/games/{id}") { req, res ->
                     res.status(200)
                     res.send()
