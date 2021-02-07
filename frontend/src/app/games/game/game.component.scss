@@ -1,0 +1,83 @@
+.column {
+  display: inline-block;
+  vertical-align: top;
+  margin-right: 50px;
+}
+
+$boardWith: 200px;
+$boardBorder: 1px;
+$groundWidth: $boardWith - $boardBorder - $boardBorder;
+.board {
+  display: inline-block;
+  //width: $groundWidth;
+  border-width: $boardBorder;
+  border-style: solid;
+  border-spacing: 0;
+}
+
+$groundBorder: 1px;
+$groundPaddingLeft: 5px;
+$groundPaddingRight: 0;
+$groundPaddingTop: 1px;
+$groundPaddingBottom: $groundPaddingTop;
+$groundTextWidth: $groundWidth - $groundBorder - $groundBorder - $groundPaddingLeft - $groundPaddingRight;
+.ground {
+  width: $groundTextWidth;
+  padding: $groundPaddingTop $groundPaddingRight $groundPaddingBottom $groundPaddingLeft;
+  border-width: $groundBorder;
+  border-style: solid;
+  border-spacing: 0;
+}
+
+$playerWidth: 75px;
+$playerPaddingLeft: 10px;
+$playerPaddingRight: 10px;
+$playerBorderWidth: 1px;
+.playerTable {
+  display: inline-block;
+  border-style: solid;
+  border-right-style: none;
+  border-bottom-style: none;
+  border-width: $playerBorderWidth;
+}
+
+$playerCellWidth: $playerWidth - $playerPaddingLeft - $playerPaddingRight;
+$playerNameCellWidth: $playerCellWidth + 50px;
+.playerTableHeader {
+  div {
+    display: inline-block;
+    width: $playerCellWidth;
+    padding-left: $playerPaddingLeft;
+    padding-right: $playerPaddingRight;
+
+    border-style: solid;
+    border-left-style: none;
+    border-top-style: none;
+    border-width: $playerBorderWidth;
+  }
+  div.playerName {
+    width: $playerNameCellWidth;
+  }
+}
+
+.playerTableRow {
+  div {
+    display: inline-block;
+    width: $playerCellWidth;
+    padding-left: $playerPaddingLeft;
+    padding-right: $playerPaddingRight;
+
+    border-style: solid;
+    border-left-style: none;
+    border-top-style: none;
+    border-width: $playerBorderWidth;
+
+  }
+  div.playerName {
+    width: $playerNameCellWidth;
+  }
+}
+
+.playerAmount {
+  text-align: right;
+}

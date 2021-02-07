@@ -6,10 +6,9 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
-import se.daan.moneyprinters.config.GameConfig
-import se.daan.moneyprinters.config.GameProperties
-import se.daan.moneyprinters.config.SecurityProperties
+import se.daan.moneyprinters.config.*
 import se.daan.moneyprinters.web.api.*
+import se.daan.moneyprinters.web.api.Ground
 import se.daan.moneyprinters.web.api.Player
 import java.io.FileInputStream
 import java.util.concurrent.ConcurrentHashMap
@@ -45,9 +44,25 @@ class Controller(
     ): GameInfo {
         val gameMaster = se.daan.moneyprinters.Player(
                 createGame.gameMaster.id,
-                createGame.gameMaster.name
+                createGame.gameMaster.name,
+                0,
+                0
         )
-        val game = Game(gameId, mutableMapOf(gameMaster.id to gameMaster), gameMaster)
+        val board = gameConfig.board.map {
+            when(it) {
+                is se.daan.moneyprinters.config.ActionSpace -> ActionSpace(it.text)
+                is se.daan.moneyprinters.config.FreeParking -> FreeParking(it.text)
+                is se.daan.moneyprinters.config.Station -> Station(it.text)
+                is se.daan.moneyprinters.config.Street -> Street(it.text, it.color)
+                is se.daan.moneyprinters.config.Utility -> Utility(it.text)
+            }
+        }
+        val game = Game(
+                gameId,
+                mutableMapOf(gameMaster.id to gameMaster),
+                gameMaster,
+                board
+        )
         games[gameId] = game
 
         return mapGame(game)
@@ -60,16 +75,33 @@ class Controller(
             @RequestBody joinGame: JoinGame
     ) {
         val game = games[gameId] ?: throw ResponseStatusException(HttpStatus.NOT_FOUND);
-        game.players[playerId] = se.daan.moneyprinters.Player(
-                playerId,
-                joinGame.name
-        )
+        if(!game.players.containsKey(playerId)) {
+            game.players[playerId] = se.daan.moneyprinters.Player(
+                    playerId,
+                    joinGame.name,
+                    0,
+                    0
+            )
+        }
     }
 
     private fun mapGame(game: Game) = GameInfo(
             game.id,
             game.players.values.map {
-                Player(it.id, it.name)
-            }
+                Player(it.id, it.name, it.money, it.debt)
+            },
+            game.board.map {
+                Ground(
+                        it.text,
+                        when (it) {
+                            is Street -> it.color
+                            is Station -> "lightgrey"
+                            is ActionSpace -> null
+                            is FreeParking -> null
+                            is Utility -> null
+                        }
+                )
+            },
+            game.gameMaster.id
     )
 }

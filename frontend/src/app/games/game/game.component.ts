@@ -6,7 +6,7 @@ import {GameInfo} from '../api/api';
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
-  styleUrls: []
+  styleUrls: ['./game.component.scss']
 })
 export class GameComponent implements OnInit {
 

@@ -41,7 +41,7 @@ export class GamesComponent implements OnInit {
   }
 
   joinGame(): void {
-    this.gameService.joinGame(this.gameId, this.user.getId(), this.user.getName(), this.user.getToken())
+    this.gameService.joinGame(this.gameId, this.user.getId(), this.name, this.user.getToken())
       .then(game => this.gameToJoin.emit(game))
       .catch(() => this.errors.push('Could not join new game'));
   }
