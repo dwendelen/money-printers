@@ -12,7 +12,7 @@ import se.daan.moneyprinters.web.config.api.Config
 class ConfigController(
         private val securityProperties: SecurityProperties,
 ) {
-    @GetMapping("/config", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getConfig(): Config {
         return Config(securityProperties.googleClientId)
     }
