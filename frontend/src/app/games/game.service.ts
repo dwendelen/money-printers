@@ -19,12 +19,8 @@ export class GameService {
     return this.createGame(gameId, createGame, token);
   }
 
-  joinGame(gameId: string, playerId: string, playerName: string, token: string): Promise<GameInfo> {
-    const joinGame: JoinGame = {
-      name: playerName
-    };
-    return this.addPlayer(gameId, playerId, joinGame, token)
-      .then(() => this.getGame(gameId, token));
+  joinGame(gameId: string, token: string): Promise<GameInfo> {
+    return this.getGame(gameId, token);
   }
 
   private getGame(gameId: string, token: string): Promise<GameInfo> {
@@ -41,16 +37,6 @@ export class GameService {
       .put<GameInfo>(
         `/api/games/${encodeURI(gameId)}`,
         createGame,
-        authorizationHeader(token)
-      )
-      .toPromise();
-  }
-
-  private addPlayer(gameId: string, playerId: string, joinGame: JoinGame, token: string): Promise<void> {
-    return this.http
-      .put<void>(
-        `/api/games/${encodeURI(gameId)}/players/${encodeURI(playerId)}`,
-        joinGame,
         authorizationHeader(token)
       )
       .toPromise();

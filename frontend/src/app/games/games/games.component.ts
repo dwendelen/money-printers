@@ -40,8 +40,8 @@ export class GamesComponent implements OnInit {
       .catch(() => this.errors.push('Could not create new game'));
   }
 
-  joinGame(): void {
-    this.gameService.joinGame(this.gameId, this.user.getId(), this.name, this.user.getToken())
+  openGame(): void {
+    this.gameService.joinGame(this.gameId, this.user.getToken())
       .then(game => this.gameToJoin.emit(game))
       .catch(() => this.errors.push('Could not join new game'));
   }

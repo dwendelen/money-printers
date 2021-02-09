@@ -3,13 +3,13 @@
 </ul>
 
 <p>
-  Welkom <input type="text" [(ngModel)]="name">
+  Welcome <input type="text" [(ngModel)]="name">
 </p>
 
 <p>
-  Join game
-  <input type="text" [(ngModel)]="gameId" (keydown.enter)="joinGame()">
-  <button (click)="joinGame()">Join</button>
+  Open game
+  <input type="text" [(ngModel)]="gameId" (keydown.enter)="openGame()">
+  <button (click)="openGame()">Open</button>
 </p>
 
 <p>
