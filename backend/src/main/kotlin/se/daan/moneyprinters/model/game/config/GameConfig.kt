@@ -1,13 +1,8 @@
-package se.daan.moneyprinters.config
-
+package se.daan.moneyprinters.model.game.config
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 data class GameConfig(
-        val prison: String,
-        val maxAmountOfHousesInGame: Int,
-        val maxAmountOfHotelsInGame: Int,
-        val maxAmountOfHousesOnStreet: Int,
         val defaultInterestRate: Double,
         val decks: Map<String, Deck>,
         val board: List<Space>,
@@ -34,7 +29,8 @@ data class Card(
             JsonSubTypes.Type(value = Station::class, name = "Station"),
             JsonSubTypes.Type(value = Utility::class, name = "Utility"),
             JsonSubTypes.Type(value = ActionSpace::class, name = "Action"),
-            JsonSubTypes.Type(value = FreeParking::class, name = "FreeParking")
+            JsonSubTypes.Type(value = FreeParking::class, name = "FreeParking"),
+            JsonSubTypes.Type(value = Prison::class, name = "Prison")
         ]
 )
 sealed class Space {
@@ -79,6 +75,11 @@ data class FreeParking(
         override val text: String
 ) : Space()
 
+data class Prison(
+        override val id: String,
+        override val text: String
+) : Space()
+
 data class Color(
         val color: String
 )
@@ -99,7 +100,7 @@ data class Color(
             JsonSubTypes.Type(value = GoForward::class, name = "GoForward"),
             JsonSubTypes.Type(value = GoBack::class, name = "GoBack"),
             JsonSubTypes.Type(value = GoToPrison::class, name = "GoToPrison"),
-            JsonSubTypes.Type(value = LeavePrison::class, name = "LeavePrison"),
+            JsonSubTypes.Type(value = LeavePrisonCard::class, name = "LeavePrisonCard"),
             JsonSubTypes.Type(value = TakeCard::class, name = "TakeCard")
         ]
 )
@@ -138,9 +139,11 @@ data class GoBack(
         val steps: Int
 ) : Action()
 
-object GoToPrison : Action()
+data class GoToPrison(
+        val prison: String
+) : Action()
 
-object LeavePrison : Action()
+object LeavePrisonCard : Action()
 
 data class TakeCard(
         val deck: String

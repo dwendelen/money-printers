@@ -1,0 +1,74 @@
+WaitingForPlayers
+  |
+  | Start game
+  v
+Playing
+  |
+  | End game
+  v
+GameDone
+
+
+WaitForRolling <-+
+  |              |
+  | Rolled <num> | NextTurn <player>
+  v              |
+WaitToEndTurn----+
+
+
+Commands:
+- CreateGame
+- StartGame
+
+- Join
+- Forfeit
+
+- RollDice
+- PickCard
+
+- BuyHouse
+- SellHouse
+- BuyHotel
+- SellHotel
+
+
+Events:
+- GameCreated
+- GameStarted
+- GameEnded
+
+- PlayerJoined
+- PlayerForfeited
+- PlayerBankrupted
+
+- DiceRolled
+- CardPicked
+
+- HouseBought
+- HouseSold
+- HotelBought
+- HotelSold
+
+======
+- Pay economy
+- Pay player
+- Decline ground
+- Buy ground
+- Receive start money
+- Receive economy
+- Receive player
+- Switch turn / End turn
+- Go to prison
+- Leave prison by paying
+- Leave prison after final throw
+- Use Leave Prison card
+
+- Start Auction
+- Bid
+- End Auction
+
+- Go To ...
+
+- Start turn
+- Start another turn
+- Buy get out of jail card

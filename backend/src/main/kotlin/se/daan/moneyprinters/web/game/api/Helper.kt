@@ -1,10 +1,8 @@
-package se.daan.moneyprinters.web.api
+package se.daan.moneyprinters.web.game.api
 
-data class GameInfo(
+data class GameMaster(
         val id: String,
-        val players: Iterable<Player>,
-        val board: List<Ground>,
-        val gameMaster: String
+        val name: String
 )
 
 data class Player(

@@ -1,10 +1,10 @@
-package se.daan.moneyprinters.config
+package se.daan.moneyprinters.model.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.ConstructorBinding
 
-@ConfigurationProperties("game")
+@ConfigurationProperties("security")
 @ConstructorBinding
-data class GameProperties(
-        val configFile: String
+data class SecurityProperties(
+        val googleClientId: String
 )
