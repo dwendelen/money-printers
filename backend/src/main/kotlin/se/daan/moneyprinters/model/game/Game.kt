@@ -24,6 +24,7 @@ class Game(
         this.apply(event)
     }
 
+    @Synchronized
     fun execute(cmd: Command, expectedVersion: Int): Boolean {
         if(expectedVersion != events.size) {
             return false
@@ -34,7 +35,7 @@ class Game(
         }
     }
 
-    fun apply(event: Event) {
+    private fun apply(event: Event) {
         when(event) {
             is GameCreated -> {
                 val gameMaster = Player(
@@ -60,26 +61,19 @@ class Player(
 )
 
 sealed class Space {
-    abstract val text: String
 }
 
 class Street(
-        override val text: String,
-        val color: String
 ) : Space()
 
 class ActionSpace(
-        override val text: String,
 ) : Space()
 
 class Utility(
-        override val text: String,
 ) : Space()
 
 class Station(
-        override val text: String
 ) : Space()
 
 class FreeParking(
-        override val text: String
 ) : Space()
