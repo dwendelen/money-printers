@@ -1,9 +1,6 @@
 package se.daan.moneyprinters.model.game
 
-import se.daan.moneyprinters.model.game.api.Command
-import se.daan.moneyprinters.model.game.api.Event
-import se.daan.moneyprinters.model.game.api.GameCreated
-import se.daan.moneyprinters.model.game.api.CreateGame
+import se.daan.moneyprinters.model.game.api.*
 
 class Game(
         createGame: CreateGame
@@ -32,6 +29,17 @@ class Game(
 
         return when(cmd) {
             is CreateGame -> false
+            is AddPlayer -> {
+                if(players.any { it.id == cmd.id }) {
+                    false
+                } else {
+                    newEvent(PlayerAdded(
+                            cmd.id,
+                            cmd.name
+                    ))
+                    true
+                }
+            }
         }
     }
 
@@ -40,13 +48,16 @@ class Game(
             is GameCreated -> {
                 val gameMaster = Player(
                         event.gameMaster.id,
-                        event.gameMaster.name,
-                        0,
-                        0,
-                        0
+                        event.gameMaster.name
                 )
                 this.players.add(gameMaster)
                 this.gameMaster = gameMaster
+            }
+            is PlayerAdded -> {
+                players.add(Player(
+                        event.id,
+                        event.name
+                ))
             }
         }
     }
@@ -55,9 +66,9 @@ class Game(
 class Player(
         val id: String,
         val name: String,
-        val money: Int,
-        val debt: Int,
-        val position: Int
+        val money: Int = 0,
+        val debt: Int = 0,
+        val position: Int = 0
 )
 
 sealed class Space {

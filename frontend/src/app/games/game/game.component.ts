@@ -4,6 +4,7 @@ import {GameService} from '../game.service';
 import {GameInfo} from '../api/api';
 import {Game} from './game';
 import {Event} from '../api/event';
+import {AddPlayer} from '../api/command';
 
 @Component({
   selector: 'app-game',
@@ -45,6 +46,17 @@ export class GameComponent implements OnInit, OnDestroy {
         this.onNewEvents([]);
       }, 10000);
     });
+  }
+
+  join(): void {
+    this.gameService.sendCommand(
+      this.gameInfo.id,
+      new AddPlayer(
+        this.user.getId(),
+        this.user.getName() // TODO proper name
+      ),
+      this.game.events.length
+    );
   }
 
   logout(): void {

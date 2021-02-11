@@ -17,6 +17,8 @@ import se.daan.moneyprinters.model.game.api.Prison as ApiPrison
 import se.daan.moneyprinters.model.game.api.Station as ApiStation
 import se.daan.moneyprinters.model.game.api.Street as ApiStreet
 import se.daan.moneyprinters.model.game.api.Utility as ApiUtility
+import se.daan.moneyprinters.model.game.api.PlayerAdded as ApiPlayerAdded
+import se.daan.moneyprinters.model.game.api.AddPlayer as ApiAddPlayer
 import se.daan.moneyprinters.web.game.api.*
 
 @RestController
@@ -46,6 +48,24 @@ class GameController(
                 .take(limit)
         return Events(mapEvents(newEvents))
     }
+
+    @PutMapping("/{gameId}/commands")
+    fun getEvents(
+            @PathVariable("gameId") gameId: String,
+            @RequestParam("version") version: Int,
+            @RequestBody cmd: Command
+    ) {
+        val game = gameService.getGame(gameId)
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+        val apiCmd = when(cmd) {
+            is AddPlayer -> ApiAddPlayer(
+                    cmd.id,
+                    cmd.name
+            )
+        }
+        game.execute(apiCmd, version)
+    }
+
 
     @PutMapping("/{gameId}")
     fun createGame(
@@ -92,6 +112,7 @@ class GameController(
             events.map {
                 when (it) {
                     is ApiGameCreated -> mapGameCreated(it)
+                    is ApiPlayerAdded -> PlayerAdded(it.id, it.name)
                 }
             }
 

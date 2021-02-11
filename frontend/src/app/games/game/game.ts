@@ -15,12 +15,17 @@ export class Game {
   apply(event: Event): void {
     switch (event.type) {
       case 'GameCreated':
-        const gameCreated = event as GameCreated;
         this.players.push(new Player(
-          gameCreated.gameMaster.id,
-          gameCreated.gameMaster.name
+          event.gameMaster.id,
+          event.gameMaster.name
         ));
-        this.board = gameCreated.board;
+        this.board = event.board;
+        break;
+      case 'PlayerAdded':
+        this.players.push(new Player(
+          event.id,
+          event.name
+        ));
         break;
     }
     this.events.push(event);

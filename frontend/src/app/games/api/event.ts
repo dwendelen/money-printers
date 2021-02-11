@@ -1,6 +1,6 @@
 import {Ground} from './api';
 
-export type Event = GameCreated;
+export type Event = GameCreated | PlayerAdded;
 
 export interface GameCreated {
   type: 'GameCreated';
@@ -9,4 +9,10 @@ export interface GameCreated {
     name: string;
   };
   board: Ground[];
+}
+
+export interface PlayerAdded {
+  type: 'PlayerAdded';
+  id: string;
+  name: string;
 }

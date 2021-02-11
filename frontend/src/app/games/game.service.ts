@@ -3,6 +3,7 @@ import {HttpClient} from '@angular/common/http';
 import {v4 as uuid_v4} from 'uuid';
 import {CreateGame, Events, GameInfo} from './api/api';
 import {Event} from './api/event';
+import {Command} from './api/command';
 
 @Injectable({providedIn: 'root'})
 export class GameService {
@@ -37,6 +38,12 @@ export class GameService {
       .get<Events>(`/api/games/${encodeURI(gameId)}/events?skip=${skip.toString()}&limit=50`)
       .toPromise()
       .then(e => e.events);
+  }
+
+  sendCommand(gameId: string, command: Command, version: number): Promise<void> {
+    return this.http
+      .put<void>(`/api/games/${encodeURI(gameId)}/commands?version=${version.toString()}`, command)
+      .toPromise();
   }
 }
 

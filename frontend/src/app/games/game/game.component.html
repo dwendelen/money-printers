@@ -27,6 +27,6 @@
     </div>
   </div>
   <div class="Actions">
-    <button *ngIf="game.canJoin()">Join game</button>
+    <button *ngIf="game.canJoin()" (click)="join()">Join game</button>
   </div>
 </div>
