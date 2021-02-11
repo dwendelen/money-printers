@@ -1,15 +1,15 @@
 <p>
-  Welkom {{user.getName()}} in game {{gameInfo.id}}
+  Welkom {{user.getName()}} in game {{gameInfo.id}}  <button (click)="logout()">Logout</button>
 </p>
 <div class="column">
   <div class="board" >
-    <div class="ground" *ngFor="let ground of gameInfo.board" [style.background-color]="ground.color">
+    <div class="ground" *ngFor="let ground of game.board" [style.background-color]="ground.color">
       {{ground.text}}
     </div>
   </div>
 </div>
 <div class="column">
-  <div>Total economy: <span id="economy">0</span></div>
+  <div>Total economy: <span id="economy">{{game.economy}}</span></div>
   <div class="playerTable">
     <div class="playerTableHeader">
       <div class="playerName">&nbsp;</div>
@@ -18,12 +18,15 @@
       <div>Debt</div>
       <div>Start</div>
     </div>
-    <div class="playerTableRow" *ngFor="let player of gameInfo.players">
+    <div class="playerTableRow" *ngFor="let player of game.players">
       <div class="playerName">{{player.name}}</div>
       <div class="playerAmount">{{player.money}}</div>
       <div class="playerAmount">0</div>
       <div class="playerAmount">{{player.debt}}</div>
       <div class="playerAmount">0</div>
     </div>
+  </div>
+  <div class="Actions">
+    <button *ngIf="game.canJoin()">Join game</button>
   </div>
 </div>

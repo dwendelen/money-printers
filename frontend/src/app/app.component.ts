@@ -68,6 +68,8 @@ class GamesPage {
 }
 
 class GamePage {
-  constructor(public gameInfo: GameInfo) {
+  constructor(
+    public gameInfo: GameInfo
+  ) {
   }
 }

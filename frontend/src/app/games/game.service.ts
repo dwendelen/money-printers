@@ -1,7 +1,8 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {v4 as uuid_v4} from 'uuid';
-import {CreateGame, GameInfo, JoinGame} from './api/api';
+import {CreateGame, Events, GameInfo} from './api/api';
+import {Event} from './api/event';
 
 @Injectable({providedIn: 'root'})
 export class GameService {
@@ -16,23 +17,6 @@ export class GameService {
         name: gameMasterName
       }
     };
-    return this.createGame(gameId, createGame, token);
-  }
-
-  joinGame(gameId: string, token: string): Promise<GameInfo> {
-    return this.getGame(gameId, token);
-  }
-
-  private getGame(gameId: string, token: string): Promise<GameInfo> {
-    return this.http
-      .get<GameInfo>(
-        `/api/games/${encodeURI(gameId)}`,
-        authorizationHeader(token)
-      )
-      .toPromise();
-  }
-
-  private createGame(gameId: string, createGame: CreateGame, token: string): Promise<GameInfo> {
     return this.http
       .put<GameInfo>(
         `/api/games/${encodeURI(gameId)}`,
@@ -40,6 +24,19 @@ export class GameService {
         authorizationHeader(token)
       )
       .toPromise();
+  }
+
+  openGame(gameId: string): Promise<GameInfo> {
+    return this.http
+      .get<GameInfo>(`/api/games/${encodeURI(gameId)}`)
+      .toPromise();
+  }
+
+  getEvents(gameId: string, skip: number): Promise<Event[]> {
+    return this.http
+      .get<Events>(`/api/games/${encodeURI(gameId)}/events?skip=${skip.toString()}&limit=50`)
+      .toPromise()
+      .then(e => e.events);
   }
 }
 

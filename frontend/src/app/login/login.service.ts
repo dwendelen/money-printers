@@ -1,11 +1,12 @@
 import {Injectable, NgZone} from '@angular/core';
 import {Config, ConfigService} from '../config/config.service';
-import {Observable, from} from 'rxjs';
+import {Observable, from, Subject, BehaviorSubject} from 'rxjs';
 import {map, mergeMap, shareReplay} from 'rxjs/operators';
 import GoogleAuth = gapi.auth2.GoogleAuth;
 import GoogleUser = gapi.auth2.GoogleUser;
+import {v4 as uuid_v4} from 'uuid';
 
-@Injectable({providedIn: 'root'})
+
 export abstract class LoginService {
   abstract getLoggedInUser(): Observable<LoggedInUser | null>;
   abstract logout(): void;
@@ -93,5 +94,37 @@ class GoogleLoggedInUser implements LoggedInUser {
 
   getToken(): string {
     return this.googleUser.getAuthResponse().id_token;
+  }
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class TestLoginService implements LoginService {
+  private user = new TestLoggedInUser();
+  private subject = new BehaviorSubject<TestLoggedInUser | null>(this.user);
+
+  getLoggedInUser(): Observable<LoggedInUser | null> {
+    return this.subject;
+  }
+
+  logout(): void {
+    this.subject.next(null);
+  }
+}
+
+class TestLoggedInUser implements LoggedInUser {
+  private id = uuid_v4();
+
+  getId(): string {
+    return this.id;
+  }
+
+  getName(): string {
+    return 'Test';
+  }
+
+  getToken(): string {
+    return 'token';
   }
 }

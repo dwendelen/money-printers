@@ -1,3 +1,6 @@
+import {GoogleLoginService} from '../app/login/login.service';
+
 export const environment = {
-  production: true
+  production: true,
+  loginServiceType: GoogleLoginService
 };

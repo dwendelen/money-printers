@@ -1,3 +1,14 @@
+import {Event} from './event';
+
+export interface Events {
+  events: Event[];
+}
+
+export interface GameInfo {
+  id: string;
+  events: Event[];
+}
+
 export interface CreateGame {
   gameMaster: {
     id: string;
@@ -5,25 +16,7 @@ export interface CreateGame {
   };
 }
 
-export interface GameInfo {
-  id: string;
-  players: [Player];
-  board: [Ground];
-}
-
-interface Player {
-  id: string;
-  name: string;
-  money: number;
-  debt: number;
-}
-
-interface Ground {
+export interface Ground {
   text: string;
   color: string | null;
-}
-
-
-export interface JoinGame {
-  name: string;
 }

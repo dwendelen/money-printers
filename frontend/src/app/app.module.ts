@@ -5,8 +5,9 @@ import {FormsModule} from '@angular/forms';
 import {AppComponent} from './app.component';
 import {LoginComponent} from './login/login.component';
 import {GamesComponent} from './games/games/games.component';
-import {LoginService, GoogleLoginService} from './login/login.service';
+import {LoginService} from './login/login.service';
 import {GameComponent} from './games/game/game.component';
+import {environment} from '../environments/environment';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,7 @@ import {GameComponent} from './games/game/game.component';
     FormsModule
   ],
   providers: [
-    {provide: LoginService, useClass: GoogleLoginService}
+    {provide: LoginService, useClass: environment.loginServiceType}
   ],
   bootstrap: [AppComponent]
 })

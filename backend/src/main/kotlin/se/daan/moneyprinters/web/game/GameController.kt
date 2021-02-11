@@ -30,7 +30,7 @@ class GameController(
     ): GameInfo {
         val game = gameService.getGame(gameId)
                 ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-        return mapGame(game)
+        return mapGame(gameId, game)
     }
 
     @GetMapping("/{gameId}/events")
@@ -78,11 +78,12 @@ class GameController(
         if (!result) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST)
         }
-        return mapGame(gameService.getGame(gameId)!!)
+        return mapGame(gameId, gameService.getGame(gameId)!!)
     }
 
-    private fun mapGame(game: Game): GameInfo {
+    private fun mapGame(gameId: String, game: Game): GameInfo {
         return GameInfo(
+                gameId,
                 mapEvents(game.events)
         )
     }
