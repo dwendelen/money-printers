@@ -13,8 +13,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
             JsonSubTypes.Type(value = GameCreated::class, name = "GameCreated"),
             JsonSubTypes.Type(value = PlayerAdded::class, name = "PlayerAdded"),
             JsonSubTypes.Type(value = GameStarted::class, name = "GameStarted"),
-            JsonSubTypes.Type(value = NewRoundStarted::class, name = "NewRoundStarted"),
+            JsonSubTypes.Type(value = NewTurnStarted::class, name = "NewTurnStarted"),
             JsonSubTypes.Type(value = DiceRolled::class, name = "DiceRolled"),
+            JsonSubTypes.Type(value = TurnEnded::class, name = "TurnEnded"),
         ]
 )
 sealed class Event
@@ -31,7 +32,7 @@ data class PlayerAdded(
 
 object GameStarted: Event()
 
-data class NewRoundStarted(
+data class NewTurnStarted(
         val player: String
 ): Event()
 
@@ -39,3 +40,5 @@ data class DiceRolled(
         val dice1: Int,
         val dice2: Int
 ): Event()
+
+object TurnEnded: Event()

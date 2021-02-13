@@ -4,8 +4,9 @@ export type Event =
   GameCreated |
   PlayerAdded |
   GameStarted |
-  NewRoundStarted |
-  DiceRolled;
+  NewTurnStarted |
+  DiceRolled |
+  TurnEnded;
 
 export interface GameCreated {
   type: 'GameCreated';
@@ -23,8 +24,8 @@ export interface GameStarted {
   type: 'GameStarted';
 }
 
-export interface NewRoundStarted {
-  type: 'NewRoundStarted';
+export interface NewTurnStarted {
+  type: 'NewTurnStarted';
   player: string;
 }
 
@@ -32,4 +33,9 @@ export interface DiceRolled {
   type: 'DiceRolled';
   dice1: number;
   dice2: number;
+}
+
+export interface TurnEnded {
+  type: 'TurnEnded';
+  player: string;
 }

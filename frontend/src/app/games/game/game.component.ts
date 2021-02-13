@@ -4,7 +4,7 @@ import {GameService} from '../game.service';
 import {GameInfo} from '../api/api';
 import {Game} from './game';
 import {Event} from '../api/event';
-import {AddPlayer, Command, RollDice, StartGame} from '../api/command';
+import {AddPlayer, Command, EndTurn, RollDice, StartGame} from '../api/command';
 
 @Component({
   selector: 'app-game',
@@ -63,6 +63,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
   roll(): void {
     this.sendCmd(new RollDice());
+  }
+
+  endTurn(): void {
+    this.sendCmd(new EndTurn());
   }
 
   private sendCmd(cmd: Command): void {

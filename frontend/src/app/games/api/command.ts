@@ -1,4 +1,8 @@
-export type Command = AddPlayer | StartGame;
+export type Command =
+  AddPlayer |
+  StartGame |
+  RollDice |
+  EndTurn;
 
 export class AddPlayer {
   type = 'AddPlayer';
@@ -16,4 +20,8 @@ export class StartGame {
 
 export class RollDice {
   type = 'RollDice';
+}
+
+export class EndTurn {
+  type = 'EndTurn';
 }

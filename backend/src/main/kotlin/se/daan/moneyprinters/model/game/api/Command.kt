@@ -32,3 +32,5 @@ data class AddPlayer(
 object StartGame: Command()
 
 object RollDice: Command()
+
+object EndTurn:  Command()
