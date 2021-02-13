@@ -4,27 +4,46 @@
   margin-right: 50px;
 }
 
-$boardWith: 200px;
+$boardNameWidth: 175px;
+$boardPlayersWidth: 100px;
 $boardBorder: 1px;
-$groundWidth: $boardWith - $boardBorder - $boardBorder;
+$groundPaddingLeft: 5px;
+$groundPaddingRight: 0;
+$groundPaddingTop: 1px;
+$groundPaddingBottom: $groundPaddingTop;
+$groundHeight: 18px;
 .board {
   display: inline-block;
-  //width: $groundWidth;
+  vertical-align: top;
   border-width: $boardBorder;
   border-style: solid;
   border-spacing: 0;
 }
 
-$groundBorder: 1px;
-$groundPaddingLeft: 5px;
-$groundPaddingRight: 0;
-$groundPaddingTop: 1px;
-$groundPaddingBottom: $groundPaddingTop;
-$groundTextWidth: $groundWidth - $groundBorder - $groundBorder - $groundPaddingLeft - $groundPaddingRight;
 .ground {
-  width: $groundTextWidth;
+  //height: $groundHeight;
+  border-style: none;
+  border-spacing: 0;
+}
+
+.groundName {
+  display: inline-block;
+  vertical-align: top;
+  width: $boardNameWidth;
+  height: $groundHeight;
   padding: $groundPaddingTop $groundPaddingRight $groundPaddingBottom $groundPaddingLeft;
-  border-width: $groundBorder;
+  border-width: $boardBorder;
+  border-style: solid;
+  border-spacing: 0;
+}
+
+.groundPlayers {
+  display: inline-block;
+  vertical-align: top;
+  width: $boardPlayersWidth;
+  height: $groundHeight;
+  padding: $groundPaddingTop $groundPaddingRight $groundPaddingBottom $groundPaddingLeft;
+  border-width: $boardBorder;
   border-style: solid;
   border-spacing: 0;
 }
@@ -35,6 +54,7 @@ $playerPaddingRight: 10px;
 $playerBorderWidth: 1px;
 .playerTable {
   display: inline-block;
+  vertical-align: top;
   border-style: solid;
   border-right-style: none;
   border-bottom-style: none;
@@ -46,6 +66,7 @@ $playerNameCellWidth: $playerCellWidth + 50px;
 .playerTableHeader {
   div {
     display: inline-block;
+    vertical-align: top;
     width: $playerCellWidth;
     padding-left: $playerPaddingLeft;
     padding-right: $playerPaddingRight;
@@ -63,6 +84,7 @@ $playerNameCellWidth: $playerCellWidth + 50px;
 .playerTableRow {
   div {
     display: inline-block;
+    vertical-align: top;
     width: $playerCellWidth;
     padding-left: $playerPaddingLeft;
     padding-right: $playerPaddingRight;

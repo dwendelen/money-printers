@@ -1,13 +1,41 @@
 package se.daan.moneyprinters.model.game.api
 
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes(
+        value = [
+            JsonSubTypes.Type(value = GameCreated::class, name = "GameCreated"),
+            JsonSubTypes.Type(value = PlayerAdded::class, name = "PlayerAdded"),
+            JsonSubTypes.Type(value = GameStarted::class, name = "GameStarted"),
+            JsonSubTypes.Type(value = NewRoundStarted::class, name = "NewRoundStarted"),
+            JsonSubTypes.Type(value = DiceRolled::class, name = "DiceRolled"),
+        ]
+)
 sealed class Event
 
 data class GameCreated(
-        val gameMaster: PlayerInfo,
+        val gameMaster: String,
         val board: List<Space>
 ): Event()
 
 data class PlayerAdded(
         val id: String,
         val name: String
+): Event()
+
+object GameStarted: Event()
+
+data class NewRoundStarted(
+        val player: String
+): Event()
+
+data class DiceRolled(
+        val dice1: Int,
+        val dice2: Int
 ): Event()

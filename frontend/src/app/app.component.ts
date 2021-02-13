@@ -36,6 +36,10 @@ export class AppComponent implements OnInit, OnDestroy {
     this.page = new GamePage(game);
   }
 
+  exit(): void {
+    this.page = new GamesPage();
+  }
+
   getLoginPage(): LoginPage | null {
     return this.getPage(LoginPage);
   }

@@ -5,21 +5,18 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
 import se.daan.moneyprinters.model.game.Game
 import se.daan.moneyprinters.model.game.GameService
-import se.daan.moneyprinters.model.game.api.PlayerInfo
-import se.daan.moneyprinters.model.game.api.Space
+import se.daan.moneyprinters.model.game.api.Command
 import se.daan.moneyprinters.model.game.config.*
+import se.daan.moneyprinters.web.game.api.CreateGame
+import se.daan.moneyprinters.web.game.api.Events
+import se.daan.moneyprinters.web.game.api.GameInfo
 import se.daan.moneyprinters.model.game.api.ActionSpace as ApiActionSpace
 import se.daan.moneyprinters.model.game.api.CreateGame as ApiCreateGame
-import se.daan.moneyprinters.model.game.api.Event as ApiEvent
 import se.daan.moneyprinters.model.game.api.FreeParking as ApiFreeParking
-import se.daan.moneyprinters.model.game.api.GameCreated as ApiGameCreated
 import se.daan.moneyprinters.model.game.api.Prison as ApiPrison
 import se.daan.moneyprinters.model.game.api.Station as ApiStation
 import se.daan.moneyprinters.model.game.api.Street as ApiStreet
 import se.daan.moneyprinters.model.game.api.Utility as ApiUtility
-import se.daan.moneyprinters.model.game.api.PlayerAdded as ApiPlayerAdded
-import se.daan.moneyprinters.model.game.api.AddPlayer as ApiAddPlayer
-import se.daan.moneyprinters.web.game.api.*
 
 @RestController
 @RequestMapping("/api/games")
@@ -43,11 +40,11 @@ class GameController(
     ): Events {
         val game = gameService.getGame(gameId)
                 ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-        val newEvents = game.events
-                .drop(skip)
-                .take(limit)
-        return Events(mapEvents(newEvents))
+        val newEvents = game.getNewEvents(skip, limit)
+        return Events(newEvents)
     }
+
+
 
     @PutMapping("/{gameId}/commands")
     fun getEvents(
@@ -57,13 +54,8 @@ class GameController(
     ) {
         val game = gameService.getGame(gameId)
                 ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-        val apiCmd = when(cmd) {
-            is AddPlayer -> ApiAddPlayer(
-                    cmd.id,
-                    cmd.name
-            )
-        }
-        game.execute(apiCmd, version)
+
+        game.execute(cmd, version)
     }
 
 
@@ -73,10 +65,6 @@ class GameController(
             @RequestBody createGame: CreateGame
     ): GameInfo {
         val gameConfig = gameService.gameConfig
-        val gameMaster = PlayerInfo(
-                createGame.gameMaster.id,
-                createGame.gameMaster.name
-        )
         val board = gameConfig.board.map {
             when (it) {
                 is ActionSpace -> ApiActionSpace(it.text)
@@ -90,7 +78,7 @@ class GameController(
         val result = gameService.execute(
                 gameId,
                 ApiCreateGame(
-                        gameMaster,
+                        createGame.gameMaster,
                         board
                 ),
                 0
@@ -104,40 +92,7 @@ class GameController(
     private fun mapGame(gameId: String, game: Game): GameInfo {
         return GameInfo(
                 gameId,
-                mapEvents(game.events)
+                game.events
         )
     }
-
-    private fun mapEvents(events: List<ApiEvent>) =
-            events.map {
-                when (it) {
-                    is ApiGameCreated -> mapGameCreated(it)
-                    is ApiPlayerAdded -> PlayerAdded(it.id, it.name)
-                }
-            }
-
-    private fun mapGameCreated(gameCreated: ApiGameCreated): GameCreated {
-        val board = gameCreated.board
-                .map(this::mapGround)
-        return GameCreated(
-                GameMaster(
-                        gameCreated.gameMaster.id,
-                        gameCreated.gameMaster.name
-                ),
-                board
-        )
-    }
-
-    private fun mapGround(space: Space) =
-            Ground(
-                    space.text,
-                    when (space) {
-                        is ApiStreet -> space.color
-                        is ApiStation -> "lightgrey"
-                        is ApiActionSpace -> null
-                        is ApiFreeParking -> null
-                        is ApiUtility -> null
-                        is ApiPrison -> null
-                    }
-            )
 }

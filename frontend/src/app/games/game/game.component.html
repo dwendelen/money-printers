@@ -1,10 +1,13 @@
 <p>
-  Welkom {{user.getName()}} in game {{gameInfo.id}}  <button (click)="logout()">Logout</button>
+  Welkom {{user.getName()}} in game {{gameInfo.id}}
+  <button (click)="exitGame()">Exit</button>
+  <button (click)="logout()">Logout</button>
 </p>
 <div class="column">
   <div class="board" >
-    <div class="ground" *ngFor="let ground of game.board" [style.background-color]="ground.color">
-      {{ground.text}}
+    <div class="ground" *ngFor="let ground of game.board">
+      <div class="groundName"  [style.background-color]="ground.color">{{ground.text}}</div>
+      <div class="groundPlayers">{{game.playersOn(ground)}}</div>
     </div>
   </div>
 </div>
@@ -28,5 +31,7 @@
   </div>
   <div class="Actions">
     <button *ngIf="game.canJoin()" (click)="join()">Join game</button>
+    <button *ngIf="game.canStartGame()" (click)="start()">Start game</button>
+    <button *ngIf="game.canRollDice()" (click)="roll()">Roll dice</button>
   </div>
 </div>

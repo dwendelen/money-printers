@@ -21,13 +21,11 @@ export class GamesComponent implements OnInit {
   @Output()
   gameToJoin = new EventEmitter<GameInfo>();
 
-  name = '';
   gameId = '';
 
   errors: string[] = [];
 
   ngOnInit(): void {
-    this.name = this.user.getName();
   }
 
   logout(): void {
@@ -35,7 +33,7 @@ export class GamesComponent implements OnInit {
   }
 
   newGame(): void {
-    this.gameService.newGame(this.user.getId(), this.name, this.user.getToken())
+    this.gameService.newGame(this.user.getId(), this.user.getToken())
       .then(game => this.gameToJoin.emit(game))
       .catch(() => this.errors.push('Could not create new game'));
   }

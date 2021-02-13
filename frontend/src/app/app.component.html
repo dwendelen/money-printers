@@ -3,4 +3,4 @@
 </ul>
 <app-login *ngIf="getLoginPage()"></app-login>
 <app-games *ngIf="getGamesPage()" [user]="user!" (gameToJoin)="joinGame($event)"></app-games>
-<app-game *ngIf="getGamePage()" [user]="user!" [gameInfo]="getGamePage()!.gameInfo"></app-game>
+<app-game *ngIf="getGamePage()" [user]="user!" (exit)="exit()" [gameInfo]="getGamePage()!.gameInfo"></app-game>

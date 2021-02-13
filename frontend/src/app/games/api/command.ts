@@ -1,4 +1,4 @@
-export type Command = AddPlayer;
+export type Command = AddPlayer | StartGame;
 
 export class AddPlayer {
   type = 'AddPlayer';
@@ -8,4 +8,12 @@ export class AddPlayer {
     public name: string
   ) {
   }
+}
+
+export class StartGame {
+  type = 'StartGame';
+}
+
+export class RollDice {
+  type = 'RollDice';
 }

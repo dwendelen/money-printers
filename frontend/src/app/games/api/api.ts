@@ -10,10 +10,7 @@ export interface GameInfo {
 }
 
 export interface CreateGame {
-  gameMaster: {
-    id: string;
-    name: string;
-  };
+  gameMaster: string;
 }
 
 export interface Ground {

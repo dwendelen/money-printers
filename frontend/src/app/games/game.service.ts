@@ -10,13 +10,10 @@ export class GameService {
   constructor(private http: HttpClient) {
   }
 
-  newGame(gameMasterId: string, gameMasterName: string, token: string): Promise<GameInfo> {
+  newGame(gameMasterId: string, token: string): Promise<GameInfo> {
     const gameId = uuid_v4();
     const createGame: CreateGame = {
-      gameMaster: {
-        id: gameMasterId,
-        name: gameMasterName
-      }
+      gameMaster:  gameMasterId
     };
     return this.http
       .put<GameInfo>(

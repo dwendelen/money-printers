@@ -10,6 +10,7 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import org.springframework.scheduling.annotation.EnableScheduling
 import java.time.Clock
 import java.time.ZoneId
+import kotlin.random.Random
 
 @SpringBootApplication
 @EnableScheduling
@@ -23,6 +24,9 @@ class MoneyPrinters {
     fun objectMapperBuilder(): Jackson2ObjectMapperBuilder =
             Jackson2ObjectMapperBuilder()
                     .modulesToInstall(KotlinModule())
+
+    @Bean
+    fun random() = Random.Default
 }
 
 fun main(args: Array<String>) {

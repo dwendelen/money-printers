@@ -1,17 +1,18 @@
+<p>
+  Welkom {{user.getName()}}
+  <button (click)="logout()">Logout</button>
+</p>
+
 <ul class="errors" *ngFor="let error of errors">
   <li>{{error}}</li>
 </ul>
 
 <p>
-  Welcome <input type="text" [(ngModel)]="name">
+  <button (click)="newGame()">Start new game</button>
 </p>
 
 <p>
   Open game
   <input type="text" [(ngModel)]="gameId" (keydown.enter)="openGame()">
   <button (click)="openGame()">Open</button>
-</p>
-
-<p>
-  <button (click)="newGame()">Start new game</button>
 </p>

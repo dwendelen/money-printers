@@ -1,10 +1,5 @@
 package se.daan.moneyprinters.model.game.api
 
-data class PlayerInfo(
-        val id: String,
-        val name: String
-)
-
 sealed class Space {
     abstract val text: String
 }
