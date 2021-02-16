@@ -67,12 +67,12 @@ class GameController(
         val gameConfig = gameService.gameConfig
         val board = gameConfig.board.map {
             when (it) {
-                is ActionSpace -> ApiActionSpace(it.text)
-                is FreeParking -> ApiFreeParking(it.text)
-                is Station -> ApiStation(it.text)
-                is Street -> ApiStreet(it.text, it.color)
-                is Utility -> ApiUtility(it.text)
-                is Prison -> ApiPrison(it.text)
+                is ActionSpace -> ApiActionSpace(it.id, it.text)
+                is FreeParking -> ApiFreeParking(it.id, it.text)
+                is Station -> ApiStation(it.id, it.text)
+                is Street -> ApiStreet(it.id, it.text, it.color)
+                is Utility -> ApiUtility(it.id, it.text)
+                is Prison -> ApiPrison(it.id, it.text)
             }
         }
         val result = gameService.execute(

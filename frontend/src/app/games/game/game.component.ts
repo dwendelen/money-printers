@@ -45,16 +45,18 @@ export class GameComponent implements OnInit, OnDestroy {
     }).catch(err => {
       console.error('Could not get more events, trying again in 10 seconds', err);
       setTimeout(() => {
-        this.onNewEvents([]);
+        if (this.open) {
+          this.onNewEvents([]);
+        }
       }, 10000);
     });
   }
 
   join(): void {
     this.sendCmd(new AddPlayer(
-        this.user.getId(),
-        this.user.getName() // TODO proper name
-      ));
+      this.user.getId(),
+      this.user.getName() // TODO proper name
+    ));
   }
 
   start(): void {

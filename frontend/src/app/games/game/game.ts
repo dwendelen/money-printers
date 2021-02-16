@@ -1,4 +1,13 @@
-import {DiceRolled, Event, GameCreated, GameStarted, NewTurnStarted, PlayerAdded, TurnEnded} from '../api/event';
+import {
+  DiceRolled,
+  Event,
+  GameCreated,
+  GameStarted,
+  LandedOn,
+  NewTurnStarted,
+  PlayerAdded,
+  TurnEnded
+} from '../api/event';
 import {Ground} from '../api/api';
 
 export class Game {
@@ -33,6 +42,9 @@ export class Game {
       case 'DiceRolled':
         this.state.applyDiceRolled(event);
         break;
+      case 'LandedOn':
+        this.state.applyLandedOn(event);
+        break;
       case 'TurnEnded':
         this.state.applyTurnEnded(event);
         break;
@@ -57,9 +69,8 @@ export class Game {
   }
 
   playersOn(ground: Ground): string {
-    const position = this.board.indexOf(ground);
     return this.players
-      .filter(p => p.position === position)
+      .filter(p => p.position === ground)
       .map(p => p.name)
       .join(', ');
   }
@@ -68,11 +79,11 @@ export class Game {
 class Player {
   money = 0;
   debt = 0;
-  position = 0;
 
   constructor(
     public id: string,
-    public name: string
+    public name: string,
+    public position: Ground
   ) {
   }
 }
@@ -82,6 +93,7 @@ interface State {
   applyGameStarted(event: GameStarted): void;
   applyNewTurnStarted(event: NewTurnStarted): void;
   applyDiceRolled(event: DiceRolled): void;
+  applyLandedOn(event: LandedOn): void;
   applyTurnEnded(event: TurnEnded): void;
   canJoin(): boolean;
   canStartGame(): boolean;
@@ -90,10 +102,11 @@ interface State {
 }
 
 abstract class NothingState implements State{
-  applyDiceRolled(event: DiceRolled): void {}
   applyGameStarted(event: GameStarted): void {}
-  applyNewTurnStarted(event: NewTurnStarted): void {}
   applyPlayerAdded(event: PlayerAdded): void {}
+  applyNewTurnStarted(event: NewTurnStarted): void {}
+  applyDiceRolled(event: DiceRolled): void {}
+  applyLandedOn(event: LandedOn): void {}
   applyTurnEnded(event: TurnEnded): void {}
 
   canJoin(): boolean {
@@ -121,7 +134,8 @@ class WaitingForStart extends NothingState {
   applyPlayerAdded(event: PlayerAdded): void {
     this.game.players.push(new Player(
       event.id,
-      event.name
+      event.name,
+      this.game.board[0]
     ));
   }
 
@@ -164,12 +178,26 @@ class WaitingForDiceRoll extends NothingState {
   }
 
   applyDiceRolled(event: DiceRolled): void {
-    this.player.position = (this.player.position + event.dice1 + event.dice2) % this.game.board.length;
-    this.game.state = new WaitingForEndTurn(this.game, this.player);
+    this.game.state = new WaitingForDiceOutcome(this.game, this.player);
   }
 
   canRollDice(): boolean {
     return this.player.id === this.game.myId;
+  }
+}
+
+class WaitingForDiceOutcome extends NothingState {
+  constructor(
+    private game: Game,
+    private player: Player
+  ) {
+    super();
+  }
+
+  applyLandedOn(event: LandedOn): void {
+    this.player.position = this.game.board
+      .filter(g => g.id === event.ground)[0];
+    this.game.state = new WaitingForEndTurn(this.game, this.player);
   }
 }
 

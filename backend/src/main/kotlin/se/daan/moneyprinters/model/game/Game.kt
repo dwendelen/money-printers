@@ -55,6 +55,7 @@ class Game(
             is GameStarted -> this.state.apply(event)
             is NewTurnStarted -> this.state.apply(event)
             is DiceRolled -> this.state.apply(event)
+            is LandedOn -> this.state.apply(event)
             is TurnEnded -> this.state.apply(event)
         }
     }
@@ -63,12 +64,12 @@ class Game(
         gameMaster = event.gameMaster
         board = event.board.map {
             when(it) {
-                is ApiStreet -> Street()
-                is ApiActionSpace -> ActionSpace()
-                is ApiFreeParking -> FreeParking()
-                is ApiPrison -> Prison()
-                is ApiStation -> Station()
-                is ApiUtility -> Utility()
+                is ApiStreet -> Street(it.id)
+                is ApiActionSpace -> ActionSpace(it.id)
+                is ApiFreeParking -> FreeParking(it.id)
+                is ApiPrison -> Prison(it.id)
+                is ApiStation -> Station(it.id)
+                is ApiUtility -> Utility(it.id)
             }
         }
     }
@@ -87,6 +88,7 @@ class Game(
         fun apply(event: NewTurnStarted)
         fun on(cmd: RollDice): Boolean
         fun apply(event: DiceRolled)
+        fun apply(event: LandedOn)
         fun on(cmd: EndTurn): Boolean
         fun apply(event: TurnEnded)
     }
@@ -99,6 +101,7 @@ class Game(
         override fun apply(event: NewTurnStarted) {}
         override fun on(cmd: RollDice) = false
         override fun apply(event: DiceRolled) { }
+        override fun apply(event: LandedOn) { }
         override fun on(cmd: EndTurn) = false
         override fun apply(event: TurnEnded) {}
     }
@@ -118,7 +121,8 @@ class Game(
 
         override fun apply(event: PlayerAdded) {
             players.add(Player(
-                    event.id
+                    event.id,
+                    board[0]
             ))
         }
 
@@ -151,12 +155,19 @@ class Game(
         override fun on(cmd: RollDice): Boolean {
             val dice1 = random.nextInt(1, 7)
             val dice2 = random.nextInt(1, 7)
+            val idx = board.indexOf(player.position)
+            val newPosition = (idx + dice1 + dice2)%board.size
+
             newEvent(DiceRolled(dice1, dice2))
+            newEvent(LandedOn(board[newPosition].id))
             return true
         }
 
-        override fun apply(event: DiceRolled) {
-            player.position = (player.position + event.dice1 + event.dice2) % board.size
+        override fun apply(event: DiceRolled) { }
+
+        override fun apply(event: LandedOn) {
+            player.position = board
+                    .filter { it.id === event.ground }[0]
             state = WaitingForEndTurn(player)
         }
     }
@@ -180,28 +191,35 @@ class Game(
 
 class Player(
         val id: String,
+        var position: Space,
         var money: Int = 0,
-        var debt: Int = 0,
-        var position: Int = 0
+        var debt: Int = 0
 )
 
 sealed class Space {
+    abstract val id: String
 }
 
 class Street(
+        override val id: String
 ) : Space()
 
 class ActionSpace(
+        override val id: String
 ) : Space()
 
 class Utility(
+        override val id: String
 ) : Space()
 
 class Station(
+        override val id: String
 ) : Space()
 
 class FreeParking(
+        override val id: String
 ) : Space()
 
 class Prison(
+        override val id: String
 ) : Space()

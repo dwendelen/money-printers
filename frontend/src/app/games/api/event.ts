@@ -6,6 +6,7 @@ export type Event =
   GameStarted |
   NewTurnStarted |
   DiceRolled |
+  LandedOn |
   TurnEnded;
 
 export interface GameCreated {
@@ -33,6 +34,11 @@ export interface DiceRolled {
   type: 'DiceRolled';
   dice1: number;
   dice2: number;
+}
+
+export interface LandedOn {
+  type: 'LandedOn';
+  ground: string;
 }
 
 export interface TurnEnded {

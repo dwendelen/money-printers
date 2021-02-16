@@ -14,6 +14,7 @@ export interface CreateGame {
 }
 
 export interface Ground {
+  id: string;
   text: string;
   color: string | null;
 }
