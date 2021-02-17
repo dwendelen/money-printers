@@ -1,5 +1,3 @@
-import {Ground} from './api';
-
 export type Event =
   GameCreated |
   PlayerAdded |
@@ -7,12 +5,13 @@ export type Event =
   NewTurnStarted |
   DiceRolled |
   LandedOn |
+  SpaceBought |
   TurnEnded;
 
 export interface GameCreated {
   type: 'GameCreated';
   gameMaster: string;
-  board: Ground[];
+  board: Space[];
 }
 
 export interface PlayerAdded {
@@ -41,7 +40,61 @@ export interface LandedOn {
   ground: string;
 }
 
+export interface SpaceBought {
+  type: 'SpaceBought';
+  ground: string;
+  player: string;
+  cash: number;
+  borrowed: number;
+}
+
 export interface TurnEnded {
   type: 'TurnEnded';
   player: string;
+}
+
+
+type Space =
+  Street |
+  ActionSpace |
+  Utility |
+  Station |
+  FreeParking |
+  Prison;
+
+interface Street {
+  type: 'Street';
+  id: string;
+  text: string;
+  color: string;
+}
+
+interface ActionSpace {
+  type: 'ActionSpace';
+  id: string;
+  text: string;
+}
+
+interface Utility {
+  type: 'Utility';
+  id: string;
+  text: string;
+}
+
+interface Station {
+  type: 'Station';
+  id: string;
+  text: string;
+}
+
+interface Prison {
+  type: 'Prison';
+  id: string;
+  text: string;
+}
+
+interface FreeParking {
+  type: 'FreeParking';
+  id: string;
+  text: string;
 }

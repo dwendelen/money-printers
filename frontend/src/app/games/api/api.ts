@@ -12,9 +12,3 @@ export interface GameInfo {
 export interface CreateGame {
   gameMaster: string;
 }
-
-export interface Ground {
-  id: string;
-  text: string;
-  color: string | null;
-}

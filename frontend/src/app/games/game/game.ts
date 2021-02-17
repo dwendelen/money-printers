@@ -5,15 +5,14 @@ import {
   GameStarted,
   LandedOn,
   NewTurnStarted,
-  PlayerAdded,
+  PlayerAdded, SpaceBought,
   TurnEnded
 } from '../api/event';
-import {Ground} from '../api/api';
 
 export class Game {
   events: Event[] = [];
   players: Player[] = [];
-  board: Ground[] = [];
+  board: Space[] = [];
   economy = 0;
   state: State = new WaitingForStart(this);
   gameMasterId: string | undefined;
@@ -27,7 +26,23 @@ export class Game {
     console.log('Event', event);
     switch (event.type) {
       case 'GameCreated':
-        this.board = event.board;
+        this.board = event.board
+          .map(s => {
+            switch (s.type) {
+              case 'ActionSpace':
+                return new ActionSpace(s.id, s.text);
+              case 'Street':
+                return new Street(s.id, s.text, s.color);
+              case 'FreeParking':
+                return new FreeParking(s.id, s.text);
+              case 'Prison':
+                return new Prison(s.id, s.text);
+              case 'Station':
+                return new Station(s.id, s.text);
+              case 'Utility':
+                return new Utility(s.id, s.text);
+            }
+          });
         this.gameMasterId = event.gameMaster;
         break;
       case 'PlayerAdded':
@@ -44,6 +59,9 @@ export class Game {
         break;
       case 'LandedOn':
         this.state.applyLandedOn(event);
+        break;
+      case 'SpaceBought':
+        this.state.applySpaceBought(event);
         break;
       case 'TurnEnded':
         this.state.applyTurnEnded(event);
@@ -68,7 +86,11 @@ export class Game {
     return this.state.canEndTurn();
   }
 
-  playersOn(ground: Ground): string {
+  canBuyThis(): boolean {
+    return this.state.canBuyGround();
+  }
+
+  playersOn(ground: Space): string {
     return this.players
       .filter(p => p.position === ground)
       .map(p => p.name)
@@ -83,31 +105,58 @@ class Player {
   constructor(
     public id: string,
     public name: string,
-    public position: Ground
+    public position: Space
   ) {
   }
 }
 
 interface State {
   applyPlayerAdded(event: PlayerAdded): void;
+
   applyGameStarted(event: GameStarted): void;
+
   applyNewTurnStarted(event: NewTurnStarted): void;
+
   applyDiceRolled(event: DiceRolled): void;
+
   applyLandedOn(event: LandedOn): void;
+
+  applySpaceBought(event: SpaceBought): void;
+
   applyTurnEnded(event: TurnEnded): void;
+
   canJoin(): boolean;
+
   canStartGame(): boolean;
+
   canRollDice(): boolean;
+
+  canBuyGround(): boolean;
+
   canEndTurn(): boolean;
 }
 
-abstract class NothingState implements State{
-  applyGameStarted(event: GameStarted): void {}
-  applyPlayerAdded(event: PlayerAdded): void {}
-  applyNewTurnStarted(event: NewTurnStarted): void {}
-  applyDiceRolled(event: DiceRolled): void {}
-  applyLandedOn(event: LandedOn): void {}
-  applyTurnEnded(event: TurnEnded): void {}
+abstract class NothingState implements State {
+  applyGameStarted(event: GameStarted): void {
+  }
+
+  applyPlayerAdded(event: PlayerAdded): void {
+  }
+
+  applyNewTurnStarted(event: NewTurnStarted): void {
+  }
+
+  applyDiceRolled(event: DiceRolled): void {
+  }
+
+  applyLandedOn(event: LandedOn): void {
+  }
+
+  applySpaceBought(event: SpaceBought): void {
+  }
+
+  applyTurnEnded(event: TurnEnded): void {
+  }
 
   canJoin(): boolean {
     return false;
@@ -118,6 +167,10 @@ abstract class NothingState implements State{
   }
 
   canRollDice(): boolean {
+    return false;
+  }
+
+  canBuyGround(): boolean {
     return false;
   }
 
@@ -150,7 +203,7 @@ class WaitingForStart extends NothingState {
 
   canStartGame(): boolean {
     return this.game.myId === this.game.gameMasterId &&
-    this.game.players.length >= 2;
+      this.game.players.length >= 2;
   }
 }
 
@@ -197,6 +250,32 @@ class WaitingForDiceOutcome extends NothingState {
   applyLandedOn(event: LandedOn): void {
     this.player.position = this.game.board
       .filter(g => g.id === event.ground)[0];
+
+    if (this.player.position.canBuy()) {
+      this.game.state = new LandedOnNewGround(this.game, this.player);
+    } else {
+      this.game.state = new WaitingForEndTurn(this.game, this.player);
+    }
+  }
+}
+
+class LandedOnNewGround extends NothingState {
+  constructor(
+    private game: Game,
+    private player: Player
+  ) {
+    super();
+  }
+
+  canBuyGround(): boolean {
+    return this.player.id === this.game.myId;
+  }
+
+  applySpaceBought(event: SpaceBought): void {
+    // TODO other players could also have bought
+    this.player.position.setOwner(this.player);
+    this.player.money -= event.cash;
+    this.player.debt += event.borrowed;
     this.game.state = new WaitingForEndTurn(this.game, this.player);
   }
 }
@@ -215,5 +294,120 @@ class WaitingForEndTurn extends NothingState {
 
   canEndTurn(): boolean {
     return this.player.id === this.game.myId;
+  }
+}
+
+interface Space {
+  id: string;
+  text: string;
+  color: string | null;
+
+  setOwner(player: Player): void;
+  canBuy(): boolean;
+}
+
+
+class Street implements Space {
+  constructor(
+    public id: string,
+    public text: string,
+    public color: string
+  ) {
+  }
+
+  owner: Player | null = null;
+
+  setOwner(player: Player): void {
+    this.owner = player;
+  }
+
+  canBuy(): boolean {
+    return this.owner == null;
+  }
+}
+
+class ActionSpace implements Space {
+  constructor(
+    public id: string,
+    public text: string
+  ) {
+  }
+
+  color = null;
+
+  setOwner(player: Player): void {}
+
+  canBuy(): boolean {
+    return false;
+  }
+}
+
+class Utility implements Space {
+  constructor(
+    public id: string,
+    public text: string
+  ) {
+  }
+
+  owner: Player | null = null;
+  color = null;
+
+  setOwner(player: Player): void {
+    this.owner = player;
+  }
+
+  canBuy(): boolean {
+    return this.owner == null;
+  }
+}
+
+class Station implements Space {
+  constructor(
+    public id: string,
+    public text: string
+  ) {
+  }
+
+  owner: Player | null = null;
+  color = 'lightgrey';
+
+  setOwner(player: Player): void {
+    this.owner = player;
+  }
+
+  canBuy(): boolean {
+    return this.owner == null;
+  }
+}
+
+class Prison implements Space {
+  constructor(
+    public id: string,
+    public text: string
+  ) {
+  }
+
+  color = null;
+
+  setOwner(player: Player): void {}
+
+  canBuy(): boolean {
+    return false;
+  }
+}
+
+class FreeParking implements Space {
+  constructor(
+    public id: string,
+    public text: string
+  ) {
+  }
+
+  color = null;
+
+  setOwner(player: Player): void {}
+
+  canBuy(): boolean {
+    return false;
   }
 }

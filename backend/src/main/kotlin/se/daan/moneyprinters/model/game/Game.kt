@@ -38,6 +38,7 @@ class Game(
             is AddPlayer -> this.state.on(cmd)
             is StartGame -> this.state.on(cmd)
             is RollDice -> this.state.on(cmd)
+            is BuyThisSpace -> this.state.on(cmd)
             is EndTurn -> this.state.on(cmd)
         }
     }
@@ -56,6 +57,7 @@ class Game(
             is NewTurnStarted -> this.state.apply(event)
             is DiceRolled -> this.state.apply(event)
             is LandedOn -> this.state.apply(event)
+            is SpaceBought -> this.state.apply(event)
             is TurnEnded -> this.state.apply(event)
         }
     }
@@ -63,7 +65,7 @@ class Game(
     private fun apply(event: GameCreated) {
         gameMaster = event.gameMaster
         board = event.board.map {
-            when(it) {
+            when (it) {
                 is ApiStreet -> Street(it.id)
                 is ApiActionSpace -> ActionSpace(it.id)
                 is ApiFreeParking -> FreeParking(it.id)
@@ -89,19 +91,23 @@ class Game(
         fun on(cmd: RollDice): Boolean
         fun apply(event: DiceRolled)
         fun apply(event: LandedOn)
+        fun on(cmd: BuyThisSpace): Boolean
+        fun apply(event: SpaceBought)
         fun on(cmd: EndTurn): Boolean
         fun apply(event: TurnEnded)
     }
 
-    private open class NothingState: State {
+    private open class NothingState : State {
         override fun on(cmd: AddPlayer) = false
         override fun apply(event: PlayerAdded) {}
         override fun on(cmd: StartGame) = false
         override fun apply(event: GameStarted) {}
         override fun apply(event: NewTurnStarted) {}
         override fun on(cmd: RollDice) = false
-        override fun apply(event: DiceRolled) { }
-        override fun apply(event: LandedOn) { }
+        override fun apply(event: DiceRolled) {}
+        override fun apply(event: LandedOn) {}
+        override fun on(cmd: BuyThisSpace) = false
+        override fun apply(event: SpaceBought) {}
         override fun on(cmd: EndTurn) = false
         override fun apply(event: TurnEnded) {}
     }
@@ -127,7 +133,7 @@ class Game(
         }
 
         override fun on(cmd: StartGame): Boolean {
-            return if(players.size >= 2) {
+            return if (players.size >= 2) {
                 newEvent(GameStarted)
                 newEvent(NewTurnStarted(players[0].id))
                 true
@@ -151,33 +157,60 @@ class Game(
 
     private inner class WaitingForDiceRoll(
             val player: Player
-    ): NothingState() {
+    ) : NothingState() {
         override fun on(cmd: RollDice): Boolean {
             val dice1 = random.nextInt(1, 7)
             val dice2 = random.nextInt(1, 7)
             val idx = board.indexOf(player.position)
-            val newPosition = (idx + dice1 + dice2)%board.size
+            val newPosition = (idx + dice1 + dice2) % board.size
 
             newEvent(DiceRolled(dice1, dice2))
             newEvent(LandedOn(board[newPosition].id))
             return true
         }
 
-        override fun apply(event: DiceRolled) { }
+        override fun apply(event: DiceRolled) {}
 
         override fun apply(event: LandedOn) {
             player.position = board
                     .filter { it.id === event.ground }[0]
+            state = if(player.position.canBuy()) {
+                LandedOnNewGround(player)
+            } else {
+                WaitingForEndTurn(player)
+            }
+        }
+    }
+
+    private inner class LandedOnNewGround(
+            val player: Player
+    ): NothingState() {
+        override fun on(cmd: BuyThisSpace): Boolean {
+            //TODO validation money etc
+            newEvent(SpaceBought(
+                    player.position.id,
+                    player.id,
+                    cmd.cash,
+                    cmd.borrowed
+            ))
+            return true
+        }
+
+        override fun apply(event: SpaceBought) {
+            //TODO other players could also have bought
+            (player.position as? Ownable)?.owner = player
+            player.money -= event.cash
+            player.debt += event.borrowed
             state = WaitingForEndTurn(player)
         }
     }
 
     private inner class WaitingForEndTurn(
             private val player: Player
-    ): NothingState() {
+    ) : NothingState() {
         override fun on(cmd: EndTurn): Boolean {
             val idx = players.indexOf(player)
-            val newPlayer = players[(idx+1)%players.size]
+            val newPlayer = players[(idx + 1) % players.size]
             newEvent(TurnEnded)
             newEvent(NewTurnStarted(newPlayer.id))
             return true
@@ -198,28 +231,57 @@ class Player(
 
 sealed class Space {
     abstract val id: String
+    abstract fun canBuy(): Boolean
+}
+
+interface Ownable {
+    var owner: Player?
 }
 
 class Street(
         override val id: String
-) : Space()
+) : Space(), Ownable {
+    override var owner: Player? = null
+
+    override fun canBuy(): Boolean {
+        return owner == null;
+    }
+}
 
 class ActionSpace(
         override val id: String
-) : Space()
+) : Space() {
+    override fun canBuy() = false
+}
 
 class Utility(
         override val id: String
-) : Space()
+) : Space(), Ownable {
+    override var owner: Player? = null
+
+    override fun canBuy(): Boolean {
+        return owner == null;
+    }
+}
 
 class Station(
         override val id: String
-) : Space()
+) : Space(), Ownable {
+    override var owner: Player? = null
+
+    override fun canBuy(): Boolean {
+        return owner == null;
+    }
+}
 
 class FreeParking(
         override val id: String
-) : Space()
+) : Space() {
+    override fun canBuy() = false
+}
 
 class Prison(
         override val id: String
-) : Space()
+) : Space() {
+    override fun canBuy() = false
+}

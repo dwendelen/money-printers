@@ -33,6 +33,7 @@
     <button *ngIf="game.canJoin()" (click)="join()">Join game</button>
     <button *ngIf="game.canStartGame()" (click)="start()">Start game</button>
     <button *ngIf="game.canRollDice()" (click)="roll()">Roll dice</button>
+    <button *ngIf="game.canBuyThis()" (click)="buyThis()">Buy this</button>
     <button *ngIf="game.canEndTurn()" (click)="endTurn()">End turn</button>
   </div>
 </div>

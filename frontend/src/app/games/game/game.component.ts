@@ -4,7 +4,7 @@ import {GameService} from '../game.service';
 import {GameInfo} from '../api/api';
 import {Game} from './game';
 import {Event} from '../api/event';
-import {AddPlayer, Command, EndTurn, RollDice, StartGame} from '../api/command';
+import {AddPlayer, BuyThisSpace, Command, EndTurn, RollDice, StartGame} from '../api/command';
 
 @Component({
   selector: 'app-game',
@@ -65,6 +65,11 @@ export class GameComponent implements OnInit, OnDestroy {
 
   roll(): void {
     this.sendCmd(new RollDice());
+  }
+
+  buyThis(): void {
+    // TODO money
+    this.sendCmd(new BuyThisSpace(10, 10));
   }
 
   endTurn(): void {
