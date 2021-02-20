@@ -1,11 +1,9 @@
 import {Injectable, NgZone} from '@angular/core';
 import {Config, ConfigService} from '../config/config.service';
-import {Observable, from, Subject, BehaviorSubject} from 'rxjs';
+import {Observable, from, BehaviorSubject} from 'rxjs';
 import {map, mergeMap, shareReplay} from 'rxjs/operators';
 import GoogleAuth = gapi.auth2.GoogleAuth;
 import GoogleUser = gapi.auth2.GoogleUser;
-import {v4 as uuid_v4} from 'uuid';
-
 
 export abstract class LoginService {
   abstract getLoggedInUser(): Observable<LoggedInUser | null>;
@@ -101,8 +99,18 @@ class GoogleLoggedInUser implements LoggedInUser {
   providedIn: 'root'
 })
 export class TestLoginService implements LoginService {
-  private user = new TestLoggedInUser();
-  private subject = new BehaviorSubject<TestLoggedInUser | null>(this.user);
+  private readonly user!: TestLoggedInUser;
+  private readonly subject!: BehaviorSubject<TestLoggedInUser | null>;
+
+  constructor() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const usr = urlParams.get('user');
+    if (!usr) {
+      throw new Error('Invalid user param');
+    }
+    this.user = new TestLoggedInUser(usr);
+    this.subject = new BehaviorSubject<TestLoggedInUser | null>(this.user);
+  }
 
   getLoggedInUser(): Observable<LoggedInUser | null> {
     return this.subject;
@@ -114,17 +122,20 @@ export class TestLoginService implements LoginService {
 }
 
 class TestLoggedInUser implements LoggedInUser {
-  private id = uuid_v4();
+  constructor(
+    private name: string
+  ) {
+  }
 
   getId(): string {
-    return this.id;
+    return this.name;
   }
 
   getName(): string {
-    return 'Test';
+    return this.name;
   }
 
   getToken(): string {
-    return 'token';
+    return this.name;
   }
 }
