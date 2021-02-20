@@ -8,7 +8,7 @@ import {GamesComponent} from './games/games/games.component';
 import {LoginService} from './login/login.service';
 import {GameComponent} from './games/game/game.component';
 import {environment} from '../environments/environment';
-import { BuyThisSpaceComponent } from './games/game/buy-this-space/buy-this-space.component';
+import { BuyThisSpaceComponent } from './games/buy-this-space/buy-this-space.component';
 
 @NgModule({
   declarations: [

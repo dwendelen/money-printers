@@ -2,7 +2,7 @@ import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angula
 import {LoggedInUser, LoginService} from '../../login/login.service';
 import {GameService} from '../game.service';
 import {GameInfo} from '../api/api';
-import {Game} from './game';
+import {Game} from '../game';
 import {Event} from '../api/event';
 import {AddPlayer, BuyThisSpace, Command, EndTurn, RollDice, StartGame} from '../api/command';
 

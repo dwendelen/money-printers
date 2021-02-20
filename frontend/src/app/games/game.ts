@@ -7,7 +7,7 @@ import {
   NewTurnStarted,
   PlayerAdded, SpaceBought,
   TurnEnded
-} from '../api/event';
+} from './api/event';
 
 export class Game {
   events: Event[] = [];
