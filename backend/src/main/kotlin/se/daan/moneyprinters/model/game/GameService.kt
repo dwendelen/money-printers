@@ -22,7 +22,7 @@ class GameService(
 
     fun execute(gameId: String, cmd: Command, version: Int): Boolean {
         return if(cmd is CreateGame && version == 0) {
-            games.putIfAbsent(gameId,Game(cmd, random)) == null
+            games.putIfAbsent(gameId,Game(cmd, gameId, random)) == null
         } else {
             games[gameId]
                     ?.execute(cmd, version)

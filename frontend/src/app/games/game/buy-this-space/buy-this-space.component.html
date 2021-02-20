@@ -1,0 +1,16 @@
+<div>
+  <div class="buy-this-left">Price</div>
+  <span class="buy-this-right">{{price}}</span>
+</div>
+<div>
+  <label for="buy_this_borrowed" class="buy-this-left">Borrowed</label>
+  <input id="buy_this_borrowed" class="buy-this-right" onClick="this.select();" type="text" [(ngModel)]="borrowed">
+</div>
+<div>
+  <label for="buy_this_cash" class="buy-this-left">Cash</label>
+  <input id="buy_this_cash" class="buy-this-right" onClick="this.select();" type="text" [(ngModel)]="cash">
+</div>
+<div>
+  <div class="buy-this-left"></div>
+  <input type="button" (click)="triggerBuy()" value="Buy this">
+</div>

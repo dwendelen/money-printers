@@ -12,6 +12,7 @@ import se.daan.moneyprinters.model.game.api.Prison as ApiPrison
 
 class Game(
         createGame: CreateGame,
+        private val id: String,
         private val random: Random
 ) {
     val events: MutableList<Event> = ArrayList()
@@ -45,7 +46,7 @@ class Game(
 
     private fun newEvent(event: Event) {
         this.events.add(event)
-        println("New event $event")
+        println("New event $id $event")
         this.apply(event)
     }
 
@@ -169,8 +170,14 @@ class Game(
             return true
         }
 
-        override fun apply(event: DiceRolled) {}
+        override fun apply(event: DiceRolled) {
+            state = WaitingForDiceOutcome(player)
+        }
+    }
 
+    private inner class WaitingForDiceOutcome(
+            val player: Player
+    ) : NothingState() {
         override fun apply(event: LandedOn) {
             player.position = board
                     .filter { it.id === event.ground }[0]

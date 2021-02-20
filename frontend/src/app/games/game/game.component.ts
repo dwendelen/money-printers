@@ -67,9 +67,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.sendCmd(new RollDice());
   }
 
-  buyThis(): void {
-    // TODO money
-    this.sendCmd(new BuyThisSpace(10, 10));
+  buyThis(cash: number, borrowed: number): void {
+    this.sendCmd(new BuyThisSpace(cash, borrowed));
   }
 
   endTurn(): void {

@@ -59,6 +59,7 @@ $playerBorderWidth: 1px;
   border-right-style: none;
   border-bottom-style: none;
   border-width: $playerBorderWidth;
+  font-size: 16px;
 }
 
 $playerCellWidth: $playerWidth - $playerPaddingLeft - $playerPaddingRight;
@@ -97,9 +98,12 @@ $playerNameCellWidth: $playerCellWidth + 50px;
   }
   div.playerName {
     width: $playerNameCellWidth;
+    height: 20px;
   }
 }
 
 .playerAmount {
   text-align: right;
+  font-family: monospace;
+  height: 20px;
 }
