@@ -33,7 +33,12 @@
     <button *ngIf="game.canJoin()" (click)="join()">Join game</button>
     <button *ngIf="game.canStartGame()" (click)="start()">Start game</button>
     <button *ngIf="game.canRollDice()" (click)="roll()">Roll dice</button>
-    <app-buy-this-space *ngIf="game.canBuyThis()" [price]="10" (buy)="buyThis($event.cash, $event.borrowed)"></app-buy-this-space>
+    <app-buy-this-space
+      *ngIf="game.canBuyThis()"
+      [price]="10"
+      [maxCash]="game.getMyCash()"
+      (buy)="buyThis($event.cash, $event.borrowed)">
+    </app-buy-this-space>
     <!--    <button *ngIf="game.canBuyThis()" (click)="buyThis()">Buy this</button>-->
     <button *ngIf="game.canEndTurn()" (click)="endTurn()">End turn</button>
   </div>

@@ -96,6 +96,12 @@ export class Game {
       .map(p => p.name)
       .join(', ');
   }
+
+  getMyCash(): number {
+    const thisPlayer = this.players
+      .filter(p => p.id === this.myId)[0];
+    return thisPlayer.money;
+  }
 }
 
 class Player {

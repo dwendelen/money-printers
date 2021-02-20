@@ -8,50 +8,60 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 export class BuyThisSpaceComponent implements OnInit {
   constructor() { }
 
-  private _cash!: number;
-  private _borrowed!: number;
+  cashField!: string;
+  borrowedField!: string;
+  cash!: number;
+  borrowed!: number;
   @Input()
   price!: number;
+  @Input()
+  maxCash!: number;
   @Output()
   buy = new EventEmitter<BuyData>();
 
   ngOnInit(): void {
-    this._cash = 0;
-    this._borrowed = this.price;
+    this.cash = 0;
+    this.cashField = '0';
+    this.borrowed = this.price;
+    this.borrowedField = this.borrowed.toString();
   }
 
-  get cash(): string {
-    return this._cash.toString();
-  }
-  set cash(val: string) {
-    this._cash = this.correct(val);
-    this._borrowed = this.price - this._cash;
-  }
-
-  get borrowed(): string {
-    return this._borrowed.toString();
-  }
-  set borrowed(val: string) {
-    this._borrowed = this.correct(val);
-    this._cash = this.price - this._borrowed;
+  cashChanged(): void {
+    this.cash = this.correct(
+      this.cashField,
+      0,
+      this.cash,
+      Math.min(this.maxCash, this.price)
+    );
+    this.borrowed = this.price - this.cash;
   }
 
-  private correct(val: string): number {
+  borrowedChanged(): void {
+    this.borrowed = this.correct(
+      this.borrowedField,
+      Math.max(this.price - this.maxCash, 0),
+      this.borrowed,
+      this.price
+    );
+    this.cash = this.price - this.borrowed;
+  }
+
+  private correct(val: string, minVal: number, original: number, maxVal: number): number {
     const num = parseInt(val, 10);
     if (isNaN(num)) {
-      return 0;
+      return original;
     }
-    if (num < 0) {
-     return 0;
+    if (num < minVal) {
+     return minVal;
     }
-    if (num > this.price) {
-      return this.price;
+    if (num > maxVal) {
+      return maxVal;
     }
     return num;
   }
 
   triggerBuy(): void {
-    this.buy.emit(new BuyData(this._cash, this._borrowed));
+    this.buy.emit(new BuyData(this.cash, this.borrowed));
   }
 }
 
