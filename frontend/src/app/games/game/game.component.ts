@@ -2,7 +2,7 @@ import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angula
 import {LoggedInUser, LoginService} from '../../login/login.service';
 import {GameService} from '../game.service';
 import {GameInfo} from '../api/api';
-import {Game} from '../game';
+import {Game, Space} from '../game';
 import {Event} from '../api/event';
 import {AddPlayer, BuyThisSpace, Command, EndTurn, RollDice, StartGame} from '../api/command';
 
@@ -93,5 +93,21 @@ export class GameComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.open = false;
+  }
+
+  getPlayerNamesOn(ground: Space): string {
+      return this.game.players
+        .filter(p => p.position === ground)
+        .map(p => p.name)
+        .join(', ');
+  }
+
+  getOwnerName(ground: Space): string {
+    const owner = ground.getOwner();
+    if (owner) {
+      return owner.name;
+    } else {
+      return '';
+    }
   }
 }

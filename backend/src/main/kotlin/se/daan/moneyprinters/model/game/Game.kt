@@ -20,11 +20,14 @@ class Game(
     private lateinit var gameMaster: String
     private var state: State = WaitingForStart()
     private lateinit var board: List<Space>
+    private var fixedStartMoney = 0
+    private var economy = 0
 
     init {
         newEvent(GameCreated(
                 createGame.gameMaster,
-                createGame.board
+                createGame.board,
+                createGame.fixedStartMoney
         ))
     }
 
@@ -57,6 +60,7 @@ class Game(
             is GameStarted -> this.state.apply(event)
             is NewTurnStarted -> this.state.apply(event)
             is DiceRolled -> this.state.apply(event)
+            is StartMoneyReceived -> this.state.apply(event)
             is LandedOn -> this.state.apply(event)
             is SpaceBought -> this.state.apply(event)
             is TurnEnded -> this.state.apply(event)
@@ -75,6 +79,7 @@ class Game(
                 is ApiUtility -> Utility(it.id)
             }
         }
+        fixedStartMoney = event.fixedStartMoney
     }
 
     fun getNewEvents(skip: Int, limit: Int): List<Event> {
@@ -91,6 +96,7 @@ class Game(
         fun apply(event: NewTurnStarted)
         fun on(cmd: RollDice): Boolean
         fun apply(event: DiceRolled)
+        fun apply(event: StartMoneyReceived)
         fun apply(event: LandedOn)
         fun on(cmd: BuyThisSpace): Boolean
         fun apply(event: SpaceBought)
@@ -106,6 +112,7 @@ class Game(
         override fun apply(event: NewTurnStarted) {}
         override fun on(cmd: RollDice) = false
         override fun apply(event: DiceRolled) {}
+        override fun apply(event: StartMoneyReceived) {}
         override fun apply(event: LandedOn) {}
         override fun on(cmd: BuyThisSpace) = false
         override fun apply(event: SpaceBought) {}
@@ -166,6 +173,9 @@ class Game(
             val newPosition = (idx + dice1 + dice2) % board.size
 
             newEvent(DiceRolled(dice1, dice2))
+            if(newPosition < idx) {
+                newEvent(StartMoneyReceived(player.id, fixedStartMoney)) //TODO calc start money
+            }
             newEvent(LandedOn(board[newPosition].id))
             return true
         }
@@ -178,6 +188,12 @@ class Game(
     private inner class WaitingForDiceOutcome(
             val player: Player
     ) : NothingState() {
+        override fun apply(event: StartMoneyReceived) {
+            val receiver = players.filter { p -> p.id === event.player }[0]
+            receiver.money += event.amount
+            economy -= event.amount
+        }
+
         override fun apply(event: LandedOn) {
             player.position = board
                     .filter { it.id === event.ground }[0]
@@ -208,6 +224,7 @@ class Game(
             (player.position as? Ownable)?.owner = player
             player.money -= event.cash
             player.debt += event.borrowed
+            economy += event.cash + event.borrowed
             state = WaitingForEndTurn(player)
         }
     }

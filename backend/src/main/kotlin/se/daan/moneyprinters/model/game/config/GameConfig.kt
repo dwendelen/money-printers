@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 data class GameConfig(
         val defaultInterestRate: Double,
+        val fixedStartMoney: Int,
         val decks: Map<String, Deck>,
         val board: List<Space>,
         val colors: Map<String, Color>

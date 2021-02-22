@@ -33,17 +33,21 @@ export class BuyThisSpaceComponent implements OnInit {
       this.cash,
       Math.min(this.maxCash, this.price)
     );
+    this.cashField = this.cash.toString();
     this.borrowed = this.price - this.cash;
+    this.borrowedField = this.borrowed.toString();
   }
 
   borrowedChanged(): void {
     this.borrowed = this.correct(
       this.borrowedField,
-      Math.max(this.price - this.maxCash, 0),
+      this.price - Math.min(this.maxCash, this.price),
       this.borrowed,
       this.price
     );
+    this.borrowedField = this.borrowed.toString();
     this.cash = this.price - this.borrowed;
+    this.cashField = this.cash.toString();
   }
 
   private correct(val: string, minVal: number, original: number, maxVal: number): number {

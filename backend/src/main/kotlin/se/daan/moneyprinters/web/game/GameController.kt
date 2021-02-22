@@ -79,7 +79,8 @@ class GameController(
                 gameId,
                 ApiCreateGame(
                         createGame.gameMaster,
-                        board
+                        board,
+                        gameConfig.fixedStartMoney
                 ),
                 0
         )

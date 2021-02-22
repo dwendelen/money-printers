@@ -6,8 +6,9 @@
 <div class="column">
   <div class="board" >
     <div class="ground" *ngFor="let ground of game.board">
+      <div class="groundOwner">{{getOwnerName(ground)}}</div>
       <div class="groundName"  [style.background-color]="ground.color">{{ground.text}}</div>
-      <div class="groundPlayers">{{game.playersOn(ground)}}</div>
+      <div class="groundPlayers">{{getPlayerNamesOn(ground)}}</div>
     </div>
   </div>
 </div>

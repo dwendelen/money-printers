@@ -4,6 +4,7 @@
   margin-right: 50px;
 }
 
+$boardOwnerWidth: 75px;
 $boardNameWidth: 175px;
 $boardPlayersWidth: 100px;
 $boardBorder: 1px;
@@ -23,6 +24,17 @@ $groundHeight: 18px;
 .ground {
   //height: $groundHeight;
   border-style: none;
+  border-spacing: 0;
+}
+
+.groundOwner {
+  display: inline-block;
+  vertical-align: top;
+  width: $boardOwnerWidth;
+  height: $groundHeight;
+  padding: $groundPaddingTop $groundPaddingRight $groundPaddingBottom $groundPaddingLeft;
+  border-width: $boardBorder;
+  border-style: solid;
   border-spacing: 0;
 }
 

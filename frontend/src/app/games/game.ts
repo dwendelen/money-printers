@@ -5,7 +5,7 @@ import {
   GameStarted,
   LandedOn,
   NewTurnStarted,
-  PlayerAdded, SpaceBought,
+  PlayerAdded, SpaceBought, StartMoneyReceived,
   TurnEnded
 } from './api/event';
 
@@ -57,6 +57,9 @@ export class Game {
       case 'DiceRolled':
         this.state.applyDiceRolled(event);
         break;
+      case 'StartMoneyReceived':
+        this.state.applyStartMoneyReceived(event);
+        break;
       case 'LandedOn':
         this.state.applyLandedOn(event);
         break;
@@ -90,13 +93,6 @@ export class Game {
     return this.state.canBuyGround();
   }
 
-  playersOn(ground: Space): string {
-    return this.players
-      .filter(p => p.position === ground)
-      .map(p => p.name)
-      .join(', ');
-  }
-
   getMyCash(): number {
     const thisPlayer = this.players
       .filter(p => p.id === this.myId)[0];
@@ -124,6 +120,8 @@ interface State {
   applyNewTurnStarted(event: NewTurnStarted): void;
 
   applyDiceRolled(event: DiceRolled): void;
+
+  applyStartMoneyReceived(event: StartMoneyReceived): void;
 
   applyLandedOn(event: LandedOn): void;
 
@@ -153,6 +151,9 @@ abstract class NothingState implements State {
   }
 
   applyDiceRolled(event: DiceRolled): void {
+  }
+
+  applyStartMoneyReceived(event: StartMoneyReceived): void {
   }
 
   applyLandedOn(event: LandedOn): void {
@@ -253,6 +254,16 @@ class WaitingForDiceOutcome extends NothingState {
     super();
   }
 
+  applyStartMoneyReceived(event: StartMoneyReceived): void {
+    const player = this.game.players
+      .find(p => p.id === event.player);
+    if (!player) {
+      throw new Error('Player not found');
+    }
+    player.money += event.amount;
+    this.game.economy -= event.amount;
+  }
+
   applyLandedOn(event: LandedOn): void {
     this.player.position = this.game.board
       .filter(g => g.id === event.ground)[0];
@@ -282,6 +293,7 @@ class LandedOnNewGround extends NothingState {
     this.player.position.setOwner(this.player);
     this.player.money -= event.cash;
     this.player.debt += event.borrowed;
+    this.game.economy += event.cash + event.borrowed;
     this.game.state = new WaitingForEndTurn(this.game, this.player);
   }
 }
@@ -303,12 +315,14 @@ class WaitingForEndTurn extends NothingState {
   }
 }
 
-interface Space {
+export interface Space {
   id: string;
   text: string;
   color: string | null;
 
   setOwner(player: Player): void;
+  getOwner(): Player | null;
+
   canBuy(): boolean;
 }
 
@@ -327,6 +341,10 @@ class Street implements Space {
     this.owner = player;
   }
 
+  getOwner(): Player | null {
+    return this.owner;
+  }
+
   canBuy(): boolean {
     return this.owner == null;
   }
@@ -342,6 +360,10 @@ class ActionSpace implements Space {
   color = null;
 
   setOwner(player: Player): void {}
+
+  getOwner(): Player | null {
+    return null;
+  }
 
   canBuy(): boolean {
     return false;
@@ -360,6 +382,10 @@ class Utility implements Space {
 
   setOwner(player: Player): void {
     this.owner = player;
+  }
+
+  getOwner(): Player | null {
+    return this.owner;
   }
 
   canBuy(): boolean {
@@ -381,6 +407,10 @@ class Station implements Space {
     this.owner = player;
   }
 
+  getOwner(): Player | null {
+    return this.owner;
+  }
+
   canBuy(): boolean {
     return this.owner == null;
   }
@@ -397,6 +427,10 @@ class Prison implements Space {
 
   setOwner(player: Player): void {}
 
+  getOwner(): Player | null {
+    return null;
+  }
+
   canBuy(): boolean {
     return false;
   }
@@ -412,6 +446,10 @@ class FreeParking implements Space {
   color = null;
 
   setOwner(player: Player): void {}
+
+  getOwner(): Player | null {
+    return null;
+  }
 
   canBuy(): boolean {
     return false;
