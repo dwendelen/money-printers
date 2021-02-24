@@ -17,7 +17,7 @@ export class GameService {
     };
     return this.http
       .put<GameInfo>(
-        `/api/games/${encodeURI(gameId)}`,
+        `api/games/${encodeURI(gameId)}`,
         createGame,
         authorizationHeader(token)
       )
@@ -26,20 +26,20 @@ export class GameService {
 
   openGame(gameId: string): Promise<GameInfo> {
     return this.http
-      .get<GameInfo>(`/api/games/${encodeURI(gameId)}`)
+      .get<GameInfo>(`api/games/${encodeURI(gameId)}`)
       .toPromise();
   }
 
   getEvents(gameId: string, skip: number): Promise<Event[]> {
     return this.http
-      .get<Events>(`/api/games/${encodeURI(gameId)}/events?skip=${skip.toString()}&limit=50`)
+      .get<Events>(`api/games/${encodeURI(gameId)}/events?skip=${skip.toString()}&limit=50`)
       .toPromise()
       .then(e => e.events);
   }
 
   sendCommand(gameId: string, command: Command, version: number): Promise<void> {
     return this.http
-      .put<void>(`/api/games/${encodeURI(gameId)}/commands?version=${version.toString()}`, command)
+      .put<void>(`api/games/${encodeURI(gameId)}/commands?version=${version.toString()}`, command)
       .toPromise();
   }
 }
