@@ -109,6 +109,7 @@ export class Game {
 class Player {
   money = 0;
   debt = 0;
+  assets = 0;
 
   constructor(
     public id: string,
@@ -300,6 +301,7 @@ class LandedOnNewGround extends NothingState {
     this.player.money -= event.cash;
     this.player.debt += event.borrowed;
     this.game.economy += event.cash + event.borrowed;
+    this.player.assets += event.cash + event.borrowed;
     this.game.state = new WaitingForEndTurn(this.game, this.player);
   }
 }
