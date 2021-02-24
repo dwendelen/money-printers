@@ -12,5 +12,5 @@
 </div>
 <div>
   <div class="buy-this-left"></div>
-  <input type="button" (click)="triggerBuy()" value="Buy this">
+  <input type="button" [disabled]="disabled" (click)="triggerBuy()" value="Buy this">
 </div>

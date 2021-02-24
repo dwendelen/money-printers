@@ -26,7 +26,8 @@ sealed class Space {
 class Street(
         override val id: String,
         override val text: String,
-        val color: String
+        val color: String,
+        val initialPrice: Int,
 ) : Space()
 
 class ActionSpace(
@@ -37,11 +38,13 @@ class ActionSpace(
 class Utility(
         override val id: String,
         override val text: String,
+        val initialPrice: Int,
 ) : Space()
 
 class Station(
         override val id: String,
-        override val text: String
+        override val text: String,
+        val initialPrice: Int,
 ) : Space()
 
 class FreeParking(

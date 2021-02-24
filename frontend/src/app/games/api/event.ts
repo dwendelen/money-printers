@@ -74,6 +74,7 @@ interface Street {
   id: string;
   text: string;
   color: string;
+  initialPrice: number;
 }
 
 interface ActionSpace {
@@ -86,12 +87,14 @@ interface Utility {
   type: 'Utility';
   id: string;
   text: string;
+  initialPrice: number;
 }
 
 interface Station {
   type: 'Station';
   id: string;
   text: string;
+  initialPrice: number;
 }
 
 interface Prison {

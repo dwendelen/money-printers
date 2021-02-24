@@ -32,15 +32,15 @@ export class Game {
               case 'ActionSpace':
                 return new ActionSpace(s.id, s.text);
               case 'Street':
-                return new Street(s.id, s.text, s.color);
+                return new Street(s.id, s.text, s.color, s.initialPrice);
               case 'FreeParking':
                 return new FreeParking(s.id, s.text);
               case 'Prison':
                 return new Prison(s.id, s.text);
               case 'Station':
-                return new Station(s.id, s.text);
+                return new Station(s.id, s.text, s.initialPrice);
               case 'Utility':
-                return new Utility(s.id, s.text);
+                return new Utility(s.id, s.text, s.initialPrice);
             }
           });
         this.gameMasterId = event.gameMaster;
@@ -97,6 +97,12 @@ export class Game {
     const thisPlayer = this.players
       .filter(p => p.id === this.myId)[0];
     return thisPlayer.money;
+  }
+
+  getInitialPrice(): number {
+    const thisPlayer = this.players
+      .filter(p => p.id === this.myId)[0];
+    return thisPlayer.position.getInitialPrice();
   }
 }
 
@@ -324,6 +330,7 @@ export interface Space {
   getOwner(): Player | null;
 
   canBuy(): boolean;
+  getInitialPrice(): number;
 }
 
 
@@ -331,7 +338,8 @@ class Street implements Space {
   constructor(
     public id: string,
     public text: string,
-    public color: string
+    public color: string,
+    public initialPrice: number
   ) {
   }
 
@@ -347,6 +355,10 @@ class Street implements Space {
 
   canBuy(): boolean {
     return this.owner == null;
+  }
+
+  getInitialPrice(): number {
+    return this.initialPrice;
   }
 }
 
@@ -368,12 +380,17 @@ class ActionSpace implements Space {
   canBuy(): boolean {
     return false;
   }
+
+  getInitialPrice(): number {
+    return 0;
+  }
 }
 
 class Utility implements Space {
   constructor(
     public id: string,
-    public text: string
+    public text: string,
+    public initialPrice: number
   ) {
   }
 
@@ -391,12 +408,17 @@ class Utility implements Space {
   canBuy(): boolean {
     return this.owner == null;
   }
+
+  getInitialPrice(): number {
+    return this.initialPrice;
+  }
 }
 
 class Station implements Space {
   constructor(
     public id: string,
-    public text: string
+    public text: string,
+    public initialPrice: number
   ) {
   }
 
@@ -413,6 +435,10 @@ class Station implements Space {
 
   canBuy(): boolean {
     return this.owner == null;
+  }
+
+  getInitialPrice(): number {
+    return this.initialPrice;
   }
 }
 
@@ -434,6 +460,10 @@ class Prison implements Space {
   canBuy(): boolean {
     return false;
   }
+
+  getInitialPrice(): number {
+    return 0;
+  }
 }
 
 class FreeParking implements Space {
@@ -453,5 +483,9 @@ class FreeParking implements Space {
 
   canBuy(): boolean {
     return false;
+  }
+
+  getInitialPrice(): number {
+    return 0;
   }
 }

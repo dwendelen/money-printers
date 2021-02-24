@@ -7,6 +7,7 @@ import se.daan.moneyprinters.model.game.Game
 import se.daan.moneyprinters.model.game.GameService
 import se.daan.moneyprinters.model.game.api.Command
 import se.daan.moneyprinters.model.game.config.*
+import se.daan.moneyprinters.web.game.api.CommandResult
 import se.daan.moneyprinters.web.game.api.CreateGame
 import se.daan.moneyprinters.web.game.api.Events
 import se.daan.moneyprinters.web.game.api.GameInfo
@@ -44,18 +45,23 @@ class GameController(
         return Events(newEvents)
     }
 
-
-
     @PutMapping("/{gameId}/commands")
-    fun getEvents(
+    fun executeCommand(
             @PathVariable("gameId") gameId: String,
             @RequestParam("version") version: Int,
+            @RequestParam("limit") limit: Int,
             @RequestBody cmd: Command
-    ) {
+    ): CommandResult {
         val game = gameService.getGame(gameId)
                 ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
 
-        game.execute(cmd, version)
+        val result = game.execute(cmd, version)
+        return if(result) {
+            val newEvents = game.getNewEvents(version, limit)
+            CommandResult(true, newEvents)
+        } else {
+            CommandResult(false, emptyList())
+        }
     }
 
 
@@ -69,9 +75,9 @@ class GameController(
             when (it) {
                 is ActionSpace -> ApiActionSpace(it.id, it.text)
                 is FreeParking -> ApiFreeParking(it.id, it.text)
-                is Station -> ApiStation(it.id, it.text)
-                is Street -> ApiStreet(it.id, it.text, it.color)
-                is Utility -> ApiUtility(it.id, it.text)
+                is Station -> ApiStation(it.id, it.text, it.initialPrice)
+                is Street -> ApiStreet(it.id, it.text, it.color, it.initialPrice)
+                is Utility -> ApiUtility(it.id, it.text, it.initialPrice)
                 is Prison -> ApiPrison(it.id, it.text)
             }
         }

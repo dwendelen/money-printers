@@ -12,3 +12,8 @@ export interface GameInfo {
 export interface CreateGame {
   gameMaster: string;
 }
+
+export interface CommandResult {
+  success: boolean;
+  events: Event[];
+}

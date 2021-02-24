@@ -16,6 +16,8 @@ export class BuyThisSpaceComponent implements OnInit {
   price!: number;
   @Input()
   maxCash!: number;
+  @Input()
+  disabled!: boolean;
   @Output()
   buy = new EventEmitter<BuyData>();
 

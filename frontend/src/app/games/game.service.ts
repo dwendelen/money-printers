@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {v4 as uuid_v4} from 'uuid';
-import {CreateGame, Events, GameInfo} from './api/api';
+import {CommandResult, CreateGame, Events, GameInfo} from './api/api';
 import {Event} from './api/event';
 import {Command} from './api/command';
 
@@ -13,7 +13,7 @@ export class GameService {
   newGame(gameMasterId: string, token: string): Promise<GameInfo> {
     const gameId = uuid_v4();
     const createGame: CreateGame = {
-      gameMaster:  gameMasterId
+      gameMaster: gameMasterId
     };
     return this.http
       .put<GameInfo>(
@@ -37,10 +37,17 @@ export class GameService {
       .then(e => e.events);
   }
 
-  sendCommand(gameId: string, command: Command, version: number): Promise<void> {
+  sendCommand(gameId: string, command: Command, version: number): Promise<Event[] | null> {
     return this.http
-      .put<void>(`api/games/${encodeURI(gameId)}/commands?version=${version.toString()}`, command)
-      .toPromise();
+      .put<CommandResult>(`api/games/${encodeURI(gameId)}/commands?version=${version.toString()}&limit=50`, command)
+      .toPromise()
+      .then(e => {
+        if (e.success) {
+          return e.events;
+        } else {
+          return null;
+        }
+      });
   }
 }
 

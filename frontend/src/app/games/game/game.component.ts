@@ -27,29 +27,39 @@ export class GameComponent implements OnInit, OnDestroy {
   gameInfo!: GameInfo;
   game!: Game;
   open = true;
+  commandInFlight = false;
 
   ngOnInit(): void {
     this.game = new Game(this.user.getId());
-    this.onNewEvents(this.gameInfo.events);
+    this.eventLoop(this.gameInfo.events, 0);
   }
 
-  private onNewEvents(events: Event[]): void {
-    events.forEach(e => this.game.apply(e));
+  private eventLoop(events: Event[], expectedVersion: number): void {
+    this.applyNewEvents(events, expectedVersion);
+
+    const currentVersion = this.game.events.length;
+
     this.gameService.getEvents(
       this.gameInfo.id,
-      this.game.events.length
+      currentVersion
     ).then(e => {
       if (this.open) {
-        this.onNewEvents(e);
+        this.eventLoop(e, currentVersion);
       }
     }).catch(err => {
       console.error('Could not get more events, trying again in 10 seconds', err);
       setTimeout(() => {
         if (this.open) {
-          this.onNewEvents([]);
+          this.eventLoop([], currentVersion);
         }
       }, 10000);
     });
+  }
+
+  private applyNewEvents(events: Event[], expectedVersion: number): void {
+    if (this.game.events.length === expectedVersion) {
+      events.forEach(e => this.game.apply(e));
+    }
   }
 
   join(): void {
@@ -76,11 +86,23 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private sendCmd(cmd: Command): void {
+    if (this.commandInFlight) {
+      console.log('Another command is already in flight');
+      return;
+    }
+    const currentVersion = this.game.events.length;
+    this.commandInFlight = true;
     this.gameService.sendCommand(
       this.gameInfo.id,
       cmd,
-      this.game.events.length
-    );
+      currentVersion
+    ).then(events => {
+      if (events !== null) {
+        this.applyNewEvents(events, currentVersion);
+      } // TODO what if failed?
+    }).finally(() => {
+      this.commandInFlight = false;
+    });
   }
 
   exitGame(): void {
