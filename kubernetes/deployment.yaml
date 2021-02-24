@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: money-printers
+  labels:
+    app: money-printers
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: money-printers
+  template:
+    metadata:
+      labels:
+        app: money-printers
+    spec:
+      containers:
+      - name: covid
+        image: "localhost:32000/money-printers:9b66f142"
+        env:
+        - name: "SERVER_SERVLET_CONTEXT_PATH"
+          value: "/money-printers"
+        - name: "GAME_CONFIG_FILE"
+          value: "config.json"
+        ports:
+        - name: http
+          containerPort: 8080
+        volumeMounts:
+          - mountPath: config.json
+            name: config
+            subPath: config.json
+          - mountPath: application.yaml
+            name: config
+            subPath: application.yaml
+      volumes:
+        - name: config
+          configMap:
+            name: money-printers

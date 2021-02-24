@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: money-printers
+spec:
+  tls:
+  - hosts:
+    - daan.se
+    secretName: daan-se-tls
+  rules:
+  - host: daan.se
+    http:
+      paths:
+      - path: /money-printers
+        backend:
+          serviceName: money-printers
+          servicePort: http

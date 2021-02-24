@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: money-printers
+  labels:
+    app: money-printers
+data:
+  application.yaml: |
+    clock:
+        zone: ""
+    security:
+        google-client-id: ""
+  config.json: |
+    {
+    }
