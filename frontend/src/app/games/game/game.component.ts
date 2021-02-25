@@ -62,6 +62,14 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
+  showJoin(): boolean {
+    return this.game.canJoin();
+  }
+
+  disableJoin(): boolean {
+    return this.commandInFlight || !this.game.canJoin();
+  }
+
   join(): void {
     this.sendCmd(new AddPlayer(
       this.user.getId(),
@@ -69,8 +77,24 @@ export class GameComponent implements OnInit, OnDestroy {
     ));
   }
 
+  showStart(): boolean {
+    return this.game.hasPowerToStartGame();
+  }
+
+  disableStart(): boolean {
+    return this.commandInFlight || !this.game.canStartGame();
+  }
+
   start(): void {
     this.sendCmd(new StartGame());
+  }
+
+  showRoll(): boolean {
+    return this.game.isMyTurn();
+  }
+
+  disableRoll(): boolean {
+    return this.commandInFlight || !this.game.canRollDice();
   }
 
   roll(): void {
@@ -79,6 +103,14 @@ export class GameComponent implements OnInit, OnDestroy {
 
   buyThis(cash: number, borrowed: number): void {
     this.sendCmd(new BuyThisSpace(cash, borrowed));
+  }
+
+  showEndTurn(): boolean {
+    return this.game.isMyTurn();
+  }
+
+  disableEndTurn(): boolean {
+    return this.commandInFlight || !this.game.canEndTurn();
   }
 
   endTurn(): void {

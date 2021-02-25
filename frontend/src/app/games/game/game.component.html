@@ -31,9 +31,11 @@
     </div>
   </div>
   <div class="Actions">
-    <button *ngIf="game.canJoin()" [disabled]="commandInFlight" (click)="join()">Join game</button>
-    <button *ngIf="game.canStartGame()" [disabled]="commandInFlight" (click)="start()">Start game</button>
-    <button *ngIf="game.canRollDice()" [disabled]="commandInFlight" (click)="roll()">Roll dice</button>
+    <button *ngIf="showJoin()" [disabled]="disableJoin()" (click)="join()">Join game</button>
+    <button *ngIf="showStart()" [disabled]="disableStart()" (click)="start()">Start game</button>
+    <button *ngIf="showRoll()" [disabled]="disableRoll()" (click)="roll()">Roll dice</button>
+    <button *ngIf="showEndTurn()" [disabled]="disableEndTurn()" (click)="endTurn()">End turn</button>
+
     <app-buy-this-space
       *ngIf="game.canBuyThis()"
       [price]="game.getInitialPrice()"
@@ -41,7 +43,5 @@
       [disabled]="commandInFlight"
       (buy)="buyThis($event.cash, $event.borrowed)">
     </app-buy-this-space>
-    <!--    <button *ngIf="game.canBuyThis()" (click)="buyThis()">Buy this</button>-->
-    <button *ngIf="game.canEndTurn()" [disabled]="commandInFlight" (click)="endTurn()">End turn</button>
   </div>
 </div>

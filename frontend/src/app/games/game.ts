@@ -73,6 +73,10 @@ export class Game {
     this.events.push(event);
   }
 
+  hasPowerToStartGame(): boolean {
+    return this.state.hasPowerToStartGame();
+  }
+
   canJoin(): boolean {
     return this.state.canJoin();
   }
@@ -91,6 +95,10 @@ export class Game {
 
   canBuyThis(): boolean {
     return this.state.canBuyGround();
+  }
+
+  isMyTurn(): boolean {
+    return this.state.isMyTurn();
   }
 
   getMyCash(): number {
@@ -138,6 +146,8 @@ interface State {
 
   canJoin(): boolean;
 
+  hasPowerToStartGame(): boolean;
+
   canStartGame(): boolean;
 
   canRollDice(): boolean;
@@ -145,6 +155,8 @@ interface State {
   canBuyGround(): boolean;
 
   canEndTurn(): boolean;
+
+  isMyTurn(): boolean;
 }
 
 abstract class NothingState implements State {
@@ -172,7 +184,13 @@ abstract class NothingState implements State {
   applyTurnEnded(event: TurnEnded): void {
   }
 
+  abstract isMyTurn(): boolean;
+
   canJoin(): boolean {
+    return false;
+  }
+
+  hasPowerToStartGame(): boolean {
     return false;
   }
 
@@ -215,9 +233,16 @@ class WaitingForStart extends NothingState {
       .some(p => p.id === this.game.myId);
   }
 
+  hasPowerToStartGame(): boolean {
+    return this.game.myId === this.game.gameMasterId;
+  }
+
   canStartGame(): boolean {
-    return this.game.myId === this.game.gameMasterId &&
-      this.game.players.length >= 2;
+    return this.hasPowerToStartGame() && this.game.players.length >= 2;
+  }
+
+  isMyTurn(): boolean {
+    return false;
   }
 }
 
@@ -234,6 +259,10 @@ class WaitingForTurn extends NothingState {
     }
     this.game.state = new WaitingForDiceRoll(this.game, player);
   }
+
+  isMyTurn(): boolean {
+    return false;
+  }
 }
 
 class WaitingForDiceRoll extends NothingState {
@@ -249,6 +278,10 @@ class WaitingForDiceRoll extends NothingState {
   }
 
   canRollDice(): boolean {
+    return this.isMyTurn();
+  }
+
+  isMyTurn(): boolean {
     return this.player.id === this.game.myId;
   }
 }
@@ -281,6 +314,10 @@ class WaitingForDiceOutcome extends NothingState {
       this.game.state = new WaitingForEndTurn(this.game, this.player);
     }
   }
+
+  isMyTurn(): boolean {
+    return this.player.id === this.game.myId;
+  }
 }
 
 class LandedOnNewGround extends NothingState {
@@ -292,7 +329,7 @@ class LandedOnNewGround extends NothingState {
   }
 
   canBuyGround(): boolean {
-    return this.player.id === this.game.myId;
+    return this.isMyTurn();
   }
 
   applySpaceBought(event: SpaceBought): void {
@@ -303,6 +340,10 @@ class LandedOnNewGround extends NothingState {
     this.game.economy += event.cash + event.borrowed;
     this.player.assets += event.cash + event.borrowed;
     this.game.state = new WaitingForEndTurn(this.game, this.player);
+  }
+
+  isMyTurn(): boolean {
+    return this.player.id === this.game.myId;
   }
 }
 
@@ -319,6 +360,10 @@ class WaitingForEndTurn extends NothingState {
   }
 
   canEndTurn(): boolean {
+    return this.isMyTurn();
+  }
+
+  isMyTurn(): boolean {
     return this.player.id === this.game.myId;
   }
 }
