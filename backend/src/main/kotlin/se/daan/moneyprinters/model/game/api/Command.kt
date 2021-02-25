@@ -23,7 +23,9 @@ sealed class Command
 data class CreateGame(
         val gameMaster: String,
         val board: List<Space>,
-        val fixedStartMoney: Int
+        val fixedStartMoney: Int,
+        val interestRate: Double,
+        val returnRate: Double,
 ) : Command()
 
 data class AddPlayer(

@@ -4,10 +4,10 @@
   <button (click)="logout()">Logout</button>
 </p>
 <div class="column">
-  <div class="board" >
+  <div class="board">
     <div class="ground" *ngFor="let ground of game.board">
       <div class="groundOwner">{{getOwnerName(ground)}}</div>
-      <div class="groundName"  [style.background-color]="ground.color">{{ground.text}}</div>
+      <div class="groundName" [style.background-color]="ground.color">{{ground.text}}</div>
       <div class="groundPlayers">{{getPlayerNamesOn(ground)}}</div>
     </div>
   </div>
@@ -27,7 +27,7 @@
       <div class="playerAmount">{{player.money}}</div>
       <div class="playerAmount">{{player.assets}}</div>
       <div class="playerAmount">{{player.debt}}</div>
-      <div class="playerAmount">0</div>
+      <div class="playerAmount"> {{game.getStartMoney(player)}}</div>
     </div>
   </div>
   <div class="Actions">

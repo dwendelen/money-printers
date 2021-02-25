@@ -13,6 +13,9 @@ export interface GameCreated {
   type: 'GameCreated';
   gameMaster: string;
   board: Space[];
+  fixedStartMoney: number;
+  interestRate: number;
+  returnRate: number;
 }
 
 export interface PlayerAdded {

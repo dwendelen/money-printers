@@ -26,7 +26,9 @@ sealed class Event
 data class GameCreated(
         val gameMaster: String,
         val board: List<Space>,
-        val fixedStartMoney: Int
+        val fixedStartMoney: Int,
+        val interestRate: Double,
+        val returnRate: Double
 ): Event()
 
 data class PlayerAdded(

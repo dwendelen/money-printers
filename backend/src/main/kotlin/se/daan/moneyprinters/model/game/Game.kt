@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.ArrayList
 import kotlin.concurrent.withLock
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.random.Random
 import se.daan.moneyprinters.model.game.api.ActionSpace as ApiActionSpace
 import se.daan.moneyprinters.model.game.api.FreeParking as ApiFreeParking
@@ -28,13 +30,17 @@ class Game(
     private var state: State = WaitingForStart()
     private lateinit var board: List<Space>
     private var fixedStartMoney = 0
+    private var interestRate = 0.0
+    private var returnRate = 0.0
     private var economy = 0
 
     init {
         newEvent(GameCreated(
                 createGame.gameMaster,
                 createGame.board,
-                createGame.fixedStartMoney
+                createGame.fixedStartMoney,
+                createGame.interestRate,
+                createGame.returnRate
         ))
     }
 
@@ -93,6 +99,8 @@ class Game(
             }
         }
         fixedStartMoney = event.fixedStartMoney
+        interestRate = event.interestRate
+        returnRate = event.returnRate
     }
 
     fun getNewEvents(skip: Int, limit: Int, timeout: Int): List<Event> {
@@ -197,7 +205,10 @@ class Game(
 
             newEvent(DiceRolled(dice1, dice2))
             if(newPosition < idx) {
-                newEvent(StartMoneyReceived(player.id, fixedStartMoney)) //TODO calc start money
+                val interest = floor(player.debt * interestRate).toInt()
+                val economyMoney = ceil(economy * returnRate).toInt()
+                val startMoney = fixedStartMoney + economyMoney - interest
+                newEvent(StartMoneyReceived(player.id, startMoney)) //TODO calc start money
             }
             newEvent(LandedOn(board[newPosition].id))
             return true

@@ -87,7 +87,9 @@ class GameController(
                 ApiCreateGame(
                         createGame.gameMaster,
                         board,
-                        gameConfig.fixedStartMoney
+                        gameConfig.fixedStartMoney,
+                        gameConfig.interestRate,
+                        gameConfig.returnRate
                 ),
                 0,
                 0

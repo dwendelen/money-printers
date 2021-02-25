@@ -15,7 +15,10 @@ export class Game {
   board: Space[] = [];
   economy = 0;
   state: State = new WaitingForStart(this);
-  gameMasterId: string | undefined;
+  gameMasterId!: string;
+  fixedStartMoney!: number;
+  interestRate!: number;
+  returnRate!: number;
 
   constructor(
     public myId: string
@@ -44,6 +47,9 @@ export class Game {
             }
           });
         this.gameMasterId = event.gameMaster;
+        this.fixedStartMoney = event.fixedStartMoney;
+        this.interestRate = event.interestRate;
+        this.returnRate = event.returnRate;
         break;
       case 'PlayerAdded':
         this.state.applyPlayerAdded(event);
@@ -111,6 +117,12 @@ export class Game {
     const thisPlayer = this.players
       .filter(p => p.id === this.myId)[0];
     return thisPlayer.position.getInitialPrice();
+  }
+
+  getStartMoney(player: Player): number {
+    const interest = Math.floor(this.interestRate * player.debt);
+    const economyMoney = Math.ceil(this.returnRate * this.economy);
+    return this.fixedStartMoney + economyMoney  - interest;
   }
 }
 
