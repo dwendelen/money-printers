@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: covid
-        image: "localhost:32000/money-printers:3879622e"
+        image: "localhost:32000/money-printers:d4e3f942"
         env:
         - name: "SERVER_SERVLET_CONTEXT_PATH"
           value: "/money-printers"
