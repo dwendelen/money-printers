@@ -32,7 +32,7 @@ export class GameService {
 
   getEvents(gameId: string, skip: number): Promise<Event[]> {
     return this.http
-      .get<Events>(`api/games/${encodeURI(gameId)}/events?skip=${skip.toString()}&limit=50`)
+      .get<Events>(`api/games/${encodeURI(gameId)}/events?skip=${skip.toString()}&limit=50&timeout=5000`)
       .toPromise()
       .then(e => e.events);
   }

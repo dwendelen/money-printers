@@ -7,6 +7,7 @@ import se.daan.moneyprinters.model.game.config.GameConfig
 import se.daan.moneyprinters.model.game.api.Command
 import se.daan.moneyprinters.model.game.api.CreateGame
 import java.io.FileInputStream
+import java.time.Clock
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
@@ -14,15 +15,16 @@ import kotlin.random.Random
 class GameService(
         gameProperties: GameProperties,
         objectMapper: ObjectMapper,
-        private val random: Random
+        private val random: Random,
+        private val clock: Clock
 ) {
     val gameConfig: GameConfig = objectMapper.readValue(FileInputStream(gameProperties.configFile))
 
     private val games = ConcurrentHashMap<String, Game>()
 
-    fun execute(gameId: String, cmd: Command, version: Int): Boolean {
+    fun execute(gameId: String, cmd: Command, version: Int, timeout: Int): Boolean {
         return if(cmd is CreateGame && version == 0) {
-            games.putIfAbsent(gameId,Game(cmd, gameId, random)) == null
+            games.putIfAbsent(gameId,Game(cmd, gameId, random, clock)) == null
         } else {
             games[gameId]
                     ?.execute(cmd, version)

@@ -1,7 +1,11 @@
 package se.daan.moneyprinters.model.game
 
 import se.daan.moneyprinters.model.game.api.*
+import java.time.Clock
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.ArrayList
+import kotlin.concurrent.withLock
 import kotlin.random.Random
 import se.daan.moneyprinters.model.game.api.ActionSpace as ApiActionSpace
 import se.daan.moneyprinters.model.game.api.FreeParking as ApiFreeParking
@@ -13,9 +17,12 @@ import se.daan.moneyprinters.model.game.api.Prison as ApiPrison
 class Game(
         createGame: CreateGame,
         private val id: String,
-        private val random: Random
+        private val random: Random,
+        private val clock: Clock
 ) {
-    val events: MutableList<Event> = ArrayList()
+    private val eventsLock = ReentrantLock()
+    private val dataAvailable = eventsLock.newCondition()
+    private val events: MutableList<Event> = ArrayList()
     private val players: MutableList<Player> = ArrayList()
     private lateinit var gameMaster: String
     private var state: State = WaitingForStart()
@@ -31,19 +38,25 @@ class Game(
         ))
     }
 
-    @Synchronized
     fun execute(cmd: Command, expectedVersion: Int): Boolean {
-        if (expectedVersion != events.size) {
-            return false
-        }
+        eventsLock.withLock {
+            if (expectedVersion != events.size) {
+                return false
+            }
 
-        return when (cmd) {
-            is CreateGame -> false
-            is AddPlayer -> this.state.on(cmd)
-            is StartGame -> this.state.on(cmd)
-            is RollDice -> this.state.on(cmd)
-            is BuyThisSpace -> this.state.on(cmd)
-            is EndTurn -> this.state.on(cmd)
+            val result = when (cmd) {
+                is CreateGame -> false
+                is AddPlayer -> this.state.on(cmd)
+                is StartGame -> this.state.on(cmd)
+                is RollDice -> this.state.on(cmd)
+                is BuyThisSpace -> this.state.on(cmd)
+                is EndTurn -> this.state.on(cmd)
+            }
+
+            if(events.size != expectedVersion) {
+                dataAvailable.signalAll()
+            }
+            return result
         }
     }
 
@@ -82,10 +95,20 @@ class Game(
         fixedStartMoney = event.fixedStartMoney
     }
 
-    fun getNewEvents(skip: Int, limit: Int): List<Event> {
-        return events
-                .drop(skip)
-                .take(limit)
+    fun getNewEvents(skip: Int, limit: Int, timeout: Int): List<Event> {
+        val end = clock.millis() + timeout
+        eventsLock.withLock {
+            while(true) {
+                val now = clock.millis()
+                val newEvents = events
+                        .drop(skip)
+                        .take(limit)
+                if(newEvents.isNotEmpty() || now >= end) {
+                    return newEvents
+                }
+                dataAvailable.await(end - now, TimeUnit.MILLISECONDS)
+            }
+        }
     }
 
     private interface State {

@@ -37,11 +37,12 @@ class GameController(
     fun getEvents(
             @PathVariable("gameId") gameId: String,
             @RequestParam("skip") skip: Int,
-            @RequestParam("limit") limit: Int
+            @RequestParam("limit") limit: Int,
+            @RequestParam("timeout") timeout: Int
     ): Events {
         val game = gameService.getGame(gameId)
                 ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-        val newEvents = game.getNewEvents(skip, limit)
+        val newEvents = game.getNewEvents(skip, limit, timeout)
         return Events(newEvents)
     }
 
@@ -57,7 +58,7 @@ class GameController(
 
         val result = game.execute(cmd, version)
         return if(result) {
-            val newEvents = game.getNewEvents(version, limit)
+            val newEvents = game.getNewEvents(version, limit, 0)
             CommandResult(true, newEvents)
         } else {
             CommandResult(false, emptyList())
@@ -88,6 +89,7 @@ class GameController(
                         board,
                         gameConfig.fixedStartMoney
                 ),
+                0,
                 0
         )
         if (!result) {
@@ -99,7 +101,7 @@ class GameController(
     private fun mapGame(gameId: String, game: Game): GameInfo {
         return GameInfo(
                 gameId,
-                game.events
+                game.getNewEvents(0, Int.MAX_VALUE, 0)
         )
     }
 }
