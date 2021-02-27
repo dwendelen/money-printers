@@ -1,8 +1,9 @@
 <app-space-info [space]="space"></app-space-info>
-<div>
-  <div class="buy-this-left">Price</div>
-  <span class="buy-this-right">{{this.space.getInitialPrice()}}</span>
-</div>
+<div>&nbsp;</div>
+<!--<div>-->
+<!--  <div class="buy-this-left">Price</div>-->
+<!--  <span class="buy-this-right">{{this.space.getInitialPrice()}}</span>-->
+<!--</div>-->
 <div>
   <label for="buy_this_borrowed" class="buy-this-left">Borrowed</label>
   <input id="buy_this_borrowed" class="buy-this-right" onClick="this.select();" (blur)="borrowedChanged()" type="text" [(ngModel)]="borrowedField">

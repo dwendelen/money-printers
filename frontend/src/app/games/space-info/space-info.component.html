@@ -7,13 +7,14 @@
   <span class="space-info-left">Asset value</span>
   <span class="space-info-right">{{space.getAssetValue()}}</span>
 </div>
+<div>&nbsp;</div>
 <div *ngIf="isStreet()">
   <span class="space-info-left">Rent</span>
   <span class="space-info-right">{{space.getRent()}}</span>
 </div>
 <div *ngIf="isStreet()">
-  <span class="space-info-left">Rent street</span>
-  <span class="space-info-right">{{2 * space.getRent()!}}</span>
+  <span class="space-info-left">Rent all</span>
+  <span class="space-info-right">{{space.getRentAll()}}</span>
 </div>
 <div *ngIf="isStreet()">
   <span class="space-info-left">1 House</span>
@@ -35,6 +36,31 @@
   <span class="space-info-left">Hotel</span>
   <span class="space-info-right">{{space.getHotelRent()}}</span>
 </div>
+<div *ngIf="isUtility()">
+  <span class="space-info-left">Rent</span>
+  <span class="space-info-right">{{space.getRent()}}x</span>
+</div>
+<div *ngIf="isUtility()">
+  <span class="space-info-left">Rent all</span>
+  <span class="space-info-right">{{space.getRentAll()}}x</span>
+</div>
+<div *ngIf="isStation()">
+  <span class="space-info-left">Rent</span>
+  <span class="space-info-right">{{space.getStationRent(1)}}</span>
+</div>
+<div *ngIf="isStation()">
+  <span class="space-info-left">2 stations</span>
+  <span class="space-info-right">{{space.getStationRent(2)}}</span>
+</div>
+<div *ngIf="isStation()">
+  <span class="space-info-left">3 stations</span>
+  <span class="space-info-right">{{space.getStationRent(3)}}</span>
+</div>
+<div *ngIf="isStation()">
+  <span class="space-info-left">4 stations</span>
+  <span class="space-info-right">{{space.getStationRent(4)}}</span>
+</div>
+<div>&nbsp;</div>
 <div *ngIf="isOwnable()">
   <span class="space-info-left">Initial price</span>
   <span class="space-info-right">{{space.getInitialPrice()}}</span>

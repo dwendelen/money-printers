@@ -397,10 +397,12 @@ export interface Space {
   getAssetValue(): number | null | undefined;
   setAssetValue(assetValue: number): void;
   getRent(): number | undefined;
+  getRentAll(): number | undefined;
   getHouseRent(nbOfHouses: number): number | undefined;
   getHotelRent(): number | undefined;
   getHousePrice(): number | undefined;
   getHotelPrice(): number | undefined;
+  getStationRent(nbOfStations: number): number | undefined;
 }
 
 export interface Ownable extends Space {
@@ -448,7 +450,11 @@ export class Street implements Ownable {
     return this.assetValue;
   }
 
-  getRent(): number | undefined {
+  getRent(): number {
+    return 0;
+  }
+
+  getRentAll(): number {
     return 0;
   }
 
@@ -466,6 +472,10 @@ export class Street implements Ownable {
 
   getHotelPrice(): number {
     return 0;
+  }
+
+  getStationRent(): undefined {
+    return undefined;
   }
 }
 
@@ -503,6 +513,10 @@ export class ActionSpace implements Space {
     return undefined;
   }
 
+  getRentAll(): undefined {
+    return undefined;
+  }
+
   getHouseRent(nbOfHouses: number): undefined {
     return undefined;
   }
@@ -516,6 +530,10 @@ export class ActionSpace implements Space {
   }
 
   getHotelPrice(): undefined {
+    return undefined;
+  }
+
+  getStationRent(): undefined {
     return undefined;
   }
 }
@@ -556,8 +574,12 @@ export class Utility implements Ownable {
     this.assetValue = assetValue;
   }
 
-  getRent(): undefined {
-    return undefined;
+  getRent(): number {
+    return 0;
+  }
+
+  getRentAll(): number {
+    return 0;
   }
 
   getHouseRent(nbOfHouses: number): undefined {
@@ -573,6 +595,10 @@ export class Utility implements Ownable {
   }
 
   getHotelPrice(): undefined {
+    return undefined;
+  }
+
+  getStationRent(): undefined {
     return undefined;
   }
 }
@@ -617,6 +643,10 @@ export class Station implements Ownable {
     return undefined;
   }
 
+  getRentAll(): undefined {
+    return undefined;
+  }
+
   getHouseRent(nbOfHouses: number): undefined {
     return undefined;
   }
@@ -631,6 +661,10 @@ export class Station implements Ownable {
 
   getHotelPrice(): undefined {
     return undefined;
+  }
+
+  getStationRent(): number {
+    return 0;
   }
 }
 
@@ -668,6 +702,10 @@ export class Prison implements Space {
     return undefined;
   }
 
+  getRentAll(): undefined {
+    return undefined;
+  }
+
   getHouseRent(nbOfHouses: number): undefined {
     return undefined;
   }
@@ -681,6 +719,10 @@ export class Prison implements Space {
   }
 
   getHotelPrice(): undefined {
+    return undefined;
+  }
+
+  getStationRent(): undefined {
     return undefined;
   }
 }
@@ -719,6 +761,10 @@ export class FreeParking implements Space {
     return undefined;
   }
 
+  getRentAll(): undefined {
+    return undefined;
+  }
+
   getHouseRent(nbOfHouses: number): undefined {
     return undefined;
   }
@@ -732,6 +778,10 @@ export class FreeParking implements Space {
   }
 
   getHotelPrice(): undefined {
+    return undefined;
+  }
+
+  getStationRent(): undefined {
     return undefined;
   }
 }

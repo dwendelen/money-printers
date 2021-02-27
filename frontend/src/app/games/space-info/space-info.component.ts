@@ -26,4 +26,12 @@ export class SpaceInfoComponent implements OnInit {
   isStreet(): boolean {
     return this.space instanceof Street;
   }
+
+  isUtility(): boolean {
+    return this.space instanceof Utility;
+  }
+
+  isStation(): boolean {
+    return this.space instanceof Station;
+  }
 }
