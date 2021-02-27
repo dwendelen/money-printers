@@ -10,6 +10,7 @@ import {GameComponent} from './games/game/game.component';
 import {environment} from '../environments/environment';
 import { BuyThisSpaceComponent } from './games/buy-this-space/buy-this-space.component';
 import { ColorSelectorComponent } from './games/color-selector/color-selector.component';
+import { SpaceInfoComponent } from './games/space-info/space-info.component';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import { ColorSelectorComponent } from './games/color-selector/color-selector.co
     GamesComponent,
     GameComponent,
     BuyThisSpaceComponent,
-    ColorSelectorComponent
+    ColorSelectorComponent,
+    SpaceInfoComponent
   ],
   imports: [
     BrowserModule,

@@ -1,6 +1,7 @@
+<app-space-info [space]="space"></app-space-info>
 <div>
   <div class="buy-this-left">Price</div>
-  <span class="buy-this-right">{{price}}</span>
+  <span class="buy-this-right">{{this.space.getInitialPrice()}}</span>
 </div>
 <div>
   <label for="buy_this_borrowed" class="buy-this-left">Borrowed</label>

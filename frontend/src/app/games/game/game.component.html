@@ -54,7 +54,7 @@
 
       <app-buy-this-space
         *ngIf="game.canBuyThis()"
-        [price]="game.getInitialPrice()"
+        [space]="game.getMyOwnable()"
         [maxCash]="game.getMyCash()"
         [disabled]="commandInFlight"
         (buy)="buyThis($event.cash, $event.borrowed)">

@@ -113,10 +113,10 @@ export class Game {
     return thisPlayer.money;
   }
 
-  getInitialPrice(): number {
+  getMyOwnable(): Ownable {
     const thisPlayer = this.players
       .filter(p => p.id === this.myId)[0];
-    return thisPlayer.position.getInitialPrice();
+    return thisPlayer.position as Ownable;
   }
 
   getStartMoney(player: Player): number {
@@ -347,12 +347,14 @@ class LandedOnNewGround extends NothingState {
   }
 
   applySpaceBought(event: SpaceBought): void {
+    const value = event.cash + event.borrowed;
     // TODO other players could also have bought
     this.player.position.setOwner(this.player);
+    this.player.position.setAssetValue(value);
     this.player.money -= event.cash;
     this.player.debt += event.borrowed;
-    this.game.economy += event.cash + event.borrowed;
-    this.player.assets += event.cash + event.borrowed;
+    this.game.economy += value;
+    this.player.assets += value;
     this.game.state = new WaitingForEndTurn(this.game, this.player);
   }
 
@@ -388,14 +390,29 @@ export interface Space {
   color: string | null;
 
   setOwner(player: Player): void;
-  getOwner(): Player | null;
+  getOwner(): Player | null | undefined;
 
   canBuy(): boolean;
-  getInitialPrice(): number;
+  getInitialPrice(): number | undefined;
+  getAssetValue(): number | null | undefined;
+  setAssetValue(assetValue: number): void;
+  getRent(): number | undefined;
+  getHouseRent(nbOfHouses: number): number | undefined;
+  getHotelRent(): number | undefined;
+  getHousePrice(): number | undefined;
+  getHotelPrice(): number | undefined;
 }
 
+export interface Ownable extends Space {
+  setOwner(player: Player): void;
+  getOwner(): Player | null;
 
-export class Street implements Space {
+  getInitialPrice(): number;
+  getAssetValue(): number | null;
+  setAssetValue(assetValue: number): void;
+}
+
+export class Street implements Ownable {
   constructor(
     public id: string,
     public text: string,
@@ -405,6 +422,7 @@ export class Street implements Space {
   }
 
   owner: Player | null = null;
+  assetValue: number | null = null;
 
   setOwner(player: Player): void {
     this.owner = player;
@@ -420,6 +438,34 @@ export class Street implements Space {
 
   getInitialPrice(): number {
     return this.initialPrice;
+  }
+
+  setAssetValue(assetValue: number): void {
+    this.assetValue = assetValue;
+  }
+
+  getAssetValue(): number | null {
+    return this.assetValue;
+  }
+
+  getRent(): number | undefined {
+    return 0;
+  }
+
+  getHouseRent(nbOfHouses: number): number {
+    return 0;
+  }
+
+  getHotelRent(): number {
+    return 0;
+  }
+
+  getHousePrice(): number {
+    return 0;
+  }
+
+  getHotelPrice(): number {
+    return 0;
   }
 }
 
@@ -442,12 +488,39 @@ export class ActionSpace implements Space {
     return false;
   }
 
-  getInitialPrice(): number {
-    return 0;
+  getInitialPrice(): undefined {
+    return undefined;
+  }
+
+  getAssetValue(): undefined {
+    return undefined;
+  }
+
+  setAssetValue(assetValue: number): void {
+  }
+
+  getRent(): undefined {
+    return undefined;
+  }
+
+  getHouseRent(nbOfHouses: number): undefined {
+    return undefined;
+  }
+
+  getHotelRent(): undefined {
+    return undefined;
+  }
+
+  getHousePrice(): undefined {
+    return undefined;
+  }
+
+  getHotelPrice(): undefined {
+    return undefined;
   }
 }
 
-export class Utility implements Space {
+export class Utility implements Ownable {
   constructor(
     public id: string,
     public text: string,
@@ -456,6 +529,7 @@ export class Utility implements Space {
   }
 
   owner: Player | null = null;
+  assetValue: number | null = null;
   color = null;
 
   setOwner(player: Player): void {
@@ -473,9 +547,37 @@ export class Utility implements Space {
   getInitialPrice(): number {
     return this.initialPrice;
   }
+
+  getAssetValue(): number | null {
+    return this.assetValue;
+  }
+
+  setAssetValue(assetValue: number): void {
+    this.assetValue = assetValue;
+  }
+
+  getRent(): undefined {
+    return undefined;
+  }
+
+  getHouseRent(nbOfHouses: number): undefined {
+    return undefined;
+  }
+
+  getHotelRent(): undefined {
+    return undefined;
+  }
+
+  getHousePrice(): undefined {
+    return undefined;
+  }
+
+  getHotelPrice(): undefined {
+    return undefined;
+  }
 }
 
-export class Station implements Space {
+export class Station implements Ownable {
   constructor(
     public id: string,
     public text: string,
@@ -484,6 +586,7 @@ export class Station implements Space {
   }
 
   owner: Player | null = null;
+  assetValue: number | null = null;
   color = 'lightgrey';
 
   setOwner(player: Player): void {
@@ -500,6 +603,34 @@ export class Station implements Space {
 
   getInitialPrice(): number {
     return this.initialPrice;
+  }
+
+  getAssetValue(): number | null {
+    return this.assetValue;
+  }
+
+  setAssetValue(assetValue: number): void {
+    this.assetValue = assetValue;
+  }
+
+  getRent(): undefined {
+    return undefined;
+  }
+
+  getHouseRent(nbOfHouses: number): undefined {
+    return undefined;
+  }
+
+  getHotelRent(): undefined {
+    return undefined;
+  }
+
+  getHousePrice(): undefined {
+    return undefined;
+  }
+
+  getHotelPrice(): undefined {
+    return undefined;
   }
 }
 
@@ -522,8 +653,35 @@ export class Prison implements Space {
     return false;
   }
 
-  getInitialPrice(): number {
-    return 0;
+  getInitialPrice(): undefined {
+    return undefined;
+  }
+
+  getAssetValue(): undefined {
+    return undefined;
+  }
+
+  setAssetValue(assetValue: number): void {
+  }
+
+  getRent(): undefined {
+    return undefined;
+  }
+
+  getHouseRent(nbOfHouses: number): undefined {
+    return undefined;
+  }
+
+  getHotelRent(): undefined {
+    return undefined;
+  }
+
+  getHousePrice(): undefined {
+    return undefined;
+  }
+
+  getHotelPrice(): undefined {
+    return undefined;
   }
 }
 
@@ -546,7 +704,34 @@ export class FreeParking implements Space {
     return false;
   }
 
-  getInitialPrice(): number {
-    return 0;
+  getInitialPrice(): undefined {
+    return undefined;
+  }
+
+  getAssetValue(): undefined {
+    return undefined;
+  }
+
+  setAssetValue(assetValue: number): void {
+  }
+
+  getRent(): undefined {
+    return undefined;
+  }
+
+  getHouseRent(nbOfHouses: number): undefined {
+    return undefined;
+  }
+
+  getHotelRent(): undefined {
+    return undefined;
+  }
+
+  getHousePrice(): undefined {
+    return undefined;
+  }
+
+  getHotelPrice(): undefined {
+    return undefined;
   }
 }

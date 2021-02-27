@@ -1,4 +1,5 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Ownable, Space} from '../game';
 
 @Component({
   selector: 'app-buy-this-space',
@@ -13,7 +14,7 @@ export class BuyThisSpaceComponent implements OnInit {
   cash!: number;
   borrowed!: number;
   @Input()
-  price!: number;
+  space!: Ownable;
   @Input()
   maxCash!: number;
   @Input()
@@ -24,50 +25,50 @@ export class BuyThisSpaceComponent implements OnInit {
   ngOnInit(): void {
     this.cash = 0;
     this.cashField = '0';
-    this.borrowed = this.price;
+    this.borrowed = this.space.getInitialPrice();
     this.borrowedField = this.borrowed.toString();
   }
 
   cashChanged(): void {
-    this.cash = this.correct(
+    this.cash = BuyThisSpaceComponent.correct(
       this.cashField,
       0,
       this.cash,
-      Math.min(this.maxCash, this.price)
+      Math.min(this.maxCash, this.space.getInitialPrice())
     );
     this.cashField = this.cash.toString();
-    this.borrowed = this.price - this.cash;
+    this.borrowed = this.space.getInitialPrice() - this.cash;
     this.borrowedField = this.borrowed.toString();
   }
 
   borrowedChanged(): void {
-    this.borrowed = this.correct(
+    this.borrowed = BuyThisSpaceComponent.correct(
       this.borrowedField,
-      this.price - Math.min(this.maxCash, this.price),
+      this.space.getInitialPrice() - Math.min(this.maxCash, this.space.getInitialPrice()),
       this.borrowed,
-      this.price
+      this.space.getInitialPrice()
     );
     this.borrowedField = this.borrowed.toString();
-    this.cash = this.price - this.borrowed;
+    this.cash = this.space.getInitialPrice() - this.borrowed;
     this.cashField = this.cash.toString();
   }
 
-  private correct(val: string, minVal: number, original: number, maxVal: number): number {
+  triggerBuy(): void {
+    this.buy.emit(new BuyData(this.cash, this.borrowed));
+  }
+
+  private static correct(val: string, minVal: number, original: number, maxVal: number): number {
     const num = parseInt(val, 10);
     if (isNaN(num)) {
       return original;
     }
     if (num < minVal) {
-     return minVal;
+      return minVal;
     }
     if (num > maxVal) {
       return maxVal;
     }
     return num;
-  }
-
-  triggerBuy(): void {
-    this.buy.emit(new BuyData(this.cash, this.borrowed));
   }
 }
 
