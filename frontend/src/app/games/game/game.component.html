@@ -13,7 +13,11 @@
                [style.border-color]="ground.getOwner()!.color"
           ></div>
         </div>
-        <div class="groundName" [style.background-color]="ground.color">{{ground.text}}</div>
+        <div class="groundName"
+             [style.background-color]="ground.color"
+            (click)="spaceInfo = ground">
+          {{ground.text}}
+        </div>
         <div class="groundPlayers">
           <div class="playerColor"
                [style.background-color]="player.color"
@@ -59,6 +63,9 @@
         [disabled]="commandInFlight"
         (buy)="buyThis($event.cash, $event.borrowed)">
       </app-buy-this-space>
+
+      <app-space-info *ngIf="spaceInfo" [space]="spaceInfo"></app-space-info>
+      <button *ngIf="spaceInfo" (click)="spaceInfo = null">Close</button>
     </div>
   </div>
 </div>

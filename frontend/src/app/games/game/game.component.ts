@@ -29,6 +29,7 @@ export class GameComponent implements OnInit, OnDestroy {
   open = true;
   commandInFlight = false;
   playerColor!: string;
+  spaceInfo: Space | null = null;
 
   ngOnInit(): void {
     this.game = new Game(this.user.getId());
