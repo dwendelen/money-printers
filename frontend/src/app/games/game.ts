@@ -35,15 +35,36 @@ export class Game {
               case 'ActionSpace':
                 return new ActionSpace(s.id, s.text);
               case 'Street':
-                return new Street(s.id, s.text, s.color, s.initialPrice);
+                return new Street(
+                  s.id,
+                  s.text,
+                  s.color,
+                  s.initialPrice,
+                  s.rent,
+                  s.rentHouse,
+                  s.rentHotel,
+                  s.priceHouse,
+                  s.priceHotel
+                );
               case 'FreeParking':
                 return new FreeParking(s.id, s.text);
               case 'Prison':
                 return new Prison(s.id, s.text);
               case 'Station':
-                return new Station(s.id, s.text, s.initialPrice);
+                return new Station(
+                  s.id,
+                  s.text,
+                  s.initialPrice,
+                  s.rent
+                );
               case 'Utility':
-                return new Utility(s.id, s.text, s.initialPrice);
+                return new Utility(
+                  s.id,
+                  s.text,
+                  s.initialPrice,
+                  s.rent,
+                  s.rentAll
+                );
             }
           });
         this.gameMasterId = event.gameMaster;
@@ -419,7 +440,12 @@ export class Street implements Ownable {
     public id: string,
     public text: string,
     public color: string,
-    public initialPrice: number
+    public initialPrice: number,
+    public rent: number,
+    public rentHouse: number[],
+    public rentHotel: number,
+    public priceHouse: number,
+    public priceHotel: number
   ) {
   }
 
@@ -451,30 +477,30 @@ export class Street implements Ownable {
   }
 
   getRent(): number {
-    return 0;
+    return this.rent;
   }
 
   getRentAll(): number {
-    return 0;
+    return 2 * this.rent;
   }
 
   getHouseRent(nbOfHouses: number): number {
-    return 0;
+    return this.rentHouse[nbOfHouses - 1];
   }
 
   getHotelRent(): number {
-    return 0;
+    return this.rentHotel;
   }
 
   getHousePrice(): number {
-    return 0;
+    return this.priceHouse;
   }
 
   getHotelPrice(): number {
-    return 0;
+    return this.priceHotel;
   }
 
-  getStationRent(): undefined {
+  getStationRent(nbOfStations: number): undefined {
     return undefined;
   }
 }
@@ -533,7 +559,7 @@ export class ActionSpace implements Space {
     return undefined;
   }
 
-  getStationRent(): undefined {
+  getStationRent(nbOfStations: number): undefined {
     return undefined;
   }
 }
@@ -542,7 +568,9 @@ export class Utility implements Ownable {
   constructor(
     public id: string,
     public text: string,
-    public initialPrice: number
+    public initialPrice: number,
+    public rent: number,
+    public rentAll: number
   ) {
   }
 
@@ -575,11 +603,11 @@ export class Utility implements Ownable {
   }
 
   getRent(): number {
-    return 0;
+    return this.rent;
   }
 
   getRentAll(): number {
-    return 0;
+    return this.rentAll;
   }
 
   getHouseRent(nbOfHouses: number): undefined {
@@ -598,7 +626,7 @@ export class Utility implements Ownable {
     return undefined;
   }
 
-  getStationRent(): undefined {
+  getStationRent(nbOfStations: number): undefined {
     return undefined;
   }
 }
@@ -607,7 +635,8 @@ export class Station implements Ownable {
   constructor(
     public id: string,
     public text: string,
-    public initialPrice: number
+    public initialPrice: number,
+    public rent: number[]
   ) {
   }
 
@@ -663,8 +692,8 @@ export class Station implements Ownable {
     return undefined;
   }
 
-  getStationRent(): number {
-    return 0;
+  getStationRent(nbOfStations: number): number {
+    return this.rent[nbOfStations - 1];
   }
 }
 
@@ -722,7 +751,7 @@ export class Prison implements Space {
     return undefined;
   }
 
-  getStationRent(): undefined {
+  getStationRent(nbOfStations: number): undefined {
     return undefined;
   }
 }
@@ -781,7 +810,7 @@ export class FreeParking implements Space {
     return undefined;
   }
 
-  getStationRent(): undefined {
+  getStationRent(nbOfStations: number): undefined {
     return undefined;
   }
 }

@@ -62,7 +62,8 @@ data class Utility(
         override val id: String,
         override val text: String,
         val initialPrice: Int,
-        val rentFactor: List<Int>
+        val rent: Int,
+        val rentAll: Int
 ) : Space()
 
 data class Station(

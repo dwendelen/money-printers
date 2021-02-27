@@ -28,6 +28,11 @@ class Street(
         override val text: String,
         val color: String,
         val initialPrice: Int,
+        val rent: Int,
+        val rentHouse: List<Int>,
+        val rentHotel: Int,
+        val priceHouse: Int,
+        val priceHotel: Int
 ) : Space()
 
 class ActionSpace(
@@ -39,12 +44,15 @@ class Utility(
         override val id: String,
         override val text: String,
         val initialPrice: Int,
+        val rent: Int,
+        val rentAll: Int
 ) : Space()
 
 class Station(
         override val id: String,
         override val text: String,
         val initialPrice: Int,
+        val rent: List<Int>
 ) : Space()
 
 class FreeParking(

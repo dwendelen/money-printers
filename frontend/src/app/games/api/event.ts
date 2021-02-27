@@ -79,6 +79,11 @@ interface Street {
   text: string;
   color: string;
   initialPrice: number;
+  rent: number;
+  rentHouse: number[];
+  rentHotel: number;
+  priceHouse: number;
+  priceHotel: number;
 }
 
 interface ActionSpace {
@@ -92,6 +97,8 @@ interface Utility {
   id: string;
   text: string;
   initialPrice: number;
+  rent: number;
+  rentAll: number;
 }
 
 interface Station {
@@ -99,6 +106,7 @@ interface Station {
   id: string;
   text: string;
   initialPrice: number;
+  rent: number[];
 }
 
 interface Prison {

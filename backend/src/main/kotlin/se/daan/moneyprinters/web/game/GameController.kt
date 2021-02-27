@@ -76,9 +76,30 @@ class GameController(
             when (it) {
                 is ActionSpace -> ApiActionSpace(it.id, it.text)
                 is FreeParking -> ApiFreeParking(it.id, it.text)
-                is Station -> ApiStation(it.id, it.text, it.initialPrice)
-                is Street -> ApiStreet(it.id, it.text, it.color, it.initialPrice)
-                is Utility -> ApiUtility(it.id, it.text, it.initialPrice)
+                is Station -> ApiStation(
+                        it.id,
+                        it.text,
+                        it.initialPrice,
+                        it.rent
+                )
+                is Street -> ApiStreet(
+                        it.id,
+                        it.text,
+                        it.color,
+                        it.initialPrice,
+                        it.rent,
+                        it.rentHouse,
+                        it.rentHotel,
+                        it.priceHouse,
+                        it.priceHotel
+                )
+                is Utility -> ApiUtility(
+                        it.id,
+                        it.text,
+                        it.initialPrice,
+                        it.rent,
+                        it.rentAll
+                )
                 is Prison -> ApiPrison(it.id, it.text)
             }
         }
