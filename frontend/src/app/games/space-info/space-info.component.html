@@ -13,7 +13,7 @@
 </div>
 <div *ngIf="isStreet()">
   <span class="space-info-left">Rent street</span>
-  <span class="space-info-right">{{2 * space.getRent()}}</span>
+  <span class="space-info-right">{{2 * space.getRent()!}}</span>
 </div>
 <div *ngIf="isStreet()">
   <span class="space-info-left">1 House</span>
