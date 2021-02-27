@@ -1,1 +1,18 @@
 /* You can add global styles to this file, and also import other style files */
+@font-face {
+  font-family: "Liberation Serif";
+  src: url("assets/LiberationSerif-Regular.ttf")
+}
+
+body, input, button {
+  font-size: 16px;
+  font-family: "Liberation Serif", serif;
+}
+
+button {
+  padding: 1px 6px;
+  border-width: 1px;
+  border-radius: 2px;
+  border-style: solid;
+}
+
