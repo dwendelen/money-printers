@@ -30,7 +30,8 @@ data class CreateGame(
 
 data class AddPlayer(
         val id: String,
-        val name: String
+        val name: String,
+        val color: String
 ) : Command()
 
 object StartGame : Command()

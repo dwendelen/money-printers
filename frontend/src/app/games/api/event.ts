@@ -22,6 +22,7 @@ export interface PlayerAdded {
   type: 'PlayerAdded';
   id: string;
   name: string;
+  color: string;
 }
 
 export interface GameStarted {

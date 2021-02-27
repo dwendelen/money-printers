@@ -8,12 +8,19 @@
   margin-right: 50px;
 }
 
-$boardOwnerWidth: 75px;
+$houseMarginTop: 3px;
+$houseMarginLeft: 3px;
+$houseHeight: 12px;
+$houseWidth: 12px;
+$hotelWidth: 4 * $houseWidth + 3 * $houseMarginLeft;
+$unbuiltBorderWidth: 3px;
+
+$boardOwnerWidth: $hotelWidth;
 $boardNameWidth: 175px;
 $boardPlayersWidth: 100px;
 $boardBorder: 1px;
 $groundPaddingLeft: 5px;
-$groundPaddingRight: 0;
+$groundPaddingRight: 5px;
 $groundPaddingTop: 1px;
 $groundPaddingBottom: $groundPaddingTop;
 $groundHeight: 18px;
@@ -23,6 +30,25 @@ $groundHeight: 18px;
   border-width: $boardBorder;
   border-style: solid;
   border-spacing: 0;
+
+  .unbuilt {
+    height: $houseHeight;
+    width: $hotelWidth;
+    border-width: $unbuiltBorderWidth;
+    border-style: solid;
+    box-sizing: border-box;
+    margin-top: $houseMarginTop;
+  }
+
+  .playerColor {
+    width: 12px;
+    height: 12px;
+    border-width: 0;
+    padding: 0;
+    margin-right: 5px;
+    margin-top: 3px;
+    display: inline-block;
+  }
 }
 
 .ground {
@@ -93,6 +119,7 @@ $playerNameCellWidth: $playerCellWidth + 50px;
     border-top-style: none;
     border-width: $playerBorderWidth;
   }
+
   div.playerName {
     width: $playerNameCellWidth;
   }
@@ -112,16 +139,26 @@ $playerNameCellWidth: $playerCellWidth + 50px;
     border-width: $playerBorderWidth;
 
   }
-  div.playerName {
+
+  .playerName {
     width: $playerNameCellWidth;
     height: 20px;
   }
-}
 
-.playerAmount {
-  text-align: right;
-  font-family: monospace;
-  height: 20px;
+  .playerAmount {
+    text-align: right;
+    font-family: monospace;
+    height: 20px;
+  }
+
+  .playerColor {
+    width: 12px;
+    height: 12px;
+    border-width: 0;
+    padding: 0;
+    margin-right: 5px;
+    margin-top: 3px;
+  }
 }
 
 .actionButton {

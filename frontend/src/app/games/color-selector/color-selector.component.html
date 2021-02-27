@@ -1,0 +1,11 @@
+<select
+  style="background-color: {{selectedColor}};"
+  [(ngModel)]="selectedColor"
+  [disabled]="disabled"
+>
+  <option
+    *ngFor="let color of availableColors"
+    [style.background-color]="color"
+    [value]="color">
+  </option>
+</select>

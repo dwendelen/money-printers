@@ -126,7 +126,7 @@ export class Game {
   }
 }
 
-class Player {
+export class Player {
   money = 0;
   debt = 0;
   assets = 0;
@@ -134,6 +134,7 @@ class Player {
   constructor(
     public id: string,
     public name: string,
+    public color: string,
     public position: Space
   ) {
   }
@@ -232,6 +233,7 @@ class WaitingForStart extends NothingState {
     this.game.players.push(new Player(
       event.id,
       event.name,
+      event.color,
       this.game.board[0]
     ));
   }
@@ -393,7 +395,7 @@ export interface Space {
 }
 
 
-class Street implements Space {
+export class Street implements Space {
   constructor(
     public id: string,
     public text: string,
@@ -421,7 +423,7 @@ class Street implements Space {
   }
 }
 
-class ActionSpace implements Space {
+export class ActionSpace implements Space {
   constructor(
     public id: string,
     public text: string
@@ -445,7 +447,7 @@ class ActionSpace implements Space {
   }
 }
 
-class Utility implements Space {
+export class Utility implements Space {
   constructor(
     public id: string,
     public text: string,
@@ -473,7 +475,7 @@ class Utility implements Space {
   }
 }
 
-class Station implements Space {
+export class Station implements Space {
   constructor(
     public id: string,
     public text: string,
@@ -501,7 +503,7 @@ class Station implements Space {
   }
 }
 
-class Prison implements Space {
+export class Prison implements Space {
   constructor(
     public id: string,
     public text: string
@@ -525,7 +527,7 @@ class Prison implements Space {
   }
 }
 
-class FreeParking implements Space {
+export class FreeParking implements Space {
   constructor(
     public id: string,
     public text: string

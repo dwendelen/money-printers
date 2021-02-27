@@ -2,7 +2,7 @@ import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angula
 import {LoggedInUser, LoginService} from '../../login/login.service';
 import {GameService} from '../game.service';
 import {GameInfo} from '../api/api';
-import {Game, Space} from '../game';
+import {Game, Player, Space, Station, Street, Utility} from '../game';
 import {Event} from '../api/event';
 import {AddPlayer, BuyThisSpace, Command, EndTurn, RollDice, StartGame} from '../api/command';
 
@@ -28,6 +28,7 @@ export class GameComponent implements OnInit, OnDestroy {
   game!: Game;
   open = true;
   commandInFlight = false;
+  playerColor!: string;
 
   ngOnInit(): void {
     this.game = new Game(this.user.getId());
@@ -73,7 +74,8 @@ export class GameComponent implements OnInit, OnDestroy {
   join(): void {
     this.sendCmd(new AddPlayer(
       this.user.getId(),
-      this.user.getName() // TODO proper name
+      this.user.getName(), // TODO proper name
+      this.playerColor
     ));
   }
 
@@ -149,24 +151,30 @@ export class GameComponent implements OnInit, OnDestroy {
     this.open = false;
   }
 
-  getPlayerNamesOn(ground: Space): string {
-      return this.game.players
-        .filter(p => p.position === ground)
-        .map(p => p.name)
-        .join(', ');
+  getPlayersOn(ground: Space): Player[] {
+    return this.game.players
+      .filter(p => p.position === ground);
   }
 
-  getOwnerName(ground: Space): string {
-    const owner = ground.getOwner();
-    if (owner) {
-      return owner.name;
+  isGroundUnBuilt(ground: Space): boolean {
+    if (ground instanceof Street) {
+      return ground.owner != null;
+    } else if (ground instanceof Utility) {
+      return ground.owner != null;
+    } else if (ground instanceof Station) {
+      return ground.owner != null;
     } else {
-      return '';
+      return false;
     }
   }
 
   copyGameIdToClipboard(): void {
     navigator.clipboard.writeText(this.gameInfo.id)
       .then();
+  }
+
+  getPlayerColors(): string[] {
+    return this.game.players
+      .map(p => p.color);
   }
 }

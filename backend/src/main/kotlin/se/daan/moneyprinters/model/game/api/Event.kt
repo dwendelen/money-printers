@@ -33,7 +33,8 @@ data class GameCreated(
 
 data class PlayerAdded(
         val id: String,
-        val name: String
+        val name: String,
+        val color: String
 ): Event()
 
 object GameStarted: Event()

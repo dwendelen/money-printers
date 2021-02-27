@@ -9,6 +9,7 @@ import {LoginService} from './login/login.service';
 import {GameComponent} from './games/game/game.component';
 import {environment} from '../environments/environment';
 import { BuyThisSpaceComponent } from './games/buy-this-space/buy-this-space.component';
+import { ColorSelectorComponent } from './games/color-selector/color-selector.component';
 
 @NgModule({
   declarations: [
@@ -16,7 +17,8 @@ import { BuyThisSpaceComponent } from './games/buy-this-space/buy-this-space.com
     LoginComponent,
     GamesComponent,
     GameComponent,
-    BuyThisSpaceComponent
+    BuyThisSpaceComponent,
+    ColorSelectorComponent
   ],
   imports: [
     BrowserModule,

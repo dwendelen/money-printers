@@ -1,49 +1,60 @@
 <div class="game">
-<div>
-  Welcome {{user.getName()}} to game <span (click)="copyGameIdToClipboard()">{{gameInfo.id}} (click to copy)</span>
-  <button (click)="exitGame()">Exit</button>
-  <button (click)="logout()">Logout</button>
-</div>
-<div class="column">
-  <div class="board">
-    <div class="ground" *ngFor="let ground of game.board">
-      <div class="groundOwner">{{getOwnerName(ground)}}</div>
-      <div class="groundName" [style.background-color]="ground.color">{{ground.text}}</div>
-      <div class="groundPlayers">{{getPlayerNamesOn(ground)}}</div>
+  <div>
+    Welcome {{user.getName()}} to game <span (click)="copyGameIdToClipboard()">{{gameInfo.id}} (click to copy)</span>
+    <button (click)="exitGame()">Exit</button>
+    <button (click)="logout()">Logout</button>
+  </div>
+  <div class="column">
+    <div class="board">
+      <div class="ground" *ngFor="let ground of game.board">
+        <div class="groundOwner">
+          <div *ngIf="isGroundUnBuilt(ground)"
+               class="unbuilt"
+               [style.border-color]="ground.getOwner()!.color"
+          ></div>
+        </div>
+        <div class="groundName" [style.background-color]="ground.color">{{ground.text}}</div>
+        <div class="groundPlayers">
+          <div class="playerColor"
+               [style.background-color]="player.color"
+              *ngFor="let player of getPlayersOn(ground)">
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
-<div class="column">
-  <div>Total economy: <span id="economy">{{game.economy}}</span></div>
-  <div class="playerTable">
-    <div class="playerTableHeader">
-      <div class="playerName">&nbsp;</div>
-      <div>Money</div>
-      <div>Assets</div>
-      <div>Debt</div>
-      <div>Start</div>
+  <div class="column">
+    <div>Total economy: <span id="economy">{{game.economy}}</span></div>
+    <div class="playerTable">
+      <div class="playerTableHeader">
+        <div class="playerName">&nbsp;</div>
+        <div>Money</div>
+        <div>Assets</div>
+        <div>Debt</div>
+        <div>Start</div>
+      </div>
+      <div class="playerTableRow" *ngFor="let player of game.players">
+        <div class="playerName"><div class="playerColor" [style.background-color]="player.color"></div>{{player.name}}</div>
+        <div class="playerAmount">{{player.money}}</div>
+        <div class="playerAmount">{{player.assets}}</div>
+        <div class="playerAmount">{{player.debt}}</div>
+        <div class="playerAmount"> {{game.getStartMoney(player)}}</div>
+      </div>
     </div>
-    <div class="playerTableRow" *ngFor="let player of game.players">
-      <div class="playerName">{{player.name}}</div>
-      <div class="playerAmount">{{player.money}}</div>
-      <div class="playerAmount">{{player.assets}}</div>
-      <div class="playerAmount">{{player.debt}}</div>
-      <div class="playerAmount"> {{game.getStartMoney(player)}}</div>
-    </div>
-  </div>
-  <div class="Actions">
-    <button class="actionButton" *ngIf="showJoin()" [disabled]="disableJoin()" (click)="join()">Join game</button>
-    <button class="actionButton" *ngIf="showStart()" [disabled]="disableStart()" (click)="start()">Start game</button>
-    <button class="actionButton" *ngIf="showRoll()" [disabled]="disableRoll()" (click)="roll()">Roll dice</button>
-    <button class="actionButton" *ngIf="showEndTurn()" [disabled]="disableEndTurn()" (click)="endTurn()">End turn</button>
+    <div class="Actions">
+      <app-color-selector *ngIf="showJoin()" [disabled]="disableJoin()" [exclude]="getPlayerColors()" (selectedColorChange)="playerColor = $event"></app-color-selector>
+      <button class="actionButton" *ngIf="showJoin()" [disabled]="disableJoin()" (click)="join()">Join game</button>
+      <button class="actionButton" *ngIf="showStart()" [disabled]="disableStart()" (click)="start()">Start game</button>
+      <button class="actionButton" *ngIf="showRoll()" [disabled]="disableRoll()" (click)="roll()">Roll dice</button>
+      <button class="actionButton" *ngIf="showEndTurn()" [disabled]="disableEndTurn()" (click)="endTurn()">End turn</button>
 
-    <app-buy-this-space
-      *ngIf="game.canBuyThis()"
-      [price]="game.getInitialPrice()"
-      [maxCash]="game.getMyCash()"
-      [disabled]="commandInFlight"
-      (buy)="buyThis($event.cash, $event.borrowed)">
-    </app-buy-this-space>
+      <app-buy-this-space
+        *ngIf="game.canBuyThis()"
+        [price]="game.getInitialPrice()"
+        [maxCash]="game.getMyCash()"
+        [disabled]="commandInFlight"
+        (buy)="buyThis($event.cash, $event.borrowed)">
+      </app-buy-this-space>
+    </div>
   </div>
-</div>
 </div>

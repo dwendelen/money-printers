@@ -156,11 +156,12 @@ class Game(
             return if (players.all { it.id != cmd.id }) {
                 newEvent(PlayerAdded(
                         cmd.id,
-                        cmd.name
+                        cmd.name,
+                        cmd.color
                 ))
                 true
             } else {
-                false
+                false //TODO check color unique
             }
         }
 
