@@ -1,8 +1,9 @@
-<p>
-  Welkom {{user.getName()}} in game {{gameInfo.id}}
+<div class="game">
+<div>
+  Welcome {{user.getName()}} to game <span (click)="copyGameIdToClipboard()">{{gameInfo.id}} (click to copy)</span>
   <button (click)="exitGame()">Exit</button>
   <button (click)="logout()">Logout</button>
-</p>
+</div>
 <div class="column">
   <div class="board">
     <div class="ground" *ngFor="let ground of game.board">
@@ -31,10 +32,10 @@
     </div>
   </div>
   <div class="Actions">
-    <button *ngIf="showJoin()" [disabled]="disableJoin()" (click)="join()">Join game</button>
-    <button *ngIf="showStart()" [disabled]="disableStart()" (click)="start()">Start game</button>
-    <button *ngIf="showRoll()" [disabled]="disableRoll()" (click)="roll()">Roll dice</button>
-    <button *ngIf="showEndTurn()" [disabled]="disableEndTurn()" (click)="endTurn()">End turn</button>
+    <button class="actionButton" *ngIf="showJoin()" [disabled]="disableJoin()" (click)="join()">Join game</button>
+    <button class="actionButton" *ngIf="showStart()" [disabled]="disableStart()" (click)="start()">Start game</button>
+    <button class="actionButton" *ngIf="showRoll()" [disabled]="disableRoll()" (click)="roll()">Roll dice</button>
+    <button class="actionButton" *ngIf="showEndTurn()" [disabled]="disableEndTurn()" (click)="endTurn()">End turn</button>
 
     <app-buy-this-space
       *ngIf="game.canBuyThis()"
@@ -44,4 +45,5 @@
       (buy)="buyThis($event.cash, $event.borrowed)">
     </app-buy-this-space>
   </div>
+</div>
 </div>

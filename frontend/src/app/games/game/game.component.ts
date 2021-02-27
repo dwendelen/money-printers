@@ -164,4 +164,9 @@ export class GameComponent implements OnInit, OnDestroy {
       return '';
     }
   }
+
+  copyGameIdToClipboard(): void {
+    navigator.clipboard.writeText(this.gameInfo.id)
+      .then();
+  }
 }

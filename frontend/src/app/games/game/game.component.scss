@@ -1,3 +1,7 @@
+.game {
+  width: 960px;
+}
+
 .column {
   display: inline-block;
   vertical-align: top;
@@ -118,4 +122,8 @@ $playerNameCellWidth: $playerCellWidth + 50px;
   text-align: right;
   font-family: monospace;
   height: 20px;
+}
+
+.actionButton {
+  width: 100px;
 }
