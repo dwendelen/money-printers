@@ -14,13 +14,13 @@ export class ColorSelectorComponent implements DoCheck {
   @Input()
   exclude!: string[];
   colors = [
-    '#000000',
     '#0000FF',
     '#00FF00',
     '#00FFFF',
     '#FF0000',
     '#FF00FF',
-    '#FFFF00'
+    '#FFFF00',
+    '#000000',
   ];
   availableColors!: string[];
   selectedColor!: string;

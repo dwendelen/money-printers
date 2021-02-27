@@ -159,6 +159,16 @@ $playerNameCellWidth: $playerCellWidth + 50px;
     margin-right: 5px;
     margin-top: 3px;
   }
+
+  .gameMaster {
+    width: 12px;
+    height: 12px;
+    border-width: 0;
+    padding: 0;
+    margin-left: 5px;
+    margin-top: 3px;
+    background-color: gold;
+  }
 }
 
 .actionButton {

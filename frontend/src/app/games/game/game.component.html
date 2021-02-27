@@ -34,7 +34,11 @@
         <div>Start</div>
       </div>
       <div class="playerTableRow" *ngFor="let player of game.players">
-        <div class="playerName"><div class="playerColor" [style.background-color]="player.color"></div>{{player.name}}</div>
+        <div class="playerName">
+          <div class="playerColor" [style.background-color]="player.color"></div>
+          {{player.name}}
+          <div *ngIf="player.id === game.gameMasterId" class="gameMaster"></div>
+        </div>
         <div class="playerAmount">{{player.money}}</div>
         <div class="playerAmount">{{player.assets}}</div>
         <div class="playerAmount">{{player.debt}}</div>
