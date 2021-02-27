@@ -19,8 +19,7 @@ export class ColorSelectorComponent implements DoCheck {
     '#00FFFF',
     '#FF0000',
     '#FF00FF',
-    '#FFFF00',
-    '#000000',
+    '#FFFF00'
   ];
   availableColors!: string[];
   selectedColor!: string;
