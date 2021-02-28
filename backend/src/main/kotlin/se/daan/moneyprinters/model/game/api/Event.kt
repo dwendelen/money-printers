@@ -44,6 +44,7 @@ data class NewTurnStarted(
 ): Event()
 
 data class DiceRolled(
+        val player: String,
         val dice1: Int,
         val dice2: Int
 ): Event()
@@ -54,6 +55,7 @@ data class StartMoneyReceived(
 ): Event()
 
 data class LandedOn(
+        val player: String,
         val ground: String
 ): Event()
 

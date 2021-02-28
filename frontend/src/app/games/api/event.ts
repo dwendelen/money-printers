@@ -36,6 +36,7 @@ export interface NewTurnStarted {
 
 export interface DiceRolled {
   type: 'DiceRolled';
+  player: string;
   dice1: number;
   dice2: number;
 }
@@ -48,6 +49,7 @@ export interface StartMoneyReceived {
 
 export interface LandedOn {
   type: 'LandedOn';
+  player: string;
   ground: string;
 }
 

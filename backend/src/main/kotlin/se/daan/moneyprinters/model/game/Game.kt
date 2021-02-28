@@ -204,14 +204,14 @@ class Game(
             val idx = board.indexOf(player.position)
             val newPosition = (idx + dice1 + dice2) % board.size
 
-            newEvent(DiceRolled(dice1, dice2))
+            newEvent(DiceRolled(player.id, dice1, dice2))
             if(newPosition < idx) {
                 val interest = floor(player.debt * interestRate).toInt()
                 val economyMoney = ceil(economy * returnRate).toInt()
                 val startMoney = fixedStartMoney + economyMoney - interest
                 newEvent(StartMoneyReceived(player.id, startMoney)) //TODO calc start money
             }
-            newEvent(LandedOn(board[newPosition].id))
+            newEvent(LandedOn(player.id, board[newPosition].id))
             return true
         }
 

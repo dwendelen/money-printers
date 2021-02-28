@@ -2,9 +2,9 @@ import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angula
 import {LoggedInUser, LoginService} from '../../login/login.service';
 import {GameService} from '../game.service';
 import {GameInfo} from '../api/api';
-import {Game, Player, Space, Station, Street, Utility} from '../game';
+import {Game, Ownable, Player, Space, Station, Street, Utility} from '../game';
 import {Event} from '../api/event';
-import {AddPlayer, BuyThisSpace, Command, EndTurn, RollDice, StartGame} from '../api/command';
+import {AddPlayer, BuyThisSpace, Command, DemandPayment, EndTurn, RollDice, StartGame} from '../api/command';
 
 @Component({
   selector: 'app-game',
@@ -108,6 +108,10 @@ export class GameComponent implements OnInit, OnDestroy {
     this.sendCmd(new BuyThisSpace(cash, borrowed));
   }
 
+  demandPayment(player: Player, space: Space): void {
+    this.sendCmd(new DemandPayment(player.id, space.id));
+  }
+
   showEndTurn(): boolean {
     return this.game.isMyTurn();
   }
@@ -177,5 +181,10 @@ export class GameComponent implements OnInit, OnDestroy {
   getPlayerColors(): string[] {
     return this.game.players
       .map(p => p.color);
+  }
+
+  getOwnerColor(ground: Space): string {
+    const ownable = ground as Ownable;
+    return ownable!.getOwner()!.color;
   }
 }

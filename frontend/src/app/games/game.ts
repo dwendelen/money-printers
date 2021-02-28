@@ -5,7 +5,9 @@ import {
   GameStarted,
   LandedOn,
   NewTurnStarted,
-  PlayerAdded, SpaceBought, StartMoneyReceived,
+  PlayerAdded,
+  SpaceBought,
+  StartMoneyReceived,
   TurnEnded
 } from './api/event';
 
@@ -14,7 +16,7 @@ export class Game {
   players: Player[] = [];
   board: Space[] = [];
   economy = 0;
-  state: State = new WaitingForStart(this);
+  state: GameState = new WaitingForStart();
   gameMasterId!: string;
   fixedStartMoney!: number;
   interestRate!: number;
@@ -29,87 +31,173 @@ export class Game {
     console.log('Event', event);
     switch (event.type) {
       case 'GameCreated':
-        this.board = event.board
-          .map(s => {
-            switch (s.type) {
-              case 'ActionSpace':
-                return new ActionSpace(s.id, s.text);
-              case 'Street':
-                return new Street(
-                  s.id,
-                  s.text,
-                  s.color,
-                  s.initialPrice,
-                  s.rent,
-                  s.rentHouse,
-                  s.rentHotel,
-                  s.priceHouse,
-                  s.priceHotel
-                );
-              case 'FreeParking':
-                return new FreeParking(s.id, s.text);
-              case 'Prison':
-                return new Prison(s.id, s.text);
-              case 'Station':
-                return new Station(
-                  s.id,
-                  s.text,
-                  s.initialPrice,
-                  s.rent
-                );
-              case 'Utility':
-                return new Utility(
-                  s.id,
-                  s.text,
-                  s.initialPrice,
-                  s.rent,
-                  s.rentAll
-                );
-            }
-          });
-        this.gameMasterId = event.gameMaster;
-        this.fixedStartMoney = event.fixedStartMoney;
-        this.interestRate = event.interestRate;
-        this.returnRate = event.returnRate;
+        this.applyGameCreated(event);
         break;
       case 'PlayerAdded':
-        this.state.applyPlayerAdded(event);
+        this.applyPlayerAdded(event);
         break;
       case 'GameStarted':
-        this.state.applyGameStarted(event);
+        this.applyGameStarted(event);
         break;
       case 'NewTurnStarted':
-        this.state.applyNewTurnStarted(event);
+        this.applyNewTurnStarted(event);
         break;
       case 'DiceRolled':
-        this.state.applyDiceRolled(event);
+        this.applyDiceRolled(event);
         break;
       case 'StartMoneyReceived':
-        this.state.applyStartMoneyReceived(event);
+        this.applyStartMoneyReceived(event);
         break;
       case 'LandedOn':
-        this.state.applyLandedOn(event);
+        this.applyLandedOn(event);
         break;
       case 'SpaceBought':
-        this.state.applySpaceBought(event);
+        this.applySpaceBought(event);
         break;
       case 'TurnEnded':
-        this.state.applyTurnEnded(event);
+        this.applyTurnEnded(event);
         break;
     }
     this.events.push(event);
   }
 
+  private applyGameCreated(event: GameCreated): void {
+    this.board = event.board
+      .map(s => {
+        switch (s.type) {
+          case 'ActionSpace':
+            return new ActionSpace(s.id, s.text);
+          case 'Street':
+            return new Street(
+              s.id,
+              s.text,
+              s.color,
+              s.initialPrice,
+              s.rent,
+              s.rentHouse,
+              s.rentHotel,
+              s.priceHouse,
+              s.priceHotel
+            );
+          case 'FreeParking':
+            return new FreeParking(s.id, s.text);
+          case 'Prison':
+            return new Prison(s.id, s.text);
+          case 'Station':
+            return new Station(
+              s.id,
+              s.text,
+              s.initialPrice,
+              s.rent
+            );
+          case 'Utility':
+            return new Utility(
+              s.id,
+              s.text,
+              s.initialPrice,
+              s.rent,
+              s.rentAll
+            );
+        }
+      });
+    this.gameMasterId = event.gameMaster;
+    this.fixedStartMoney = event.fixedStartMoney;
+    this.interestRate = event.interestRate;
+    this.returnRate = event.returnRate;
+  }
+
+  private applyPlayerAdded(event: PlayerAdded): void {
+    this.players.push(new Player(
+      event.id,
+      event.name,
+      event.color,
+      this.board[0]
+    ));
+  }
+
+  private applyGameStarted(event: GameStarted): void {
+    this.state = new NotMyTurn();
+  }
+
+  private applyNewTurnStarted(event: NewTurnStarted): void {
+    if (event.player === this.myId) {
+      this.state = new MyTurn();
+    } else {
+      this.state = new NotMyTurn();
+    }
+  }
+
+  private applyDiceRolled(event: DiceRolled): void {
+  }
+
+  private applyStartMoneyReceived(event: StartMoneyReceived): void {
+    const player = this.getPlayer(event.player);
+    player.applyStartMoneyReceived(event);
+  }
+
+  private applyLandedOn(event: LandedOn): void  {
+    const player = this.getPlayer(event.player);
+    const space = this.getSpace(event.ground);
+
+    player.applyLandedOn(event, space);
+    this.state.applyLandedOn(event, space);
+  }
+
+  private applySpaceBought(event: SpaceBought): void  {
+    const player = this.getPlayer(event.player);
+    const ownable = this.getOwnable(event.ground);
+
+    const value = event.cash + event.borrowed;
+    this.economy += value;
+    ownable.setOwner(player);
+    ownable.setAssetValue(value);
+    player.applySpaceBought(event);
+
+    this.state.applySpaceBought(event, ownable);
+  }
+
+  private applyTurnEnded(event: TurnEnded): void {
+    this.state = new NotMyTurn();
+  }
+
+  private getPlayer(id: string): Player {
+    const player = this.players
+      .filter(p => p.id === id)[0];
+    if (!player) {
+      throw new Error('Player not found');
+    }
+    return player;
+  }
+
+  private getSpace(id: string): Space {
+    const space = this.board
+      .filter(p => p.id === id)[0];
+    if (!space) {
+      throw new Error('Space not found');
+    }
+    return space;
+  }
+
+  private getOwnable(id: string): Ownable {
+    return this.getSpace(id) as Ownable;
+  }
+
   hasPowerToStartGame(): boolean {
-    return this.state.hasPowerToStartGame();
+    return this.state instanceof WaitingForStart &&
+      this.myId === this.gameMasterId;
   }
 
   canJoin(): boolean {
-    return this.state.canJoin();
+    const iHaveJoined = !this.players
+      .some(p => p.id === this.myId);
+
+    return iHaveJoined && this.state instanceof WaitingForStart;
   }
 
   canStartGame(): boolean {
-    return this.state.canStartGame();
+    return this.state instanceof WaitingForStart &&
+      this.hasPowerToStartGame() &&
+      this.players.length >= 2;
   }
 
   canRollDice(): boolean {
@@ -121,23 +209,24 @@ export class Game {
   }
 
   canBuyThis(): boolean {
-    return this.state.canBuyGround();
+    return this.state.canBuyGround() &&
+      this.getMe().canBuyThis();
   }
 
   isMyTurn(): boolean {
-    return this.state.isMyTurn();
+    return this.state instanceof MyTurn;
   }
 
   getMyCash(): number {
-    const thisPlayer = this.players
-      .filter(p => p.id === this.myId)[0];
-    return thisPlayer.money;
+    return this.getMe().money;
   }
 
   getMyOwnable(): Ownable {
-    const thisPlayer = this.players
-      .filter(p => p.id === this.myId)[0];
-    return thisPlayer.position as Ownable;
+    return this.getMe().position as Ownable;
+  }
+
+  private getMe(): Player {
+    return this.getPlayer(this.myId);
   }
 
   getStartMoney(player: Player): number {
@@ -159,250 +248,185 @@ export class Player {
     public position: Space
   ) {
   }
+
+  applyStartMoneyReceived(event: StartMoneyReceived): void {
+    this.money += event.amount;
+  }
+
+  applyLandedOn(event: LandedOn, space: Space): void {
+    this.position = space;
+  }
+
+  applySpaceBought(event: SpaceBought): void {
+    this.money -= event.cash;
+    this.debt += event.borrowed;
+    this.assets += event.cash + event.borrowed;
+  }
+
+  canBuyThis(): boolean {
+    return this.position.canBuy();
+  }
 }
 
-interface State {
-  applyPlayerAdded(event: PlayerAdded): void;
+interface GameState {
 
-  applyGameStarted(event: GameStarted): void;
+  applyLandedOn(event: LandedOn, space: Space): void;
 
-  applyNewTurnStarted(event: NewTurnStarted): void;
+  applySpaceBought(event: SpaceBought, ownable: Ownable): void;
 
-  applyDiceRolled(event: DiceRolled): void;
+  canRollDice(): boolean;
 
-  applyStartMoneyReceived(event: StartMoneyReceived): void;
+  canEndTurn(): boolean;
 
-  applyLandedOn(event: LandedOn): void;
+  canBuyGround(): boolean;
+}
 
-  applySpaceBought(event: SpaceBought): void;
+class WaitingForStart implements GameState {
+  applyLandedOn(event: LandedOn, space: Space): void {}
 
-  applyTurnEnded(event: TurnEnded): void;
+  applySpaceBought(event: SpaceBought, space: Space): void {}
 
-  canJoin(): boolean;
+  canBuyGround(): boolean {
+    return false;
+  }
 
-  hasPowerToStartGame(): boolean;
+  canEndTurn(): boolean {
+    return false;
+  }
 
-  canStartGame(): boolean;
+  canRollDice(): boolean {
+    return false;
+  }
+}
+
+class NotMyTurn implements  GameState {
+  applyLandedOn(event: LandedOn, space: Space): void {
+  }
+
+  applySpaceBought(event: SpaceBought, space: Space): void {
+  }
+
+  canBuyGround(): boolean {
+    return false;
+  }
+
+  canEndTurn(): boolean {
+    return false;
+  }
+
+  canRollDice(): boolean {
+    return false;
+  }
+}
+
+class MyTurn implements  GameState {
+  private state: TurnState = new WaitingForDiceRoll();
+
+  applyLandedOn(event: LandedOn, space: Space): void {
+    this.state = this.state.applyLandedOn(event, space);
+  }
+
+  applySpaceBought(event: SpaceBought, ownable: Ownable): void {
+    this.state = this.state.applySpaceBought(event, ownable);
+  }
+
+  canBuyGround(): boolean {
+    return this.state.canBuyGround();
+  }
+
+  canEndTurn(): boolean {
+    return this.state.canEndTurn();
+  }
+
+  canRollDice(): boolean {
+    return this.state.canRollDice();
+  }
+
+}
+
+interface TurnState {
+  applyLandedOn(event: LandedOn, space: Space): TurnState;
+
+  applySpaceBought(event: SpaceBought, ownable: Ownable): TurnState;
 
   canRollDice(): boolean;
 
   canBuyGround(): boolean;
 
   canEndTurn(): boolean;
-
-  isMyTurn(): boolean;
 }
 
-abstract class NothingState implements State {
-  applyGameStarted(event: GameStarted): void {
-  }
-
-  applyPlayerAdded(event: PlayerAdded): void {
-  }
-
-  applyNewTurnStarted(event: NewTurnStarted): void {
-  }
-
-  applyDiceRolled(event: DiceRolled): void {
-  }
-
-  applyStartMoneyReceived(event: StartMoneyReceived): void {
-  }
-
-  applyLandedOn(event: LandedOn): void {
-  }
-
-  applySpaceBought(event: SpaceBought): void {
-  }
-
-  applyTurnEnded(event: TurnEnded): void {
-  }
-
-  abstract isMyTurn(): boolean;
-
-  canJoin(): boolean {
-    return false;
-  }
-
-  hasPowerToStartGame(): boolean {
-    return false;
-  }
-
-  canStartGame(): boolean {
-    return false;
-  }
+class WaitingForDiceRoll implements TurnState {
 
   canRollDice(): boolean {
-    return false;
+    return true;
   }
 
-  canBuyGround(): boolean {
-    return false;
-  }
-
-  canEndTurn(): boolean {
-    return false;
-  }
-}
-
-class WaitingForStart extends NothingState {
-  constructor(private game: Game) {
-    super();
-  }
-
-  applyPlayerAdded(event: PlayerAdded): void {
-    this.game.players.push(new Player(
-      event.id,
-      event.name,
-      event.color,
-      this.game.board[0]
-    ));
-  }
-
-  applyGameStarted(event: GameStarted): void {
-    this.game.state = new WaitingForTurn(this.game);
-  }
-
-  canJoin(): boolean {
-    return !this.game.players
-      .some(p => p.id === this.game.myId);
-  }
-
-  hasPowerToStartGame(): boolean {
-    return this.game.myId === this.game.gameMasterId;
-  }
-
-  canStartGame(): boolean {
-    return this.hasPowerToStartGame() && this.game.players.length >= 2;
-  }
-
-  isMyTurn(): boolean {
-    return false;
-  }
-}
-
-class WaitingForTurn extends NothingState {
-  constructor(private game: Game) {
-    super();
-  }
-
-  applyNewTurnStarted(event: NewTurnStarted): void {
-    const player = this.game.players
-      .find(p => p.id === event.player);
-    if (!player) {
-      throw new Error('Player not found');
-    }
-    this.game.state = new WaitingForDiceRoll(this.game, player);
-  }
-
-  isMyTurn(): boolean {
-    return false;
-  }
-}
-
-class WaitingForDiceRoll extends NothingState {
-  constructor(
-    private game: Game,
-    private player: Player
-  ) {
-    super();
-  }
-
-  applyDiceRolled(event: DiceRolled): void {
-    this.game.state = new WaitingForDiceOutcome(this.game, this.player);
-  }
-
-  canRollDice(): boolean {
-    return this.isMyTurn();
-  }
-
-  isMyTurn(): boolean {
-    return this.player.id === this.game.myId;
-  }
-}
-
-class WaitingForDiceOutcome extends NothingState {
-  constructor(
-    private game: Game,
-    private player: Player
-  ) {
-    super();
-  }
-
-  applyStartMoneyReceived(event: StartMoneyReceived): void {
-    const player = this.game.players
-      .find(p => p.id === event.player);
-    if (!player) {
-      throw new Error('Player not found');
-    }
-    player.money += event.amount;
-    this.game.economy -= event.amount;
-  }
-
-  applyLandedOn(event: LandedOn): void {
-    this.player.position = this.game.board
-      .filter(g => g.id === event.ground)[0];
-
-    if (this.player.position.canBuy()) {
-      this.game.state = new LandedOnNewGround(this.game, this.player);
+  applyLandedOn(event: LandedOn, ownable: Ownable): TurnState {
+    if (ownable.canBuy()) {
+      return new LandedOnNewGround();
     } else {
-      this.game.state = new WaitingForEndTurn(this.game, this.player);
+      return new WaitingForEndTurn();
     }
   }
 
-  isMyTurn(): boolean {
-    return this.player.id === this.game.myId;
-  }
-}
-
-class LandedOnNewGround extends NothingState {
-  constructor(
-    private game: Game,
-    private player: Player
-  ) {
-    super();
+  applySpaceBought(event: SpaceBought, space: Space): TurnState {
+    return this;
   }
 
   canBuyGround(): boolean {
-    return this.isMyTurn();
-  }
-
-  applySpaceBought(event: SpaceBought): void {
-    const value = event.cash + event.borrowed;
-    // TODO other players could also have bought
-    this.player.position.setOwner(this.player);
-    this.player.position.setAssetValue(value);
-    this.player.money -= event.cash;
-    this.player.debt += event.borrowed;
-    this.game.economy += value;
-    this.player.assets += value;
-    this.game.state = new WaitingForEndTurn(this.game, this.player);
-  }
-
-  isMyTurn(): boolean {
-    return this.player.id === this.game.myId;
-  }
-}
-
-class WaitingForEndTurn extends NothingState {
-  constructor(
-    private game: Game,
-    private player: Player
-  ) {
-    super();
-  }
-
-  applyTurnEnded(event: TurnEnded): void {
-    this.game.state = new WaitingForTurn(this.game);
+    return false;
   }
 
   canEndTurn(): boolean {
-    return this.isMyTurn();
+    return false;
+  }
+}
+
+class LandedOnNewGround implements TurnState {
+  canBuyGround(): boolean {
+    return true;
   }
 
-  isMyTurn(): boolean {
-    return this.player.id === this.game.myId;
+  applySpaceBought(event: SpaceBought): TurnState {
+    return new WaitingForEndTurn();
   }
+
+  applyLandedOn(event: LandedOn): TurnState {
+    return this;
+  }
+
+  canEndTurn(): boolean {
+    return false;
+  }
+
+  canRollDice(): boolean {
+    return false;
+  }
+}
+
+class WaitingForEndTurn implements TurnState {
+
+  canEndTurn(): boolean {
+    return true;
+  }
+
+  applyLandedOn(event: LandedOn): TurnState {
+    return this;
+  }
+
+  applySpaceBought(event: SpaceBought): TurnState {
+    return this;
+  }
+
+  canBuyGround(): boolean {
+    return false;
+  }
+
+  canRollDice(): boolean {
+    return false;
+  }
+
 }
 
 export interface Space {
@@ -410,13 +434,8 @@ export interface Space {
   text: string;
   color: string | null;
 
-  setOwner(player: Player): void;
-  getOwner(): Player | null | undefined;
-
   canBuy(): boolean;
-  getInitialPrice(): number | undefined;
-  getAssetValue(): number | null | undefined;
-  setAssetValue(assetValue: number): void;
+
   getRent(): number | undefined;
   getRentAll(): number | undefined;
   getHouseRent(nbOfHouses: number): number | undefined;
@@ -461,7 +480,7 @@ export class Street implements Ownable {
   }
 
   canBuy(): boolean {
-    return this.owner == null;
+    return this.owner === null;
   }
 
   getInitialPrice(): number {
@@ -522,17 +541,6 @@ export class ActionSpace implements Space {
 
   canBuy(): boolean {
     return false;
-  }
-
-  getInitialPrice(): undefined {
-    return undefined;
-  }
-
-  getAssetValue(): undefined {
-    return undefined;
-  }
-
-  setAssetValue(assetValue: number): void {
   }
 
   getRent(): undefined {
@@ -653,7 +661,7 @@ export class Station implements Ownable {
   }
 
   canBuy(): boolean {
-    return this.owner == null;
+    return this.owner === null;
   }
 
   getInitialPrice(): number {
@@ -716,17 +724,6 @@ export class Prison implements Space {
     return false;
   }
 
-  getInitialPrice(): undefined {
-    return undefined;
-  }
-
-  getAssetValue(): undefined {
-    return undefined;
-  }
-
-  setAssetValue(assetValue: number): void {
-  }
-
   getRent(): undefined {
     return undefined;
   }
@@ -773,17 +770,6 @@ export class FreeParking implements Space {
 
   canBuy(): boolean {
     return false;
-  }
-
-  getInitialPrice(): undefined {
-    return undefined;
-  }
-
-  getAssetValue(): undefined {
-    return undefined;
-  }
-
-  setAssetValue(assetValue: number): void {
   }
 
   getRent(): undefined {

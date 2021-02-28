@@ -1,5 +1,5 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {Space, Station, Street, Utility} from '../game';
+import {Ownable, Space, Station, Street, Utility} from '../game';
 
 @Component({
   selector: 'app-space-info',
@@ -33,5 +33,20 @@ export class SpaceInfoComponent implements OnInit {
 
   isStation(): boolean {
     return this.space instanceof Station;
+  }
+
+  getOwnerName(space: Space): string{
+    const ownable = space as Ownable;
+    return ownable.getOwner()?.name || '';
+  }
+
+  getAssetValue(space: Space): number {
+    const ownable = space as Ownable;
+    return ownable.getAssetValue()!;
+  }
+
+  getInitialPrice(space: Space): number {
+    const ownable = space as Ownable;
+    return ownable.getInitialPrice()!;
   }
 }

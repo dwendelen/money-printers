@@ -1,11 +1,11 @@
 <div>{{space.text}}</div>
 <div *ngIf="isOwnable()">
   <span class="space-info-left owner">Owner</span>
-  <span class="space-info-right owner">{{space.getOwner()?.name}}</span>
+  <span class="space-info-right owner">{{getOwnerName(space)}}</span>
 </div>
 <div *ngIf="isOwnable()">
   <span class="space-info-left">Asset value</span>
-  <span class="space-info-right amount">{{space.getAssetValue()}}</span>
+  <span class="space-info-right amount">{{getAssetValue(space)}}</span>
 </div>
 <div *ngIf="isOwnable()">&nbsp;</div>
 <div *ngIf="isStreet()">
@@ -63,7 +63,7 @@
 <div *ngIf="isOwnable()">&nbsp;</div>
 <div *ngIf="isOwnable()">
   <span class="space-info-left">Initial price</span>
-  <span class=" space-info-right amount">{{space.getInitialPrice()}}</span>
+  <span class=" space-info-right amount">{{getInitialPrice(space)}}</span>
 </div>
 <div *ngIf="isStreet()">
   <span class="space-info-left">Price House</span>

@@ -10,7 +10,7 @@
         <div class="groundOwner">
           <div *ngIf="isGroundUnBuilt(ground)"
                class="unbuilt"
-               [style.border-color]="ground.getOwner()!.color"
+               [style.border-color]="getOwnerColor(ground)"
           ></div>
         </div>
         <div class="groundName"
