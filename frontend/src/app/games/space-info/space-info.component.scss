@@ -1,22 +1,56 @@
-.space-info-left {
-  display: inline-block;
-  width: 80px;
-  padding: 0 10px;
+$nameWidth: 174px;
+$paddingName: 5px;
+$rowWidth: $nameWidth + 2 * $paddingName;
+$widthLeft: 80px;
+$widthRight: 50px;
+$paddingLeftRight: ($rowWidth - $widthLeft - $widthRight)/2;
+$extraOwner: 30px;
+$height: 18px;
+$paddingLine: 5px;
+
+.name {
+  //display: inline-block;
+  width: $nameWidth;
+  height: $height;
+  padding: $paddingName;
+
+  border-width: 1px;
+  border-style: solid;
+  text-align: center;
 }
-.space-info-left.owner {
-  width: 50px;
+.box {
+  width: $rowWidth;
+  border-width: 0 1px 1px 1px;
+  border-style: none solid solid solid;
+  padding: $paddingLine 0;
+}
+.row {
+  width: $rowWidth;
+}
+.left {
+  display: inline-block;
+  vertical-align: top;
+  width: $widthLeft;
+  height: $height;
+  padding: 0 0 0 $paddingLeftRight;
+}
+.left.owner {
+  width: $widthLeft - $extraOwner;
 }
 .amount {
   //font-family: monospace;
 }
 
-.space-info-right {
+.right {
   display: inline-block;
-  width: 50px;
-  padding: 0 10px;
+  vertical-align: top;
+  width: $widthRight;
+  height: $height;
+  padding: 0 $paddingLeftRight 0 0;
   font-size: 16px;
   text-align: right;
 }
-.space-info-right.owner {
-  width: 80px;
+.right.owner {
+  width: $widthRight + $extraOwner;
 }
+
