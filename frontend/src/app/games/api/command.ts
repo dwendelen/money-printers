@@ -33,6 +33,15 @@ export class BuyThisSpace {
   }
 }
 
+export class DemandPayment {
+  type = 'DemandPayment';
+  constructor(
+    public player: string,
+    public space: string
+  ) {
+  }
+}
+
 export class EndTurn {
   type = 'EndTurn';
 }
