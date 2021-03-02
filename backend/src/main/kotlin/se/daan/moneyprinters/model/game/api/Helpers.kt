@@ -23,7 +23,7 @@ sealed class Space {
     abstract val text: String
 }
 
-class Street(
+data class Street(
         override val id: String,
         override val text: String,
         val color: String,
@@ -35,12 +35,12 @@ class Street(
         val priceHotel: Int
 ) : Space()
 
-class ActionSpace(
+data class ActionSpace(
         override val id: String,
         override val text: String,
 ) : Space()
 
-class Utility(
+data class Utility(
         override val id: String,
         override val text: String,
         val initialPrice: Int,
@@ -48,19 +48,19 @@ class Utility(
         val rentAll: Int
 ) : Space()
 
-class Station(
+data class Station(
         override val id: String,
         override val text: String,
         val initialPrice: Int,
         val rent: List<Int>
 ) : Space()
 
-class FreeParking(
+data class FreeParking(
         override val id: String,
         override val text: String
 ) : Space()
 
-class Prison(
+data class Prison(
         override val id: String,
         override val text: String
 ) : Space()
