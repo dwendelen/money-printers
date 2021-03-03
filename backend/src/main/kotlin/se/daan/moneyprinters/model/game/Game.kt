@@ -59,7 +59,7 @@ class Game(
                 is EndTurn -> on(cmd)
             }
 
-            if(events.size != expectedVersion) {
+            if (events.size != expectedVersion) {
                 dataAvailable.signalAll()
             }
             return result
@@ -68,8 +68,7 @@ class Game(
 
     private fun on(cmd: AddPlayer): Boolean {
         return if (
-                players.all { it.color != cmd.color } &&
-                players.all { it.id != cmd.id } &&
+                players.all { it.isCompatibleWithNewPlayer(cmd.id, cmd.color) } &&
                 this.state.canAddPlayer()
         ) {
             newEvent(PlayerAdded(
@@ -99,7 +98,8 @@ class Game(
 
     private fun on(cmd: RollDice): Boolean {
         val player = findPlayer(cmd.player)
-        return if(
+        return if (
+                player != null &&
                 this.state.canRollDice(player)
         ) {
             val dice1 = random.nextInt(1, 7)
@@ -109,7 +109,7 @@ class Game(
             val newPosition = (idx + dice1 + dice2) % board.size
 
             newEvent(DiceRolled(player.id, dice1, dice2))
-            if(newPosition < idx) {
+            if (newPosition < idx) {
                 val interest = floor(player.debt * interestRate).toInt()
                 val economyMoney = ceil(economy * returnRate).toInt()
                 val startMoney = fixedStartMoney + economyMoney - interest
@@ -124,12 +124,13 @@ class Game(
 
     private fun on(cmd: BuyThisSpace): Boolean {
         val player = findPlayer(cmd.player)
-        val ownable = player.position as Ownable?
-        return if(
-                player.money >= cmd.cash &&
-                ownable is Ownable &&
-                ownable.owner == null &&
-                ownable.initialPrice == cmd.cash + cmd.borrowed &&
+        val space = player?.position
+        return if (
+                player != null &&
+                space is Ownable &&
+                player.canBuy(cmd.cash) &&
+                space.canBuy(cmd.cash + cmd.borrowed) &&
+
                 this.state.canBuyThis(player)
         ) {
             newEvent(SpaceBought(
@@ -146,7 +147,8 @@ class Game(
 
     private fun on(cmd: EndTurn): Boolean {
         val player = findPlayer(cmd.player)
-        return if(
+        return if (
+                player != null &&
                 this.state.canEndGame(player)
         ) {
             val idx = players.indexOf(player)
@@ -210,7 +212,9 @@ class Game(
 
     private fun apply(event: NewTurnStarted) {
         val player = findPlayer(event.player)
-        state = WaitingForDiceRoll(player)
+        if(player != null) {
+            state = WaitingForDiceRoll(player)
+        }
     }
 
     private fun apply(event: DiceRolled) {
@@ -218,46 +222,58 @@ class Game(
     }
 
     private fun apply(event: StartMoneyReceived) {
-            val receiver = players.filter { p -> p.id === event.player }[0]
-            receiver.money += event.amount
+        val player = findPlayer(event.player)
+        if(player != null) {
+            player.apply(event)
             economy -= event.amount
+        }
     }
 
     private fun apply(event: LandedOn) {
         val player = findPlayer(event.player)
-        player.position = board
-                .filter { it.id === event.ground }[0]
-
-        val canBuy = player.position.canBuy()
-        state = state.apply(event, canBuy)
+        val space = findSpace(event.ground)
+        if(player != null && space != null) {
+            player.apply(event, space)
+            state = state.apply(event, space.canBuy())
+        }
     }
+
     private fun apply(event: SpaceBought) {
         val player = findPlayer(event.player)
-        val ownable = board.find { it.id == event.ground } as Ownable
-        ownable.owner = player
-        player.money -= event.cash
-        player.debt += event.borrowed
+        val space = findSpace(event.ground)
+
+        if(player != null && space is Ownable) {
+            player.apply(event)
+            space.apply(event, player)
+        }
+
         economy += event.cash + event.borrowed
         this.state = this.state.apply(event)
     }
+
     private fun apply(event: TurnEnded) {
         state = WaitingForTurn()
     }
 
-    private fun findPlayer(id: String): Player {
+    private fun findPlayer(id: String): Player? {
         return players
-                .find { it.id == id }!!
+                .find { it.id == id }
+    }
+
+    private fun findSpace(id: String): Space? {
+        return board
+                .find { it.id == id }
     }
 
     fun getNewEvents(skip: Int, limit: Int, timeout: Int): List<Event> {
         val end = clock.millis() + timeout
         eventsLock.withLock {
-            while(true) {
+            while (true) {
                 val now = clock.millis()
                 val newEvents = events
                         .drop(skip)
                         .take(limit)
-                if(newEvents.isNotEmpty() || now >= end) {
+                if (newEvents.isNotEmpty() || now >= end) {
                     return newEvents
                 }
                 dataAvailable.await(end - now, TimeUnit.MILLISECONDS)
@@ -316,7 +332,7 @@ class Game(
             val player: Player
     ) : NothingGameState() {
         override fun apply(event: LandedOn, canBuy: Boolean): GameState {
-            return if(canBuy) {
+            return if (canBuy) {
                 LandedOnNewGround(player)
             } else {
                 WaitingForEndTurn(player)
@@ -326,7 +342,7 @@ class Game(
 
     private inner class LandedOnNewGround(
             val player: Player
-    ): NothingGameState() {
+    ) : NothingGameState() {
         override fun canBuyThis(player: Player): Boolean {
             return this.player == player
         }
@@ -351,7 +367,31 @@ class Player(
         var position: Space,
         var money: Int = 0,
         var debt: Int = 0
-)
+) {
+    fun isCompatibleWithNewPlayer(
+            id: String,
+            color: String
+    ): Boolean {
+        return id != this.id && color != this.color
+    }
+
+    fun canBuy(cash: Int): Boolean {
+        return money >= cash
+    }
+
+    fun apply(event: StartMoneyReceived) {
+        money += event.amount
+    }
+
+    fun apply(event: LandedOn, space: Space) {
+        position = space
+    }
+
+    fun apply(event: SpaceBought) {
+        money -= event.cash
+        debt += event.borrowed
+    }
+}
 
 sealed class Space {
     abstract val id: String
@@ -361,6 +401,15 @@ sealed class Space {
 interface Ownable {
     val initialPrice: Int
     var owner: Player?
+
+    fun canBuy(price: Int): Boolean {
+        return owner == null &&
+                initialPrice == price
+    }
+
+    fun apply(block: SpaceBought, player: Player) {
+        owner = player
+    }
 }
 
 class Street(
