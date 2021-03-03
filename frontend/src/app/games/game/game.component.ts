@@ -89,7 +89,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   start(): void {
-    this.sendCmd(new StartGame());
+    this.sendCmd(new StartGame(this.game.myId));
   }
 
   showRoll(): boolean {
@@ -101,15 +101,15 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   roll(): void {
-    this.sendCmd(new RollDice());
+    this.sendCmd(new RollDice(this.game.myId));
   }
 
   buyThis(cash: number, borrowed: number): void {
-    this.sendCmd(new BuyThisSpace(cash, borrowed));
+    this.sendCmd(new BuyThisSpace(this.game.myId, cash, borrowed));
   }
 
   demandPayment(player: Player, space: Space): void {
-    this.sendCmd(new DemandPayment(player.id, space.id));
+    this.sendCmd(new DemandPayment(this.game.myId, player.id, space.id));
   }
 
   showEndTurn(): boolean {
@@ -121,7 +121,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   endTurn(): void {
-    this.sendCmd(new EndTurn());
+    this.sendCmd(new EndTurn(this.game.myId));
   }
 
   private sendCmd(cmd: Command): void {

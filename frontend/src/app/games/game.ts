@@ -133,6 +133,7 @@ export class Game {
   private applyStartMoneyReceived(event: StartMoneyReceived): void {
     const player = this.getPlayer(event.player);
     player.applyStartMoneyReceived(event);
+    this.economy -= event.amount;
   }
 
   private applyLandedOn(event: LandedOn): void  {

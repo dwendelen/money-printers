@@ -18,15 +18,27 @@ export class AddPlayer {
 
 export class StartGame {
   type = 'StartGame';
+
+  constructor(
+    public initiator: string
+  ) {
+  }
 }
 
 export class RollDice {
   type = 'RollDice';
+
+  constructor(
+    public player: string
+  ) {
+  }
 }
 
 export class BuyThisSpace {
   type = 'BuyThisSpace';
+
   constructor(
+    public player: string,
     public cash: number,
     public borrowed: number
   ) {
@@ -35,7 +47,9 @@ export class BuyThisSpace {
 
 export class DemandPayment {
   type = 'DemandPayment';
+
   constructor(
+    public initiator: string,
     public player: string,
     public space: string
   ) {
@@ -44,4 +58,9 @@ export class DemandPayment {
 
 export class EndTurn {
   type = 'EndTurn';
+
+  constructor(
+    public player: string
+  ) {
+  }
 }

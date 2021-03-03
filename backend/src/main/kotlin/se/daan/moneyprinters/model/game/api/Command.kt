@@ -35,18 +35,26 @@ data class AddPlayer(
         val color: String
 ) : Command()
 
-object StartGame : Command()
+data class StartGame(
+        val initiator: String
+) : Command()
 
-object RollDice : Command()
+data class RollDice(
+        val player: String
+) : Command()
 
 data class BuyThisSpace(
+        val player: String,
         val cash: Int,
         val borrowed: Int
 ) : Command()
 
 //data class DemandPayment(
+//    val initiator: String,
 //    val player: String,
 //    val space: String
 //): Command()
 
-object EndTurn : Command()
+data class EndTurn(
+        val player: String
+) : Command()
