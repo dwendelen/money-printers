@@ -149,7 +149,7 @@ class Game(
         val player = findPlayer(cmd.player)
         return if (
                 player != null &&
-                this.state.canEndGame(player)
+                this.state.canEndTurn(player)
         ) {
             val idx = players.indexOf(player)
             val newPlayer = players[(idx + 1) % players.size]
@@ -213,12 +213,12 @@ class Game(
     private fun apply(event: NewTurnStarted) {
         val player = findPlayer(event.player)
         if(player != null) {
-            state = WaitingForDiceRoll(player)
+            state = Turn(player)
         }
     }
 
     private fun apply(event: DiceRolled) {
-        this.state = this.state.apply(event)
+        this.state.apply(event)
     }
 
     private fun apply(event: StartMoneyReceived) {
@@ -234,7 +234,7 @@ class Game(
         val space = findSpace(event.ground)
         if(player != null && space != null) {
             player.apply(event, space)
-            state = state.apply(event, space.canBuy())
+            state.apply(event, space.canBuy())
         }
     }
 
@@ -245,10 +245,10 @@ class Game(
         if(player != null && space is Ownable) {
             player.apply(event)
             space.apply(event, player)
-        }
 
-        economy += event.cash + event.borrowed
-        this.state = this.state.apply(event)
+            economy += event.cash + event.borrowed
+            this.state.apply(event)
+        }
     }
 
     private fun apply(event: TurnEnded) {
@@ -285,79 +285,86 @@ class Game(
         fun canAddPlayer(): Boolean
         fun canStartGame(): Boolean
         fun canRollDice(player: Player): Boolean
-        fun apply(event: DiceRolled): GameState
-        fun apply(event: LandedOn, canBuy: Boolean): GameState
+        fun apply(event: DiceRolled)
+        fun apply(event: LandedOn, canBuy: Boolean)
         fun canBuyThis(player: Player): Boolean
-        fun apply(event: SpaceBought): GameState
-        fun canEndGame(player: Player): Boolean
+        fun apply(event: SpaceBought)
+        fun canEndTurn(player: Player): Boolean
     }
 
-    private open class NothingGameState : GameState {
+    private inner class WaitingForStart: GameState {
+        override fun canAddPlayer() = true
+        override fun canStartGame() = true
+
+        override fun canRollDice(player: Player) = false
+        override fun apply(event: DiceRolled){}
+        override fun apply(event: LandedOn, canBuy: Boolean){}
+        override fun canBuyThis(player: Player) = false
+        override fun apply(event: SpaceBought) {}
+        override fun canEndTurn(player: Player) = false
+    }
+
+    private inner class WaitingForTurn : GameState {
         override fun canAddPlayer() = false
         override fun canStartGame() = false
         override fun canRollDice(player: Player) = false
-        override fun apply(event: DiceRolled): GameState = this
-        override fun apply(event: LandedOn, canBuy: Boolean): GameState = this
+        override fun apply(event: DiceRolled) {}
+        override fun apply(event: LandedOn, canBuy: Boolean) {}
         override fun canBuyThis(player: Player) = false
-        override fun apply(event: SpaceBought): GameState = this
-        override fun canEndGame(player: Player) = false
+        override fun apply(event: SpaceBought) {}
+        override fun canEndTurn(player: Player) = false
     }
 
-    private inner class WaitingForStart : NothingGameState() {
-
-        override fun canAddPlayer(): Boolean {
-            return true
-        }
-
-        override fun canStartGame(): Boolean {
-            return true
-        }
-    }
-
-    private inner class WaitingForTurn : NothingGameState()
-
-    private inner class WaitingForDiceRoll(
+    private inner class Turn(
             val player: Player
-    ) : NothingGameState() {
+    ): GameState {
+        var state: TurnState = WaitingForDiceRoll()
+        override fun canAddPlayer() = false
+        override fun canStartGame() = false
         override fun canRollDice(player: Player): Boolean {
-            return this.player == player
+            return this.player == player && state.canRollDice()
         }
-
-        override fun apply(event: DiceRolled): GameState {
-            return WaitingForDiceOutcome(player)
+        override fun apply(event: DiceRolled) {
+            this.state = WaitingForDiceOutcome()
         }
-    }
-
-    private inner class WaitingForDiceOutcome(
-            val player: Player
-    ) : NothingGameState() {
-        override fun apply(event: LandedOn, canBuy: Boolean): GameState {
-            return if (canBuy) {
-                LandedOnNewGround(player)
+        override fun apply(event: LandedOn, canBuy: Boolean) {
+            this.state = if (canBuy) {
+                LandedOnNewGround()
             } else {
-                WaitingForEndTurn(player)
+                WaitingForEndTurn()
             }
         }
-    }
-
-    private inner class LandedOnNewGround(
-            val player: Player
-    ) : NothingGameState() {
         override fun canBuyThis(player: Player): Boolean {
-            return this.player == player
+            return this.player == player && state.canBuyThis()
         }
 
-        override fun apply(event: SpaceBought): GameState {
-            return WaitingForEndTurn(player)
+        override fun apply(event: SpaceBought) {
+            this.state = WaitingForEndTurn()
+        }
+        override fun canEndTurn(player: Player): Boolean {
+            return this.player == player && state.canEndTurn()
         }
     }
 
-    private inner class WaitingForEndTurn(
-            private val player: Player
-    ) : NothingGameState() {
-        override fun canEndGame(player: Player): Boolean {
-            return this.player == player
-        }
+    interface TurnState {
+        fun canRollDice() = false
+        fun canBuyThis() = false
+        fun canEndTurn() = false
+    }
+
+    private inner class WaitingForDiceRoll(): TurnState {
+        override fun canRollDice() = true
+    }
+
+    private inner class WaitingForDiceOutcome(): TurnState {
+    }
+
+    private inner class LandedOnNewGround(): TurnState {
+        override fun canBuyThis() = true
+    }
+
+    private inner class WaitingForEndTurn(): TurnState {
+        override fun canEndTurn() = true
     }
 }
 
