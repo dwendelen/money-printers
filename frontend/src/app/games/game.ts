@@ -140,7 +140,7 @@ export class Game {
     const player = this.getPlayer(event.player);
     const space = this.getSpace(event.ground);
 
-    player.applyLandedOn(event, space);
+    player.applyLandedOn(event, this.events.length, space);
     this.state.applyLandedOn(event, space);
   }
 
@@ -241,6 +241,7 @@ export class Player {
   money = 0;
   debt = 0;
   assets = 0;
+  lastLandId = 0;
 
   constructor(
     public id: string,
@@ -254,8 +255,9 @@ export class Player {
     this.money += event.amount;
   }
 
-  applyLandedOn(event: LandedOn, space: Space): void {
+  applyLandedOn(event: LandedOn, eventId: number, space: Space): void {
     this.position = space;
+    this.lastLandId = eventId;
   }
 
   applySpaceBought(event: SpaceBought): void {

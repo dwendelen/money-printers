@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
             JsonSubTypes.Type(value = StartMoneyReceived::class, name = "StartMoneyReceived"),
             JsonSubTypes.Type(value = LandedOn::class, name = "LandedOn"),
             JsonSubTypes.Type(value = SpaceBought::class, name = "SpaceBought"),
+            JsonSubTypes.Type(value = RentDemanded::class, name = "RentDemanded"),
             JsonSubTypes.Type(value = TurnEnded::class, name = "TurnEnded"),
         ]
 )
@@ -56,7 +57,8 @@ data class StartMoneyReceived(
 
 data class LandedOn(
         val player: String,
-        val ground: String
+        val ground: String,
+        val diceEvent: Int
 ): Event()
 
 data class SpaceBought(
@@ -64,6 +66,14 @@ data class SpaceBought(
     val player: String,
     val cash: Int,
     val borrowed: Int,
+): Event()
+
+data class RentDemanded(
+        val owner: String,
+        val player: String,
+        val ground: String,
+        val rent: Int,
+        val landEvent: Int
 ): Event()
 
 object TurnEnded: Event()

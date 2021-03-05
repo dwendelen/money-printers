@@ -7,6 +7,7 @@ export type Event =
   StartMoneyReceived |
   LandedOn |
   SpaceBought |
+  RentDemanded |
   TurnEnded;
 
 export interface GameCreated {
@@ -51,6 +52,7 @@ export interface LandedOn {
   type: 'LandedOn';
   player: string;
   ground: string;
+  diceEvent: number;
 }
 
 export interface SpaceBought {
@@ -61,11 +63,19 @@ export interface SpaceBought {
   borrowed: number;
 }
 
+export interface RentDemanded {
+  type: 'RentDemanded';
+  owner: string;
+  player: string;
+  ground: string;
+  rent: number;
+  landEvent: number;
+}
+
 export interface TurnEnded {
   type: 'TurnEnded';
   player: string;
 }
-
 
 type Space =
   Street |

@@ -3,6 +3,7 @@ export type Command =
   StartGame |
   RollDice |
   BuyThisSpace |
+  DemandRent |
   EndTurn;
 
 export class AddPlayer {
@@ -45,13 +46,12 @@ export class BuyThisSpace {
   }
 }
 
-export class DemandPayment {
-  type = 'DemandPayment';
+export class DemandRent {
+  type = 'DemandRent';
 
   constructor(
-    public initiator: string,
-    public player: string,
-    public space: string
+    public owner: string,
+    public landEvent: number
   ) {
   }
 }

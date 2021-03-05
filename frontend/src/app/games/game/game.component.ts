@@ -4,7 +4,7 @@ import {GameService} from '../game.service';
 import {GameInfo} from '../api/api';
 import {Game, Ownable, Player, Space, Station, Street, Utility} from '../game';
 import {Event} from '../api/event';
-import {AddPlayer, BuyThisSpace, Command, DemandPayment, EndTurn, RollDice, StartGame} from '../api/command';
+import {AddPlayer, BuyThisSpace, Command, DemandRent, EndTurn, RollDice, StartGame} from '../api/command';
 
 @Component({
   selector: 'app-game',
@@ -108,8 +108,16 @@ export class GameComponent implements OnInit, OnDestroy {
     this.sendCmd(new BuyThisSpace(this.game.myId, cash, borrowed));
   }
 
-  demandPayment(player: Player, space: Space): void {
-    this.sendCmd(new DemandPayment(this.game.myId, player.id, space.id));
+  demandRent(landEvent: number, space: Space): void {
+    if (this.isOwnable(space) && (space as Ownable).getOwner()?.id === this.game.myId) {
+      this.sendCmd(new DemandRent(this.game.myId, landEvent));
+    }
+  }
+
+  private isOwnable(space: Space): boolean {
+    return space instanceof Street ||
+      space instanceof Station ||
+      space instanceof Utility;
   }
 
   showEndTurn(): boolean {
