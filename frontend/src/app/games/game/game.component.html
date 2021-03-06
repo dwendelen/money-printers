@@ -67,6 +67,9 @@
 
       <app-space-info *ngIf="spaceInfo" [space]="spaceInfo"></app-space-info>
       <button *ngIf="spaceInfo" (click)="spaceInfo = null">Close</button>
+      <button *ngIf="game.hasMyRentDemand()" (click)="payRent()">
+        Pay {{ game.getMyRentDemand().owner}} {{game.getMyRentDemand().rent}} rent
+      </button>
     </div>
   </div>
 </div>

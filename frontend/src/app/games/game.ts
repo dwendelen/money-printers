@@ -5,7 +5,7 @@ import {
   GameStarted,
   LandedOn,
   NewTurnStarted,
-  PlayerAdded,
+  PlayerAdded, RentDemanded, RentPaid,
   SpaceBought,
   StartMoneyReceived,
   TurnEnded
@@ -53,6 +53,12 @@ export class Game {
         break;
       case 'SpaceBought':
         this.applySpaceBought(event);
+        break;
+      case 'RentDemanded':
+        this.applyRentDemanded(event);
+        break;
+      case 'RentPaid':
+        this.applyRentPaid(event);
         break;
       case 'TurnEnded':
         this.applyTurnEnded(event);
@@ -136,7 +142,7 @@ export class Game {
     this.economy -= event.amount;
   }
 
-  private applyLandedOn(event: LandedOn): void  {
+  private applyLandedOn(event: LandedOn): void {
     const player = this.getPlayer(event.player);
     const space = this.getSpace(event.ground);
 
@@ -144,7 +150,7 @@ export class Game {
     this.state.applyLandedOn(event, space);
   }
 
-  private applySpaceBought(event: SpaceBought): void  {
+  private applySpaceBought(event: SpaceBought): void {
     const player = this.getPlayer(event.player);
     const ownable = this.getOwnable(event.ground);
 
@@ -155,6 +161,27 @@ export class Game {
     player.applySpaceBought(event);
 
     this.state.applySpaceBought(event, ownable);
+  }
+
+  private applyRentDemanded(event: RentDemanded): void {
+    if (event.player === this.myId) {
+      const rentDemand = new RentDemand(
+        event.owner,
+        event.rent,
+        this.events.length
+      );
+      this.state = new RentDemandedForMe(rentDemand, this.state);
+    } else {
+      this.state = new RentDemandedNotForMe(this.state);
+    }
+  }
+
+  private applyRentPaid(event: RentPaid): void {
+    const owner = this.getPlayer(event.owner);
+    const player = this.getPlayer(event.player);
+    owner.applyRentPaidOwner(event);
+    player.applyRentPaidPlayer(event);
+    this.state = this.state.applyRentPaid(event);
   }
 
   private applyTurnEnded(event: TurnEnded): void {
@@ -233,7 +260,15 @@ export class Game {
   getStartMoney(player: Player): number {
     const interest = Math.floor(this.interestRate * player.debt);
     const economyMoney = Math.ceil(this.returnRate * this.economy);
-    return this.fixedStartMoney + economyMoney  - interest;
+    return this.fixedStartMoney + economyMoney - interest;
+  }
+
+  hasMyRentDemand(): boolean {
+    return this.state instanceof RentDemandedForMe;
+  }
+
+  getMyRentDemand(): RentDemand {
+      return (this.state as RentDemandedForMe).rentDemand;
   }
 }
 
@@ -269,13 +304,22 @@ export class Player {
   canBuyThis(): boolean {
     return this.position.canBuy();
   }
+
+  applyRentPaidOwner(event: RentPaid): void {
+    this.money += event.rent;
+  }
+
+  applyRentPaidPlayer(event: RentPaid): void {
+    this.money -= event.rent;
+  }
 }
 
 interface GameState {
-
   applyLandedOn(event: LandedOn, space: Space): void;
 
   applySpaceBought(event: SpaceBought, ownable: Ownable): void;
+
+  applyRentPaid(event: RentPaid): GameState;
 
   canRollDice(): boolean;
 
@@ -285,30 +329,16 @@ interface GameState {
 }
 
 class WaitingForStart implements GameState {
-  applyLandedOn(event: LandedOn, space: Space): void {}
-
-  applySpaceBought(event: SpaceBought, space: Space): void {}
-
-  canBuyGround(): boolean {
-    return false;
-  }
-
-  canEndTurn(): boolean {
-    return false;
-  }
-
-  canRollDice(): boolean {
-    return false;
-  }
-}
-
-class NotMyTurn implements  GameState {
   applyLandedOn(event: LandedOn, space: Space): void {
   }
 
   applySpaceBought(event: SpaceBought, space: Space): void {
   }
 
+  applyRentPaid(event: RentPaid): GameState {
+    return this;
+  }
+
   canBuyGround(): boolean {
     return false;
   }
@@ -322,7 +352,31 @@ class NotMyTurn implements  GameState {
   }
 }
 
-class MyTurn implements  GameState {
+class NotMyTurn implements GameState {
+  applyLandedOn(event: LandedOn, space: Space): void {
+  }
+
+  applySpaceBought(event: SpaceBought, space: Space): void {
+  }
+
+  applyRentPaid(event: RentPaid): GameState {
+    return this;
+  }
+
+  canBuyGround(): boolean {
+    return false;
+  }
+
+  canEndTurn(): boolean {
+    return false;
+  }
+
+  canRollDice(): boolean {
+    return false;
+  }
+}
+
+class MyTurn implements GameState {
   private state: TurnState = new WaitingForDiceRoll();
 
   applyLandedOn(event: LandedOn, space: Space): void {
@@ -331,6 +385,10 @@ class MyTurn implements  GameState {
 
   applySpaceBought(event: SpaceBought, ownable: Ownable): void {
     this.state = this.state.applySpaceBought(event, ownable);
+  }
+
+  applyRentPaid(event: RentPaid): GameState {
+    return this;
   }
 
   canBuyGround(): boolean {
@@ -344,7 +402,65 @@ class MyTurn implements  GameState {
   canRollDice(): boolean {
     return this.state.canRollDice();
   }
+}
 
+class RentDemandedNotForMe implements GameState {
+  constructor(
+    private previousState: GameState
+  ) {
+  }
+
+  applyLandedOn(event: LandedOn, space: Space): void {
+  }
+
+  applySpaceBought(event: SpaceBought, ownable: Ownable): void {
+  }
+
+  applyRentPaid(event: RentPaid): GameState {
+    return this.previousState;
+  }
+
+  canBuyGround(): boolean {
+    return false;
+  }
+
+  canEndTurn(): boolean {
+    return false;
+  }
+
+  canRollDice(): boolean {
+    return false;
+  }
+}
+
+class RentDemandedForMe implements GameState {
+  constructor(
+    public rentDemand: RentDemand,
+    private previousState: GameState
+  ) {
+  }
+
+  applyLandedOn(event: LandedOn, space: Space): void {
+  }
+
+  applySpaceBought(event: SpaceBought, ownable: Ownable): void {
+  }
+
+  applyRentPaid(event: RentPaid): GameState {
+    return this.previousState;
+  }
+
+  canBuyGround(): boolean {
+    return false;
+  }
+
+  canEndTurn(): boolean {
+    return false;
+  }
+
+  canRollDice(): boolean {
+    return false;
+  }
 }
 
 interface TurnState {
@@ -432,6 +548,15 @@ class WaitingForEndTurn implements TurnState {
 
 }
 
+class RentDemand {
+  constructor(
+    public owner: string,
+    public rent: number,
+    public demandEventId: number
+  ) {
+  }
+}
+
 export interface Space {
   id: string;
   text: string;
@@ -440,20 +565,29 @@ export interface Space {
   canBuy(): boolean;
 
   getRent(): number | undefined;
+
   getRentAll(): number | undefined;
+
   getHouseRent(nbOfHouses: number): number | undefined;
+
   getHotelRent(): number | undefined;
+
   getHousePrice(): number | undefined;
+
   getHotelPrice(): number | undefined;
+
   getStationRent(nbOfStations: number): number | undefined;
 }
 
 export interface Ownable extends Space {
   setOwner(player: Player): void;
+
   getOwner(): Player | null;
 
   getInitialPrice(): number;
+
   getAssetValue(): number | null;
+
   setAssetValue(assetValue: number): void;
 }
 
@@ -536,7 +670,8 @@ export class ActionSpace implements Space {
 
   color = null;
 
-  setOwner(player: Player): void {}
+  setOwner(player: Player): void {
+  }
 
   getOwner(): Player | null {
     return null;
@@ -717,7 +852,8 @@ export class Prison implements Space {
 
   color = null;
 
-  setOwner(player: Player): void {}
+  setOwner(player: Player): void {
+  }
 
   getOwner(): Player | null {
     return null;
@@ -765,7 +901,8 @@ export class FreeParking implements Space {
 
   color = null;
 
-  setOwner(player: Player): void {}
+  setOwner(player: Player): void {
+  }
 
   getOwner(): Player | null {
     return null;

@@ -8,6 +8,7 @@ export type Event =
   LandedOn |
   SpaceBought |
   RentDemanded |
+  RentPaid |
   TurnEnded;
 
 export interface GameCreated {
@@ -67,9 +68,16 @@ export interface RentDemanded {
   type: 'RentDemanded';
   owner: string;
   player: string;
-  ground: string;
   rent: number;
   landEvent: number;
+}
+
+export interface RentPaid {
+  type: 'RentPaid';
+  player: string;
+  owner: string;
+  rent: number;
+  demandEvent: number;
 }
 
 export interface TurnEnded {
