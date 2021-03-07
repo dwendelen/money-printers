@@ -78,12 +78,19 @@ class Game(
         return when (event) {
             is GameCreated -> apply(event)
             is PlayerAdded -> apply(event)
+            is PromotedToGameMaster -> apply(event)
             is GameStarted -> Unit
             is NewTurnStarted -> apply(event)
             is DiceRolled -> apply(event)
             is StartMoneyReceived -> apply(event)
-            is LandedOn -> apply(event)
+            is LandedOnSafeSpace -> apply(event)
+            is LandedOnBuyableSpace -> apply(event)
             is SpaceBought -> apply(event)
+            is BidStarted -> TODO()
+            is BidPlaced -> TODO()
+            is BidPassed -> TODO()
+            is BidWon -> TODO()
+            is LandedOnHostileSpace -> apply(event)
             is RentDemanded -> apply(event)
             is RentPaid -> apply(event)
             is TurnEnded -> Unit
@@ -122,7 +129,8 @@ class Game(
             newEvent(PlayerAdded(
                     cmd.id,
                     cmd.name,
-                    cmd.color
+                    cmd.color,
+                0
             ))
             true
         } else {
@@ -134,8 +142,14 @@ class Game(
         players.add(Player(
                 event.id,
                 event.color,
-                board[0].id
+                board[0].id,
+                event.startDebt,
+                event.startDebt
         ))
+    }
+
+    private fun apply(event: PromotedToGameMaster) {
+        findPlayer(event.player)?.apply(event)
     }
 
     private fun on(cmd: StartGame): Boolean {
@@ -169,14 +183,22 @@ class Game(
             val newPosition = (idx + dice1 + dice2) % board.size
 
             newEvent(DiceRolled(player.id, dice1, dice2))
-            val diceEvent = events.size
             if (newPosition < idx) {
                 val interest = floor(player.debt * interestRate).toInt()
                 val economyMoney = ceil(economy * returnRate).toInt()
                 val startMoney = fixedStartMoney + economyMoney - interest
                 newEvent(StartMoneyReceived(player.id, startMoney))
             }
-            newEvent(LandedOn(player.id, board[newPosition].id, diceEvent))
+            val space = board[newPosition]
+            newEvent(if(space is Ownable) {
+                when(val owner = space.owner) {
+                    null -> LandedOnBuyableSpace(cmd.player, space.id)
+                    cmd.player -> LandedOnSafeSpace(cmd.player, space.id)
+                    else -> LandedOnHostileSpace(cmd.player, space.id, owner, events.size)
+                }
+            } else {
+                LandedOnSafeSpace(cmd.player, space.id)
+            })
             true
         } else {
             false
@@ -195,14 +217,30 @@ class Game(
         }
     }
 
-    private fun apply(event: LandedOn) {
+    private fun apply(event: LandedOnSafeSpace) {
+        val player = findPlayer(event.player)
+        if (player != null) {
+            player.apply(event)
+            state.apply(event)
+        }
+    }
+
+    private fun apply(event: LandedOnBuyableSpace) {
+        val player = findPlayer(event.player)
+        if (player != null) {
+            player.apply(event)
+            state.apply(event)
+        }
+    }
+
+    private fun apply(event: LandedOnHostileSpace) {
         val player = findPlayer(event.player)
         val space = findSpace(event.ground)
-        val roll = events[event.diceEvent - 1] as? DiceRolled
-        if (player != null && space != null && roll != null) {
+        val lastRoll = (state as? Turn)?.lastRoll
+        if (player != null && space != null && lastRoll != null) {
             player.apply(event)
-            val rent = getRent(space, roll.dice1 + roll.dice2)
-            state.apply(event, events.size, space, rent ?: 0)
+            val rent = getRent(space, lastRoll)
+            state.apply(event, rent ?: 0)
         }
     }
 
@@ -271,7 +309,7 @@ class Game(
     }
 
     private fun on(cmd: DemandRent): Boolean {
-        val rentDemand = state.findOpenRentDemand(cmd.landEvent)
+        val rentDemand = state.findOpenRentDemand(cmd.demandId)
 
         return if (
                 hasPlayer(cmd.owner) &&
@@ -301,7 +339,7 @@ class Game(
     }
 
     private fun on(cmd: PayRent): Boolean {
-        val rentDemand = this.state.findRentDemand(cmd.demandEvent)
+        val rentDemand = this.state.findRentDemand(cmd.demandId)
         val player = findPlayer(cmd.player)
         return if (
                 rentDemand != null &&
@@ -313,7 +351,7 @@ class Game(
                     rentDemand.player,
                     rentDemand.owner,
                     rentDemand.rent,
-                    rentDemand.demandEvent
+                    rentDemand.demandId
             ))
             true
         } else {
@@ -339,7 +377,7 @@ class Game(
         ) {
             val idx = players.indexOf(player)
             val newPlayer = players[(idx + 1) % players.size]
-            newEvent(TurnEnded(cmd.player))
+            newEvent(TurnEnded)
             newEvent(NewTurnStarted(newPlayer.id))
             true
         } else {
@@ -384,12 +422,14 @@ class Game(
         fun apply(event: NewTurnStarted): GameState = this
         fun canRollDice(player: String): Boolean = false
         fun apply(event: DiceRolled) {}
-        fun apply(event: LandedOn, eventId: Int, space: Space, rent: Int) {}
+        fun apply(event: LandedOnSafeSpace) {}
+        fun apply(event: LandedOnBuyableSpace) {}
+        fun apply(event: LandedOnHostileSpace, rent: Int) {}
         fun canBuyThis(player: String): Boolean = false
         fun apply(event: SpaceBought) {}
         fun findOpenRentDemand(landEvent: Int): OpenRentDemand? = null
         fun apply(event: RentDemanded) {}
-        fun findRentDemand(demandEvent: Int): RentDemand? = null
+        fun findRentDemand(demandId: Int): RentDemand? = null
         fun canPayRent(rentDemand: RentDemand) = false
         fun apply(event: RentPaid): GameState = this
         fun canEndTurn(player: String): Boolean = false
@@ -408,6 +448,7 @@ class Game(
             var openRentDemands: List<OpenRentDemand>
     ) : GameState {
         var state: TurnState = WaitingForDiceRoll()
+        var lastRoll: Int? = null
 
         override fun canRollDice(player: String): Boolean {
             return this.player == player && state.canRollDice()
@@ -418,21 +459,21 @@ class Game(
                     .forEach { it.ttl-- }
             openRentDemands = openRentDemands
                     .filter { it.ttl > 0 }
+            lastRoll = event.dice1 + event.dice2
             this.state = WaitingForDiceOutcome()
         }
 
-        override fun apply(event: LandedOn, eventId: Int, space: Space, rent: Int) {
-            this.state = if (space.canBuy()) {
-                LandedOnNewGround()
-            } else {
-                if (space is Ownable) {
-                    val owner = space.owner
-                    if (owner != null && owner != event.player) {
-                        openRentDemands = openRentDemands + OpenRentDemand(eventId, event.player, owner, rent, 2)
-                    }
-                }
-                WaitingForEndTurn()
-            }
+        override fun apply(event: LandedOnSafeSpace) {
+            this.state = WaitingForEndTurn()
+        }
+
+        override fun apply(event: LandedOnBuyableSpace) {
+            this.state = LandedOnNewGround()
+        }
+
+        override fun apply(event: LandedOnHostileSpace, rent: Int) {
+            openRentDemands = openRentDemands + OpenRentDemand(event.demandId, event.player, event.owner, rent, 2)
+            this.state = WaitingForEndTurn()
         }
 
         override fun canBuyThis(player: String): Boolean {
@@ -448,15 +489,8 @@ class Game(
         }
 
         override fun apply(event: RentDemanded) {
-            val openDemand = findOpenRentDemand(event.landEvent)
-            if (openDemand != null) {
-                openRentDemands = openRentDemands
-                        .filter { it.landEvent != event.landEvent }
-            }
-        }
-
-        override fun findRentDemand(demandEvent: Int): RentDemand? {
-            return this.state.findRentDemand(demandEvent)
+            openRentDemands = openRentDemands
+                    .filter { it.landEvent != event.demandId }
         }
 
         override fun canPayRent(rentDemand: RentDemand): Boolean {
@@ -481,8 +515,8 @@ class Game(
             return rentDemand == demand
         }
 
-        override fun findRentDemand(demandEvent: Int): RentDemand? {
-            return if (demand.demandEvent == demandEvent) {
+        override fun findRentDemand(demandId: Int): RentDemand? {
+            return if (demand.demandId == demandId) {
                 demand
             } else {
                 null
@@ -498,7 +532,6 @@ class Game(
         fun canRollDice() = false
         fun canBuyThis() = false
         fun canPayRent(rentDemand: RentDemand) = false
-        fun findRentDemand(demandEvent: Int): RentDemand? = null
         fun canEndTurn() = false
     }
 
@@ -521,14 +554,19 @@ class Player(
         val id: String,
         val color: String,
         var position: String,
-        var money: Int = 0,
-        var debt: Int = 0
+        var money: Int,
+        var debt: Int,
+        var gameMaster: Boolean = false
 ) {
     fun isCompatibleWithNewPlayer(
             id: String,
             color: String
     ): Boolean {
         return id != this.id && color != this.color
+    }
+
+    fun apply(event: PromotedToGameMaster) {
+        gameMaster = true
     }
 
     fun canBuy(cash: Int): Boolean {
@@ -539,7 +577,15 @@ class Player(
         money += event.amount
     }
 
-    fun apply(event: LandedOn) {
+    fun apply(event: LandedOnSafeSpace) {
+        position = event.ground
+    }
+
+    fun apply(event: LandedOnBuyableSpace) {
+        position = event.ground
+    }
+
+    fun apply(event: LandedOnHostileSpace) {
         position = event.ground
     }
 
@@ -566,15 +612,14 @@ data class OpenRentDemand(
 )
 
 data class RentDemand(
-        val demandEvent: Int,
-        val player: String,
-        val owner: String,
-        val rent: Int
+    val demandId: Int,
+    val player: String,
+    val owner: String,
+    val rent: Int
 )
 
 sealed class Space {
     abstract val id: String
-    abstract fun canBuy(): Boolean
 }
 
 interface Ownable {
@@ -603,10 +648,6 @@ class Street(
 ) : Space(), Ownable {
     override var owner: String? = null
 
-    override fun canBuy(): Boolean {
-        return owner == null
-    }
-
     fun getRent(fullStreet: Boolean): Int {
         val houses = this.houses
         val hotel = this.hotel
@@ -622,7 +663,6 @@ class Street(
 class ActionSpace(
         override val id: String
 ) : Space() {
-    override fun canBuy() = false
 }
 
 class Utility(
@@ -632,10 +672,6 @@ class Utility(
         val rentAll: Int
 ) : Space(), Ownable {
     override var owner: String? = null
-
-    override fun canBuy(): Boolean {
-        return owner == null
-    }
 
     fun getRent(allUtilities: Boolean, diceRoll: Int): Int {
         val factor = if (allUtilities) {
@@ -654,10 +690,6 @@ class Station(
 ) : Space(), Ownable {
     override var owner: String? = null
 
-    override fun canBuy(): Boolean {
-        return owner == null
-    }
-
     fun getRent(nbOfStations: Int): Int {
         return rent[nbOfStations - 1]
     }
@@ -666,11 +698,9 @@ class Station(
 class FreeParking(
         override val id: String
 ) : Space() {
-    override fun canBuy() = false
 }
 
 class Prison(
         override val id: String
 ) : Space() {
-    override fun canBuy() = false
 }

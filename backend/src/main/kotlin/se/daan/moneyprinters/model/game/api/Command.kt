@@ -52,12 +52,12 @@ data class BuyThisSpace(
 
 data class DemandRent(
     val owner: String,
-    val landEvent: Int
+    val demandId: Int
 ): Command()
 
 data class PayRent(
     val player: String,
-    val demandEvent: Int
+    val demandId: Int
 ): Command()
 
 data class EndTurn(

@@ -3,7 +3,7 @@ import {
   Event,
   GameCreated,
   GameStarted,
-  LandedOn,
+  LandedOnBuyableSpace, LandedOnHostileSpace, LandedOnSafeSpace,
   NewTurnStarted,
   PlayerAdded, RentDemanded, RentPaid,
   SpaceBought,
@@ -48,11 +48,17 @@ export class Game {
       case 'StartMoneyReceived':
         this.applyStartMoneyReceived(event);
         break;
-      case 'LandedOn':
-        this.applyLandedOn(event);
+      case 'LandedOnSafeSpace':
+        this.applyLandedOnSafeSpace(event);
+        break;
+      case 'LandedOnBuyableSpace':
+        this.applyLandedOnBuyableSpace(event);
         break;
       case 'SpaceBought':
         this.applySpaceBought(event);
+        break;
+      case 'LandedOnHostileSpace':
+        this.applyLandedOnHostileSpace(event);
         break;
       case 'RentDemanded':
         this.applyRentDemanded(event);
@@ -142,12 +148,20 @@ export class Game {
     this.economy -= event.amount;
   }
 
-  private applyLandedOn(event: LandedOn): void {
+  private applyLandedOnSafeSpace(event: LandedOnSafeSpace): void {
     const player = this.getPlayer(event.player);
     const space = this.getSpace(event.ground);
 
-    player.applyLandedOn(event, this.events.length, space);
-    this.state.applyLandedOn(event, space);
+    player.applyLandedOnSafeSpace(event, space);
+    this.state.applyLandedOnSafeSpace(event, space);
+  }
+
+  private applyLandedOnBuyableSpace(event: LandedOnBuyableSpace): void {
+    const player = this.getPlayer(event.player);
+    const space = this.getSpace(event.ground);
+
+    player.applyLandedOnBuyableSpace(event, space);
+    this.state.applyLandedOnBuyableSpace(event, space);
   }
 
   private applySpaceBought(event: SpaceBought): void {
@@ -161,6 +175,14 @@ export class Game {
     player.applySpaceBought(event);
 
     this.state.applySpaceBought(event, ownable);
+  }
+
+  private applyLandedOnHostileSpace(event: LandedOnHostileSpace): void {
+    const player = this.getPlayer(event.player);
+    const space = this.getSpace(event.ground);
+
+    player.applyLandedOnHostileSpace(event, space, this.myId);
+    this.state.applyLandedOnHostileSpace(event, space);
   }
 
   private applyRentDemanded(event: RentDemanded): void {
@@ -276,7 +298,7 @@ export class Player {
   money = 0;
   debt = 0;
   assets = 0;
-  lastLandId = 0;
+  lastDemandId: number | null = null;
 
   constructor(
     public id: string,
@@ -290,9 +312,23 @@ export class Player {
     this.money += event.amount;
   }
 
-  applyLandedOn(event: LandedOn, eventId: number, space: Space): void {
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): void {
     this.position = space;
-    this.lastLandId = eventId;
+    this.lastDemandId = null;
+  }
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
+    this.position = space;
+    this.lastDemandId = null;
+  }
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space, myId: string): void {
+    this.position = space;
+    if (event.owner === myId) {
+      this.lastDemandId = event.demandId;
+    } else {
+      this.lastDemandId = null;
+    }
   }
 
   applySpaceBought(event: SpaceBought): void {
@@ -315,9 +351,13 @@ export class Player {
 }
 
 interface GameState {
-  applyLandedOn(event: LandedOn, space: Space): void;
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): void;
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void;
 
   applySpaceBought(event: SpaceBought, ownable: Ownable): void;
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void;
 
   applyRentPaid(event: RentPaid): GameState;
 
@@ -329,10 +369,16 @@ interface GameState {
 }
 
 class WaitingForStart implements GameState {
-  applyLandedOn(event: LandedOn, space: Space): void {
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): void {
+  }
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
   }
 
   applySpaceBought(event: SpaceBought, space: Space): void {
+  }
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
   }
 
   applyRentPaid(event: RentPaid): GameState {
@@ -353,10 +399,16 @@ class WaitingForStart implements GameState {
 }
 
 class NotMyTurn implements GameState {
-  applyLandedOn(event: LandedOn, space: Space): void {
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): void {
+  }
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
   }
 
   applySpaceBought(event: SpaceBought, space: Space): void {
+  }
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
   }
 
   applyRentPaid(event: RentPaid): GameState {
@@ -379,12 +431,20 @@ class NotMyTurn implements GameState {
 class MyTurn implements GameState {
   private state: TurnState = new WaitingForDiceRoll();
 
-  applyLandedOn(event: LandedOn, space: Space): void {
-    this.state = this.state.applyLandedOn(event, space);
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): void {
+    this.state = this.state.applyLandedOnSafeSpace(event, space);
+  }
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
+    this.state = this.state.applyLandedOnBuyableSpace(event, space);
   }
 
   applySpaceBought(event: SpaceBought, ownable: Ownable): void {
     this.state = this.state.applySpaceBought(event, ownable);
+  }
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
+    this.state = this.state.applyLandedOnHostileSpace(event, space);
   }
 
   applyRentPaid(event: RentPaid): GameState {
@@ -410,10 +470,16 @@ class RentDemandedNotForMe implements GameState {
   ) {
   }
 
-  applyLandedOn(event: LandedOn, space: Space): void {
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): void {
+  }
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
   }
 
   applySpaceBought(event: SpaceBought, ownable: Ownable): void {
+  }
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
   }
 
   applyRentPaid(event: RentPaid): GameState {
@@ -440,10 +506,16 @@ class RentDemandedForMe implements GameState {
   ) {
   }
 
-  applyLandedOn(event: LandedOn, space: Space): void {
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
+  }
+
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): void {
   }
 
   applySpaceBought(event: SpaceBought, ownable: Ownable): void {
+  }
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
   }
 
   applyRentPaid(event: RentPaid): GameState {
@@ -464,9 +536,13 @@ class RentDemandedForMe implements GameState {
 }
 
 interface TurnState {
-  applyLandedOn(event: LandedOn, space: Space): TurnState;
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): TurnState;
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): TurnState;
 
   applySpaceBought(event: SpaceBought, ownable: Ownable): TurnState;
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): TurnState;
 
   canRollDice(): boolean;
 
@@ -481,16 +557,20 @@ class WaitingForDiceRoll implements TurnState {
     return true;
   }
 
-  applyLandedOn(event: LandedOn, ownable: Ownable): TurnState {
-    if (ownable.canBuy()) {
-      return new LandedOnNewGround();
-    } else {
-      return new WaitingForEndTurn();
-    }
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): TurnState {
+    return new WaitingForEndTurn();
+  }
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): TurnState {
+    return new LandedOnNewGround();
   }
 
   applySpaceBought(event: SpaceBought, space: Space): TurnState {
     return this;
+  }
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): TurnState {
+    return new WaitingForEndTurn();
   }
 
   canBuyGround(): boolean {
@@ -507,11 +587,19 @@ class LandedOnNewGround implements TurnState {
     return true;
   }
 
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): TurnState {
+    return this;
+  }
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): TurnState {
+    return this;
+  }
+
   applySpaceBought(event: SpaceBought): TurnState {
     return new WaitingForEndTurn();
   }
 
-  applyLandedOn(event: LandedOn): TurnState {
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): TurnState {
     return this;
   }
 
@@ -530,11 +618,19 @@ class WaitingForEndTurn implements TurnState {
     return true;
   }
 
-  applyLandedOn(event: LandedOn): TurnState {
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): TurnState {
+    return this;
+  }
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): TurnState {
     return this;
   }
 
   applySpaceBought(event: SpaceBought): TurnState {
+    return this;
+  }
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): TurnState {
     return this;
   }
 

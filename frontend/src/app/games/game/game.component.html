@@ -22,7 +22,7 @@
           <div class="playerColor"
                [style.background-color]="player.color"
               *ngFor="let player of getPlayersOn(ground)"
-              (click)="demandRent(player.lastLandId, ground)">
+              (click)="demandRent(player.lastDemandId)">
           </div>
         </div>
       </div>

@@ -52,7 +52,7 @@ export class DemandRent {
 
   constructor(
     public owner: string,
-    public landEvent: number
+    public demandId: number
   ) {
   }
 }
@@ -62,7 +62,7 @@ export class PayRent {
 
   constructor(
     public player: string,
-    public demandEvent: number
+    public demandId: number
   ) {
   }
 }

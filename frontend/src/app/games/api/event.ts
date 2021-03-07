@@ -1,12 +1,15 @@
 export type Event =
   GameCreated |
   PlayerAdded |
+  PromotedToGameMaster |
   GameStarted |
   NewTurnStarted |
   DiceRolled |
   StartMoneyReceived |
-  LandedOn |
+  LandedOnSafeSpace |
+  LandedOnBuyableSpace |
   SpaceBought |
+  LandedOnHostileSpace |
   RentDemanded |
   RentPaid |
   TurnEnded;
@@ -25,6 +28,12 @@ export interface PlayerAdded {
   id: string;
   name: string;
   color: string;
+  startDebt: string;
+}
+
+export interface PromotedToGameMaster {
+  type: 'PromotedToGameMaster';
+  player: string;
 }
 
 export interface GameStarted {
@@ -49,11 +58,16 @@ export interface StartMoneyReceived {
   amount: number;
 }
 
-export interface LandedOn {
-  type: 'LandedOn';
+export interface LandedOnSafeSpace {
+  type: 'LandedOnSafeSpace';
   player: string;
   ground: string;
-  diceEvent: number;
+}
+
+export interface LandedOnBuyableSpace {
+  type: 'LandedOnBuyableSpace';
+  player: string;
+  ground: string;
 }
 
 export interface SpaceBought {
@@ -64,12 +78,20 @@ export interface SpaceBought {
   borrowed: number;
 }
 
+export interface LandedOnHostileSpace {
+  type: 'LandedOnHostileSpace';
+  player: string;
+  ground: string;
+  owner: string;
+  demandId: number;
+}
+
 export interface RentDemanded {
   type: 'RentDemanded';
   owner: string;
   player: string;
   rent: number;
-  landEvent: number;
+  demandId: number;
 }
 
 export interface RentPaid {
@@ -77,12 +99,11 @@ export interface RentPaid {
   player: string;
   owner: string;
   rent: number;
-  demandEvent: number;
+  demandId: number;
 }
 
 export interface TurnEnded {
   type: 'TurnEnded';
-  player: string;
 }
 
 type Space =

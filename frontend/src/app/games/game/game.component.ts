@@ -108,9 +108,9 @@ export class GameComponent implements OnInit, OnDestroy {
     this.sendCmd(new BuyThisSpace(this.game.myId, cash, borrowed));
   }
 
-  demandRent(landEvent: number, space: Space): void {
-    if (this.isOwnable(space) && (space as Ownable).getOwner()?.id === this.game.myId) {
-      this.sendCmd(new DemandRent(this.game.myId, landEvent));
+  demandRent(demandId: number | null): void {
+    if (demandId != null) {
+      this.sendCmd(new DemandRent(this.game.myId, demandId));
     }
   }
 
