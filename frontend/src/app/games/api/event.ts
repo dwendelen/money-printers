@@ -9,6 +9,10 @@ export type Event =
   LandedOnSafeSpace |
   LandedOnBuyableSpace |
   SpaceBought |
+  BidStarted |
+  BidPlaced |
+  BidPassed |
+  BidWon |
   LandedOnHostileSpace |
   RentDemanded |
   RentPaid |
@@ -76,6 +80,29 @@ export interface SpaceBought {
   player: string;
   cash: number;
   borrowed: number;
+}
+
+export interface BidStarted {
+  type: 'BidStarted';
+  ground: string;
+  defaultWinner: string;
+}
+
+export interface BidPlaced {
+  type: 'BidPlaced';
+  player: string;
+  bid: number;
+}
+
+export interface BidPassed {
+  type: 'BidPassed';
+  player: string;
+}
+
+export interface BidWon {
+  type: 'BidWon';
+  player: string;
+  bid: number;
 }
 
 export interface LandedOnHostileSpace {

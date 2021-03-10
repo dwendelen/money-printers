@@ -15,6 +15,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
             JsonSubTypes.Type(value = StartGame::class, name = "StartGame"),
             JsonSubTypes.Type(value = RollDice::class, name = "RollDice"),
             JsonSubTypes.Type(value = BuyThisSpace::class, name = "BuyThisSpace"),
+            JsonSubTypes.Type(value = DeclineThisSpace::class, name = "DeclineThisSpace"),
+            JsonSubTypes.Type(value = PlaceBid::class, name = "PlaceBid"),
+            JsonSubTypes.Type(value = PassBid::class, name = "PassBid"),
+            JsonSubTypes.Type(value = BuyWonBid::class, name = "BuyWonBid"),
             JsonSubTypes.Type(value = DemandRent::class, name = "DemandRent"),
             JsonSubTypes.Type(value = PayRent::class, name = "PayRent"),
             JsonSubTypes.Type(value = EndTurn::class, name = "EndTurn"),
@@ -34,7 +38,7 @@ data class AddPlayer(
         val id: String,
         val name: String,
         val color: String
-) : Command()
+) :Command()
 
 data class StartGame(
         val initiator: String
@@ -48,7 +52,26 @@ data class BuyThisSpace(
         val player: String,
         val cash: Int,
         val borrowed: Int
-) : Command()
+): Command()
+
+data class DeclineThisSpace(
+    val player: String
+): Command()
+
+data class PlaceBid(
+    val player: String,
+    val bid: Int
+): Command()
+
+data class PassBid(
+    val player: String
+): Command()
+
+data class BuyWonBid(
+    val player: String,
+    val cash: Int,
+    val borrowed: Int
+): Command()
 
 data class DemandRent(
     val owner: String,
@@ -62,4 +85,4 @@ data class PayRent(
 
 data class EndTurn(
         val player: String
-) : Command()
+): Command()

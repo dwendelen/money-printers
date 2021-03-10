@@ -40,15 +40,15 @@ data class GameCreated(
         val returnRate: Double
 ): Event()
 
+data class PromotedToGameMaster(
+    val player: String
+): Event()
+
 data class PlayerAdded(
         val id: String,
         val name: String,
         val color: String,
         val startDebt: Int
-): Event()
-
-data class PromotedToGameMaster(
-    val player: String
 ): Event()
 
 object GameStarted: Event()
@@ -86,7 +86,7 @@ data class SpaceBought(
 ): Event()
 
 data class BidStarted(
-    val ground: Int,
+    val ground: String,
     val defaultWinner: String
 ): Event()
 

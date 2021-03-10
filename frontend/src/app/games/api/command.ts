@@ -3,6 +3,9 @@ export type Command =
   StartGame |
   RollDice |
   BuyThisSpace |
+  DeclineThisSpace |
+  PlaceBid |
+  PassBid |
   DemandRent |
   PayRent |
   EndTurn;
@@ -43,6 +46,29 @@ export class BuyThisSpace {
     public player: string,
     public cash: number,
     public borrowed: number
+  ) {
+  }
+}
+
+export class DeclineThisSpace{
+  type = 'DeclineThisSpace';
+}
+
+export class PlaceBid{
+  type = 'PlaceBid';
+
+  constructor(
+    public player: string,
+    public bid: number
+  ) {
+  }
+}
+
+export class PassBid{
+  type = 'PassBid';
+
+  constructor(
+    public player: string
   ) {
   }
 }
