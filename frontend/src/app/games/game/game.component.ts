@@ -4,7 +4,18 @@ import {GameService} from '../game.service';
 import {GameInfo} from '../api/api';
 import {Game, Ownable, Player, Space, Station, Street, Utility} from '../game';
 import {Event} from '../api/event';
-import {AddPlayer, BuyThisSpace, Command, DemandRent, EndTurn, PayRent, RollDice, StartGame} from '../api/command';
+import {
+  AddPlayer,
+  BuyThisSpace, BuyWonBid,
+  Command,
+  DeclineThisSpace,
+  DemandRent,
+  EndTurn, PassBid,
+  PayRent, PlaceBid,
+  RollDice,
+  StartGame
+} from '../api/command';
+import {Bidding} from '../bidding/bidding';
 
 @Component({
   selector: 'app-game',
@@ -32,7 +43,9 @@ export class GameComponent implements OnInit, OnDestroy {
   spaceInfo: Space | null = null;
 
   ngOnInit(): void {
-    this.game = new Game(this.user.getId());
+    this.game = new Game(this.user.getId(), amount => {
+      setTimeout(() =>this.sendCmd(new BuyWonBid(this.game.myId, 0, amount)), 0)
+    });
     this.eventLoop(this.gameInfo.events, 0);
   }
 
@@ -108,16 +121,14 @@ export class GameComponent implements OnInit, OnDestroy {
     this.sendCmd(new BuyThisSpace(this.game.myId, cash, borrowed));
   }
 
+  dontBuyThis(): void {
+    this.sendCmd(new DeclineThisSpace(this.game.myId));
+  }
+
   demandRent(demandId: number | null): void {
     if (demandId != null) {
       this.sendCmd(new DemandRent(this.game.myId, demandId));
     }
-  }
-
-  private isOwnable(space: Space): boolean {
-    return space instanceof Street ||
-      space instanceof Station ||
-      space instanceof Utility;
   }
 
   payRent(): void {
@@ -138,6 +149,14 @@ export class GameComponent implements OnInit, OnDestroy {
 
   endTurn(): void {
     this.sendCmd(new EndTurn(this.game.myId));
+  }
+
+  passBid(): void {
+    this.sendCmd(new PassBid(this.game.myId));
+  }
+
+  placeBid(amount: number): void {
+    this.sendCmd(new PlaceBid(this.game.myId, amount));
   }
 
   private sendCmd(cmd: Command): void {
@@ -201,6 +220,18 @@ export class GameComponent implements OnInit, OnDestroy {
 
   getOwnerColor(ground: Space): string {
     const ownable = ground as Ownable;
-    return ownable!.getOwner()!.color;
+    return ownable.getOwner()!.color;
+  }
+
+  getBidding(): Bidding {
+    const bidInfo = this.game.getBidInfo()!!;
+
+    return new Bidding(
+      bidInfo.player.name,
+      bidInfo.bid,
+      bidInfo.players.filter(p => p.id !== this.game.myId).length,
+      bidInfo.player.id === this.game.myId,
+      bidInfo.players.some(p => p.id === this.game.myId)
+    );
   }
 }

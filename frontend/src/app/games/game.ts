@@ -1,4 +1,7 @@
 import {
+  BidPassed,
+  BidPlaced,
+  BidStarted, BidWon,
   DiceRolled,
   Event,
   GameCreated,
@@ -23,7 +26,8 @@ export class Game {
   returnRate!: number;
 
   constructor(
-    public myId: string
+    public myId: string,
+    private tmpBuy: (amount:number) => void // TODO delete
   ) {
   }
 
@@ -56,6 +60,18 @@ export class Game {
         break;
       case 'SpaceBought':
         this.applySpaceBought(event);
+        break;
+      case 'BidStarted':
+        this.applyBidStarted(event);
+        break;
+      case 'BidPlaced':
+        this.applyBidPlaced(event);
+        break;
+      case 'BidPassed':
+        this.applyBidPassed(event);
+        break;
+      case 'BidWon':
+        this.applyBidWon(event);
         break;
       case 'LandedOnHostileSpace':
         this.applyLandedOnHostileSpace(event);
@@ -174,7 +190,30 @@ export class Game {
     ownable.setAssetValue(value);
     player.applySpaceBought(event);
 
-    this.state.applySpaceBought(event, ownable);
+    this.state = this.state.applySpaceBought(event);
+  }
+
+  private applyBidStarted(event: BidStarted): void {
+    const player = this.getPlayer(event.defaultWinner);
+    const ground = this.getSpace(event.ground);
+    this.state = new Bidding(ground, new BidInfo(player, 0, this.players), this.state);
+  }
+
+  private applyBidPlaced(event: BidPlaced): void {
+    const player = this.getPlayer(event.player);
+    this.state.applyBidPlaced(event, player);
+  }
+
+  private applyBidPassed(event: BidPassed): void{
+    this.state.applyBidPassed(event);
+  }
+
+  private applyBidWon(event: BidWon): void {
+    const won = event.player === this.myId;
+    this.state = this.state.applyBidWon(event, won);
+    if(won) {
+      this.tmpBuy(event.bid);
+    }
   }
 
   private applyLandedOnHostileSpace(event: LandedOnHostileSpace): void {
@@ -292,6 +331,14 @@ export class Game {
   getMyRentDemand(): RentDemand {
       return (this.state as RentDemandedForMe).rentDemand;
   }
+
+  isBidding(): boolean {
+    return this.state.getBidInfo() != null;
+  }
+
+  getBidInfo(): BidInfo | null {
+    return this.state.getBidInfo();
+  }
 }
 
 export class Player {
@@ -355,7 +402,15 @@ interface GameState {
 
   applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void;
 
-  applySpaceBought(event: SpaceBought, ownable: Ownable): void;
+  applySpaceBought(event: SpaceBought): GameState;
+
+  applyBidStarted(event: BidStarted): void;
+
+  applyBidPlaced(event: BidPlaced, player: Player): void;
+
+  applyBidPassed(event: BidPassed): void;
+
+  applyBidWon(event: BidWon, won: boolean): GameState;
 
   applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void;
 
@@ -366,6 +421,8 @@ interface GameState {
   canEndTurn(): boolean;
 
   canBuyGround(): boolean;
+
+  getBidInfo(): BidInfo | null;
 }
 
 class WaitingForStart implements GameState {
@@ -375,7 +432,21 @@ class WaitingForStart implements GameState {
   applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
   }
 
-  applySpaceBought(event: SpaceBought, space: Space): void {
+  applySpaceBought(event: SpaceBought): GameState {
+    return this;
+  }
+
+  applyBidStarted(event: BidStarted): void {
+  }
+
+  applyBidPlaced(event: BidPlaced, player: Player): void {
+  }
+
+  applyBidPassed(event: BidPassed): void{
+  }
+
+  applyBidWon(event: BidWon, won: boolean): GameState {
+    return this;
   }
 
   applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
@@ -395,6 +466,10 @@ class WaitingForStart implements GameState {
 
   canRollDice(): boolean {
     return false;
+  }
+
+  getBidInfo(): BidInfo | null {
+    return null;
   }
 }
 
@@ -405,7 +480,21 @@ class NotMyTurn implements GameState {
   applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
   }
 
-  applySpaceBought(event: SpaceBought, space: Space): void {
+  applySpaceBought(event: SpaceBought): GameState {
+    return this;
+  }
+
+  applyBidStarted(event: BidStarted): void {
+  }
+
+  applyBidPlaced(event: BidPlaced, player: Player): void {
+  }
+
+  applyBidPassed(event: BidPassed): void{
+  }
+
+  applyBidWon(event: BidWon, won: boolean): GameState {
+    return this;
   }
 
   applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
@@ -425,6 +514,10 @@ class NotMyTurn implements GameState {
 
   canRollDice(): boolean {
     return false;
+  }
+
+  getBidInfo(): BidInfo | null {
+    return null;
   }
 }
 
@@ -439,8 +532,22 @@ class MyTurn implements GameState {
     this.state = this.state.applyLandedOnBuyableSpace(event, space);
   }
 
-  applySpaceBought(event: SpaceBought, ownable: Ownable): void {
-    this.state = this.state.applySpaceBought(event, ownable);
+  applySpaceBought(event: SpaceBought): GameState {
+    this.state = new WaitingForEndTurn()
+    return this;
+  }
+
+  applyBidStarted(event: BidStarted): void {
+  }
+
+  applyBidPlaced(event: BidPlaced, player: Player): void {
+  }
+
+  applyBidPassed(event: BidPassed): void{
+  }
+
+  applyBidWon(event: BidWon, won: boolean): GameState {
+    return this;
   }
 
   applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
@@ -462,6 +569,10 @@ class MyTurn implements GameState {
   canRollDice(): boolean {
     return this.state.canRollDice();
   }
+
+  getBidInfo(): BidInfo | null {
+    return null;
+  }
 }
 
 class RentDemandedNotForMe implements GameState {
@@ -476,7 +587,21 @@ class RentDemandedNotForMe implements GameState {
   applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
   }
 
-  applySpaceBought(event: SpaceBought, ownable: Ownable): void {
+  applySpaceBought(event: SpaceBought): GameState {
+    return this;
+  }
+
+  applyBidStarted(event: BidStarted): void {
+  }
+
+  applyBidPlaced(event: BidPlaced, player: Player): void {
+  }
+
+  applyBidPassed(event: BidPassed): void{
+  }
+
+  applyBidWon(event: BidWon, won: boolean): GameState {
+    return this;
   }
 
   applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
@@ -496,6 +621,10 @@ class RentDemandedNotForMe implements GameState {
 
   canRollDice(): boolean {
     return false;
+  }
+
+  getBidInfo(): BidInfo | null {
+    return null;
   }
 }
 
@@ -512,7 +641,21 @@ class RentDemandedForMe implements GameState {
   applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): void {
   }
 
-  applySpaceBought(event: SpaceBought, ownable: Ownable): void {
+  applySpaceBought(event: SpaceBought): GameState {
+    return this;
+  }
+
+  applyBidStarted(event: BidStarted): void {
+  }
+
+  applyBidPlaced(event: BidPlaced, player: Player): void {
+  }
+
+  applyBidPassed(event: BidPassed): void{
+  }
+
+  applyBidWon(event: BidWon, won: boolean): GameState {
+    return this;
   }
 
   applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
@@ -533,14 +676,189 @@ class RentDemandedForMe implements GameState {
   canRollDice(): boolean {
     return false;
   }
+
+  getBidInfo(): BidInfo | null {
+    return null;
+  }
+}
+
+class Bidding implements GameState {
+  constructor(
+    public space: Space,
+    public bidInfo: BidInfo,
+    public previousState: GameState,
+  ) {
+  }
+  applyBidPassed(event: BidPassed): void {
+    this.bidInfo.players = this.bidInfo.players.filter(p => p.id !== event.player);
+  }
+
+  applyBidPlaced(event: BidPlaced, player: Player): void {
+    if (!this.bidInfo.players.includes(player)) {
+      this.bidInfo.players.push(player);
+    }
+    this.bidInfo.player = player;
+    this.bidInfo.bid = event.bid;
+  }
+
+  applyBidStarted(event: BidStarted): void {
+  }
+
+  applyBidWon(event: BidWon, won: boolean): GameState {
+    if(won ) {
+      return new BuyingWonBid(this.space, this.previousState);
+    } else {
+      return new WaitingForAnotherToBuyBid(this.space, this.previousState)
+    }
+  }
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
+  }
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
+  }
+
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): void {
+  }
+
+  applyRentPaid(event: RentPaid): GameState {
+    return this;
+  }
+
+  applySpaceBought(event: SpaceBought): GameState {
+    return this;
+  }
+
+  canBuyGround(): boolean {
+    return false;
+  }
+
+  canEndTurn(): boolean {
+    return false;
+  }
+
+  canRollDice(): boolean {
+    return false;
+  }
+
+  getBidInfo(): BidInfo | null {
+    return this.bidInfo;
+  }
+}
+
+
+class BuyingWonBid implements GameState {
+  constructor(
+    public space: Space,
+    public previousState: GameState,
+  ) {
+  }
+  applyBidPassed(event: BidPassed): void {
+  }
+
+  applyBidPlaced(event: BidPlaced, player: Player): void {
+  }
+
+  applyBidStarted(event: BidStarted): void {
+  }
+
+  applyBidWon(event: BidWon, won: boolean): GameState {
+    return this
+  }
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
+  }
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
+  }
+
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): void {
+  }
+
+  applyRentPaid(event: RentPaid): GameState {
+    return this;
+  }
+
+  applySpaceBought(event: SpaceBought): GameState {
+    const state = this.previousState;
+    return state.applySpaceBought(event)
+  }
+
+  canBuyGround(): boolean {
+    return false;
+  }
+
+  canEndTurn(): boolean {
+    return false;
+  }
+
+  canRollDice(): boolean {
+    return false;
+  }
+
+  getBidInfo(): BidInfo | null {
+    return null;
+  }
+}
+
+class WaitingForAnotherToBuyBid implements GameState {
+  constructor(
+    public space: Space,
+    public previousState: GameState,
+  ) {
+  }
+  applyBidPassed(event: BidPassed): void {
+  }
+
+  applyBidPlaced(event: BidPlaced, player: Player): void {
+  }
+
+  applyBidStarted(event: BidStarted): void {
+  }
+
+  applyBidWon(event: BidWon, won: boolean): GameState {
+    return this
+  }
+
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
+  }
+
+  applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): void {
+  }
+
+  applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): void {
+  }
+
+  applyRentPaid(event: RentPaid): GameState {
+    return this;
+  }
+
+  applySpaceBought(event: SpaceBought): GameState {
+    const state = this.previousState;// TODO something is fucked somewhere
+    return state.applySpaceBought(event)
+  }
+
+  canBuyGround(): boolean {
+    return false;
+  }
+
+  canEndTurn(): boolean {
+    return false;
+  }
+
+  canRollDice(): boolean {
+    return false;
+  }
+
+  getBidInfo(): BidInfo | null {
+    return null;
+  }
 }
 
 interface TurnState {
   applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): TurnState;
 
   applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): TurnState;
-
-  applySpaceBought(event: SpaceBought, ownable: Ownable): TurnState;
 
   applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): TurnState;
 
@@ -563,10 +881,6 @@ class WaitingForDiceRoll implements TurnState {
 
   applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): TurnState {
     return new LandedOnNewGround();
-  }
-
-  applySpaceBought(event: SpaceBought, space: Space): TurnState {
-    return this;
   }
 
   applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): TurnState {
@@ -595,10 +909,6 @@ class LandedOnNewGround implements TurnState {
     return this;
   }
 
-  applySpaceBought(event: SpaceBought): TurnState {
-    return new WaitingForEndTurn();
-  }
-
   applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): TurnState {
     return this;
   }
@@ -623,10 +933,6 @@ class WaitingForEndTurn implements TurnState {
   }
 
   applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): TurnState {
-    return this;
-  }
-
-  applySpaceBought(event: SpaceBought): TurnState {
     return this;
   }
 
@@ -1034,5 +1340,14 @@ export class FreeParking implements Space {
 
   getStationRent(nbOfStations: number): undefined {
     return undefined;
+  }
+}
+
+export class BidInfo {
+  public constructor(
+    public player: Player,
+    public bid: number,
+    public players: Player[],
+  ) {
   }
 }

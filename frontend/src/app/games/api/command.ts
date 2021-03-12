@@ -6,6 +6,7 @@ export type Command =
   DeclineThisSpace |
   PlaceBid |
   PassBid |
+  BuyWonBid |
   DemandRent |
   PayRent |
   EndTurn;
@@ -50,11 +51,16 @@ export class BuyThisSpace {
   }
 }
 
-export class DeclineThisSpace{
+export class DeclineThisSpace {
   type = 'DeclineThisSpace';
+
+  constructor(
+    public player: string
+  ) {
+  }
 }
 
-export class PlaceBid{
+export class PlaceBid {
   type = 'PlaceBid';
 
   constructor(
@@ -64,7 +70,7 @@ export class PlaceBid{
   }
 }
 
-export class PassBid{
+export class PassBid {
   type = 'PassBid';
 
   constructor(
@@ -72,6 +78,18 @@ export class PassBid{
   ) {
   }
 }
+
+export class BuyWonBid {
+  type = 'BuyWonBid';
+
+  constructor(
+    public player: string,
+    public cash: number,
+    public borrowed: number
+  ) {
+  }
+}
+
 
 export class DemandRent {
   type = 'DemandRent';

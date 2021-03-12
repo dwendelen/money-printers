@@ -746,13 +746,12 @@ class Game(
         val space: String,
         val price: Int
     ): TurnState {
-        override fun getBidWinner(): String {
-            TODO()
-            return player
+        override fun getBidWinner(): String? {
+            return null
         }
 
         override fun validate(cmd: BuyWonBid): Boolean {
-            return cmd.player === player &&
+            return cmd.player == player &&
                     price == cmd.borrowed + cmd.cash
         }
 

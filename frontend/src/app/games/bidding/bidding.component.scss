@@ -1,0 +1,28 @@
+$padding: 10px;
+$widthLeft: 80px;
+$widthRight: 50px;
+.left {
+  display: inline-block;
+  width: $widthLeft;
+  padding: 0 $padding;
+}
+
+.right {
+  display: inline-block;
+  text-align: right;
+  width: $widthRight;
+  padding: 0 $padding;
+  border: 0;
+  margin: 0;
+}
+
+$buttonDivWidth: $widthLeft + $padding + $padding + $widthRight;
+$buttonWidth: $buttonDivWidth / 2;
+.buttonDiv {
+  width: $buttonDivWidth;
+  padding: 0 $padding;
+}
+
+button {
+  width: $buttonWidth;
+}

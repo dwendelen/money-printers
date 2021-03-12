@@ -11,6 +11,7 @@ import {environment} from '../environments/environment';
 import { BuyThisSpaceComponent } from './games/buy-this-space/buy-this-space.component';
 import { ColorSelectorComponent } from './games/color-selector/color-selector.component';
 import { SpaceInfoComponent } from './games/space-info/space-info.component';
+import { BiddingComponent } from './games/bidding/bidding.component';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { SpaceInfoComponent } from './games/space-info/space-info.component';
     GameComponent,
     BuyThisSpaceComponent,
     ColorSelectorComponent,
-    SpaceInfoComponent
+    SpaceInfoComponent,
+    BiddingComponent
   ],
   imports: [
     BrowserModule,

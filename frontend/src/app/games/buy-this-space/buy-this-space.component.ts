@@ -21,6 +21,22 @@ export class BuyThisSpaceComponent implements OnInit {
   disabled!: boolean;
   @Output()
   buy = new EventEmitter<BuyData>();
+  @Output()
+  dontBuy = new EventEmitter<void>();
+
+  private static correct(val: string, minVal: number, original: number, maxVal: number): number {
+    const num = parseInt(val, 10);
+    if (isNaN(num)) {
+      return original;
+    }
+    if (num < minVal) {
+      return minVal;
+    }
+    if (num > maxVal) {
+      return maxVal;
+    }
+    return num;
+  }
 
   ngOnInit(): void {
     this.cash = 0;
@@ -57,18 +73,8 @@ export class BuyThisSpaceComponent implements OnInit {
     this.buy.emit(new BuyData(this.cash, this.borrowed));
   }
 
-  private static correct(val: string, minVal: number, original: number, maxVal: number): number {
-    const num = parseInt(val, 10);
-    if (isNaN(num)) {
-      return original;
-    }
-    if (num < minVal) {
-      return minVal;
-    }
-    if (num > maxVal) {
-      return maxVal;
-    }
-    return num;
+  triggerDontBuy(): void {
+    this.dontBuy.emit();
   }
 }
 

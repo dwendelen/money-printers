@@ -62,7 +62,8 @@
         [space]="game.getMyOwnable()"
         [maxCash]="game.getMyCash()"
         [disabled]="commandInFlight"
-        (buy)="buyThis($event.cash, $event.borrowed)">
+        (buy)="buyThis($event.cash, $event.borrowed)"
+        (dontBuy)="dontBuyThis()">
       </app-buy-this-space>
 
       <app-space-info *ngIf="spaceInfo" [space]="spaceInfo"></app-space-info>
@@ -70,6 +71,14 @@
       <button *ngIf="game.hasMyRentDemand()" (click)="payRent()">
         Pay {{ game.getMyRentDemand().owner}} {{game.getMyRentDemand().rent}} rent
       </button>
+      <app-bidding
+        *ngIf="game.isBidding()"
+        [bidding]="getBidding()"
+        [disabled]="commandInFlight"
+        (pass)="passBid()"
+        (bid)="placeBid($event)"
+      >
+      </app-bidding>
     </div>
   </div>
 </div>
