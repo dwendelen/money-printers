@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: money-printers
-        image: "localhost:32000/money-printers:5c1f64db"
+        image: "localhost:32000/money-printers:accd41a2"
         env:
         - name: "SERVER_SERVLET_CONTEXT_PATH"
           value: "/money-printers"
