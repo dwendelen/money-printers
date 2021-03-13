@@ -2,10 +2,14 @@
   width: 960px;
 }
 
-.column {
+.column1 {
   display: inline-block;
   vertical-align: top;
   margin-right: 50px;
+}
+.column2 {
+  display: inline-block;
+  vertical-align: top;
 }
 
 $houseMarginTop: 3px;
@@ -173,4 +177,28 @@ $playerNameCellWidth: $playerCellWidth + 50px;
 
 .actionButton {
   width: 100px;
+}
+
+.actions {
+  height: 32px;
+}
+
+.context {
+  height: 500px;
+}
+
+.context1 {
+  display: inline-block;
+  vertical-align: top;
+  width: 250px;
+}
+
+.context2 {
+  display: inline-block;
+  vertical-align: top;
+  width: 250px;
+}
+
+.log {
+
 }

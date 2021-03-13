@@ -42,6 +42,7 @@ export interface PromotedToGameMaster {
 
 export interface GameStarted {
   type: 'GameStarted';
+  initiator: string;
 }
 
 export interface NewTurnStarted {
@@ -131,6 +132,7 @@ export interface RentPaid {
 
 export interface TurnEnded {
   type: 'TurnEnded';
+  player: string;
 }
 
 type Space =

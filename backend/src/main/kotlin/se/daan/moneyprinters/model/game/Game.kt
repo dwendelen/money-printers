@@ -162,7 +162,7 @@ class Game(
                 players.size >= 2 &&
                 this.state.validate(cmd)
         ) {
-            newEvent(GameStarted)
+            newEvent(GameStarted(cmd.initiator))
             newEvent(NewTurnStarted(players[0].id))
             true
         } else {
@@ -466,7 +466,7 @@ class Game(
         ) {
             val idx = players.indexOfFirst { it.id == cmd.player }
             val newPlayer = players[(idx + 1) % players.size]
-            newEvent(TurnEnded)
+            newEvent(TurnEnded(cmd.player))
             newEvent(NewTurnStarted(newPlayer.id))
             true
         } else {

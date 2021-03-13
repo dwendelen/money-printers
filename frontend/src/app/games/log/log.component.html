@@ -1,0 +1,77 @@
+<div class="log">
+  <div *ngFor="let event of game.events.reverse()">
+    <ng-container *ngIf="event.type == 'GameCreated'" >
+      New game was created
+    </ng-container>
+    <ng-container *ngIf="event.type == 'PlayerAdded'">
+      <app-player-name [player]="getPlayer(event.id)"></app-player-name>
+      joined
+    </ng-container>
+    <ng-container *ngIf="event.type == 'GameStarted'">
+      <app-player-name [player]="getPlayer(event.initiator)"></app-player-name> started the game
+    </ng-container>
+    <ng-container *ngIf="event.type == 'NewTurnStarted'">
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>'s turn started
+    </ng-container>
+    <ng-container *ngIf="event.type == 'DiceRolled'">
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>
+      rolled {{event.dice1}} and {{event.dice2}}
+    </ng-container>
+    <ng-container *ngIf="event.type == 'StartMoneyReceived'">
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>
+      received {{event.amount}} start money
+    </ng-container>
+
+    <ng-container *ngIf="event.type == 'LandedOnSafeSpace'">
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>
+      landed on
+      <app-space-name [space]="getGround(event.ground)"></app-space-name>
+    </ng-container>
+    <ng-container *ngIf="event.type == 'LandedOnBuyableSpace'">
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>
+      landed on
+      <app-space-name [space]="getGround(event.ground)"></app-space-name>
+    </ng-container>
+    <ng-container *ngIf="event.type == 'SpaceBought'">
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>
+      bought
+      <app-space-name [space]="getGround(event.ground)"></app-space-name>
+    </ng-container>
+    <ng-container *ngIf="event.type == 'LandedOnHostileSpace'">
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>
+      landed on
+      <app-space-name [space]="getGround(event.ground)"></app-space-name>
+    </ng-container>
+    <ng-container *ngIf="event.type == 'BidStarted'">
+      A bid started for
+      <app-space-name [space]="getGround(event.ground)"></app-space-name>
+    </ng-container>
+    <ng-container *ngIf="event.type == 'BidPlaced'">
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>
+      bid {{event.bid}}
+    </ng-container>
+    <ng-container *ngIf="event.type == 'BidPassed'">
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>
+      passed
+    </ng-container>
+    <ng-container *ngIf="event.type == 'BidWon'">
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>
+      won the bid
+    </ng-container>
+    <ng-container *ngIf="event.type == 'RentDemanded'">
+      <app-player-name [player]="getPlayer(event.owner)"></app-player-name>
+      demanded {{event.rent}} rent from
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>
+    </ng-container>
+    <ng-container *ngIf="event.type == 'RentPaid'">
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>
+      paid {{event.rent}} to
+      <app-player-name [player]="getPlayer(event.owner)"></app-player-name>
+    </ng-container>
+    <ng-container *ngIf="event.type == 'TurnEnded'">
+      <app-player-name [player]="getPlayer(event.player)"></app-player-name>
+      ended he/her turn
+    </ng-container>
+  </div>
+</div>
+

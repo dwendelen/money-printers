@@ -245,7 +245,7 @@ export class Game {
     this.state = new NotMyTurn();
   }
 
-  private getPlayer(id: string): Player {
+  getPlayer(id: string): Player {
     const player = this.players
       .filter(p => p.id === id)[0];
     if (!player) {
@@ -254,7 +254,7 @@ export class Game {
     return player;
   }
 
-  private getSpace(id: string): Space {
+  getSpace(id: string): Space {
     const space = this.board
       .filter(p => p.id === id)[0];
     if (!space) {

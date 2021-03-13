@@ -51,7 +51,9 @@ data class PlayerAdded(
         val startDebt: Int
 ): Event()
 
-object GameStarted: Event()
+data class GameStarted(
+    val initiator: String
+): Event()
 
 data class NewTurnStarted(
         val player: String
@@ -125,4 +127,6 @@ data class RentPaid(
     val demandId: Int
 ): Event()
 
-object TurnEnded: Event()
+data class TurnEnded(
+    val player: String
+): Event()

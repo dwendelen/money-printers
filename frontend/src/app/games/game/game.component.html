@@ -4,7 +4,7 @@
     <button (click)="exitGame()">Exit</button>
     <button (click)="logout()">Logout</button>
   </div>
-  <div class="column">
+  <div class="column1">
     <div class="board">
       <div class="ground" *ngFor="let ground of game.board">
         <div class="groundOwner">
@@ -15,20 +15,20 @@
         </div>
         <div class="groundName"
              [style.background-color]="ground.color"
-            (click)="spaceInfo = ground">
+             (click)="spaceInfo = ground">
           {{ground.text}}
         </div>
         <div class="groundPlayers">
           <div class="playerColor"
                [style.background-color]="player.color"
-              *ngFor="let player of getPlayersOn(ground)"
-              (click)="demandRent(player.lastDemandId)">
+               *ngFor="let player of getPlayersOn(ground)"
+               (click)="demandRent(player.lastDemandId)">
           </div>
         </div>
       </div>
     </div>
   </div>
-  <div class="column">
+  <div class="column2">
     <div>Total economy: <span id="economy">{{game.economy}}</span></div>
     <div class="playerTable">
       <div class="playerTableHeader">
@@ -50,26 +50,26 @@
         <div class="playerAmount"> {{game.getStartMoney(player)}}</div>
       </div>
     </div>
-    <div class="Actions">
-      <app-color-selector *ngIf="showJoin()" [disabled]="disableJoin()" [exclude]="getPlayerColors()" (selectedColorChange)="playerColor = $event"></app-color-selector>
+    <div class="actions">
+      <app-color-selector *ngIf="showJoin()" [disabled]="disableJoin()" [exclude]="getPlayerColors()"
+                          (selectedColorChange)="playerColor = $event"></app-color-selector>
       <button class="actionButton" *ngIf="showJoin()" [disabled]="disableJoin()" (click)="join()">Join game</button>
       <button class="actionButton" *ngIf="showStart()" [disabled]="disableStart()" (click)="start()">Start game</button>
       <button class="actionButton" *ngIf="showRoll()" [disabled]="disableRoll()" (click)="roll()">Roll dice</button>
       <button class="actionButton" *ngIf="showEndTurn()" [disabled]="disableEndTurn()" (click)="endTurn()">End turn</button>
-
-      <app-buy-this-space
-        *ngIf="game.canBuyThis()"
-        [space]="game.getMyOwnable()"
-        [price]="game.getMyOwnable().getInitialPrice()"
-        [maxCash]="game.getMyCash()"
-        [disabled]="commandInFlight"
-        [canDecline]="true"
-        (buy)="buyThis($event.cash, $event.borrowed)"
-        (dontBuy)="dontBuyThis()">
-      </app-buy-this-space>
-
-      <app-space-info *ngIf="spaceInfo" [space]="spaceInfo"></app-space-info>
-      <button *ngIf="spaceInfo" (click)="spaceInfo = null">Close</button>
+    </div>
+    <div class="context">
+      <div class="context1">
+        <app-buy-this-space
+          *ngIf="game.canBuyThis()"
+          [space]="game.getMyOwnable()"
+          [price]="game.getMyOwnable().getInitialPrice()"
+          [maxCash]="game.getMyCash()"
+          [disabled]="commandInFlight"
+          [canDecline]="true"
+          (buy)="buyThis($event.cash, $event.borrowed)"
+          (dontBuy)="dontBuyThis()">
+        </app-buy-this-space>
       <button *ngIf="game.hasMyRentDemand()" (click)="payRent()">
         Pay {{ game.getMyRentDemand().owner}} {{game.getMyRentDemand().rent}} rent
       </button>
@@ -89,6 +89,15 @@
         [canDecline]="false"
         (buy)="buyWonBid($event.cash, $event.borrowed)">
       </app-buy-this-space>
+      </div>
+      <div class="context2">
+        <app-space-info *ngIf="spaceInfo" [space]="spaceInfo"></app-space-info>
+        <button *ngIf="spaceInfo" (click)="spaceInfo = null">Close</button>
+      </div>
+    </div>
+    <div class="log">
+      <app-log [game]="game">
+      </app-log>
     </div>
   </div>
 </div>
