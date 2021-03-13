@@ -30,31 +30,35 @@
   </div>
   <div class="column2">
     <div>Total economy: <span id="economy">{{game.economy}}</span></div>
-    <div class="playerTable">
-      <div class="playerTableHeader">
-        <div class="playerName">&nbsp;</div>
-        <div>Money</div>
-        <div>Assets</div>
-        <div>Debt</div>
-        <div>Start</div>
-      </div>
-      <div class="playerTableRow" *ngFor="let player of game.players">
-        <div class="playerName">
-          <div class="playerColor" [style.background-color]="player.color"></div>
-          {{player.name}}
-          <div *ngIf="player.id === game.gameMasterId" class="gameMaster"></div>
+    <div class="playerThing">
+      <div class="playerTable">
+        <div class="playerTableHeader">
+          <div class="playerName">&nbsp;</div>
+          <div>Money</div>
+          <div>Assets</div>
+          <div>Debt</div>
+          <div>Start</div>
         </div>
-        <div class="playerAmount">{{player.money}}</div>
-        <div class="playerAmount">{{player.assets}}</div>
-        <div class="playerAmount">{{player.debt}}</div>
-        <div class="playerAmount"> {{game.getStartMoney(player)}}</div>
+        <div class="playerTableRow" *ngFor="let player of game.players">
+          <div class="playerName">
+            <div class="playerColor" [style.background-color]="player.color"></div>
+            {{player.name}}
+            <div *ngIf="player.id === game.gameMasterId" class="gameMaster"></div>
+          </div>
+          <div class="playerAmount">{{player.money}}</div>
+          <div class="playerAmount">{{player.assets}}</div>
+          <div class="playerAmount">{{player.debt}}</div>
+          <div class="playerAmount"> {{game.getStartMoney(player)}}</div>
+        </div>
+      </div>
+      <div>
+        <app-color-selector *ngIf="showJoin()" [disabled]="disableJoin()" [exclude]="getPlayerColors()"
+                            (selectedColorChange)="playerColor = $event"></app-color-selector>
+        <button class="actionButton" *ngIf="showJoin()" [disabled]="disableJoin()" (click)="join()">Join game</button>
+        <button class="actionButton" *ngIf="showStart()" [disabled]="disableStart()" (click)="start()">Start game</button>
       </div>
     </div>
     <div class="actions">
-      <app-color-selector *ngIf="showJoin()" [disabled]="disableJoin()" [exclude]="getPlayerColors()"
-                          (selectedColorChange)="playerColor = $event"></app-color-selector>
-      <button class="actionButton" *ngIf="showJoin()" [disabled]="disableJoin()" (click)="join()">Join game</button>
-      <button class="actionButton" *ngIf="showStart()" [disabled]="disableStart()" (click)="start()">Start game</button>
       <button class="actionButton" *ngIf="showRoll()" [disabled]="disableRoll()" (click)="roll()">Roll dice</button>
       <button class="actionButton" *ngIf="showEndTurn()" [disabled]="disableEndTurn()" (click)="endTurn()">End turn</button>
     </div>
