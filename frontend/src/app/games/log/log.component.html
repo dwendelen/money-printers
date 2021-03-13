@@ -1,5 +1,5 @@
 <div class="log">
-  <div *ngFor="let event of game.events.reverse()">
+  <div *ngFor="let event of game.events.slice().reverse()">
     <ng-container *ngIf="event.type == 'GameCreated'" >
       New game was created
     </ng-container>
