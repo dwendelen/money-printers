@@ -1,0 +1,12 @@
+<div>
+  <span class="left">Price</span>
+  <span class="right">{{price}}</span>
+</div>
+<div>
+  <label for="borrowed" class="left">Borrowed</label>
+  <input id="borrowed" class="right" onClick="this.select();" (blur)="borrowedChanged()" type="text" [(ngModel)]="borrowedField">
+</div>
+<div>
+  <label for="cash" class="left">Cash</label>
+  <input id="cash" class="right" onClick="this.select();" (blur)="cashChanged()" type="text" [(ngModel)]="cashField">
+</div>

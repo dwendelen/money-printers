@@ -1,18 +1,11 @@
 <app-space-info [space]="space"></app-space-info>
 <div>&nbsp;</div>
-<!--<div>-->
-<!--  <div class="buy-this-left">Price</div>-->
-<!--  <span class="buy-this-right">{{this.space.getInitialPrice()}}</span>-->
-<!--</div>-->
-<div>
-  <label for="buy_this_borrowed" class="buy-this-left">Borrowed</label>
-  <input id="buy_this_borrowed" class="buy-this-right" onClick="this.select();" (blur)="borrowedChanged()" type="text" [(ngModel)]="borrowedField">
-</div>
-<div>
-  <label for="buy_this_cash" class="buy-this-left">Cash</label>
-  <input id="buy_this_cash" class="buy-this-right" onClick="this.select();" (blur)="cashChanged()" type="text" [(ngModel)]="cashField">
-</div>
-<div>
-  <button [disabled]="disabled" (click)="triggerDontBuy()" value="">Decline</button>
-  <button [disabled]="disabled" (click)="triggerBuy()" value="">Buy</button>
+<app-buy-space
+  [maxCash]="maxCash"
+  [price]="space.getInitialPrice()"
+  (onChange)="allocation = $event"
+></app-buy-space>
+<div class="buttonDiv">
+  <button [disabled]="disabled" (click)="triggerDontBuy()">Decline</button>
+  <button [disabled]="disabled" (click)="triggerBuy()">Buy</button>
 </div>
