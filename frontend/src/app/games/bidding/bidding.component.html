@@ -1,3 +1,7 @@
+<app-space-info
+  [space]="bidding.space"
+></app-space-info>
+<div>&nbsp;</div>
 <div>
   <label class="left">{{bidding.player}}</label>
   <span class="right">{{bidding.bid}}</span>
@@ -10,7 +14,7 @@
   <label class="left" for="bidAmount">My bid</label>
   <input class="right" id="bidAmount" type="text" [(ngModel)]="bidField" onClick="this.select();" (blur)="bidChanged()">
 </div>
-<div class="buttonDiv">
+<div class="buttonRow">
   <button [disabled]="!canPass()" (click)="triggerPass()">Pass</button>
   <button [disabled]="!canBid()" (click)="triggerBid()">Bid</button>
 </div>

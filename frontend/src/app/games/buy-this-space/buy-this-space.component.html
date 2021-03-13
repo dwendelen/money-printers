@@ -2,10 +2,14 @@
 <div>&nbsp;</div>
 <app-buy-space
   [maxCash]="maxCash"
-  [price]="space.getInitialPrice()"
+  [price]="price"
   (onChange)="allocation = $event"
 ></app-buy-space>
-<div class="buttonDiv">
-  <button [disabled]="disabled" (click)="triggerDontBuy()">Decline</button>
-  <button [disabled]="disabled" (click)="triggerBuy()">Buy</button>
+<div class="buttonRow">
+  <div class="buttonCell">
+    <button *ngIf="canDecline" [disabled]="disabled" (click)="triggerDontBuy()">Decline</button>
+  </div>
+  <div class="buttonCell">
+    <button [disabled]="disabled" (click)="triggerBuy()">Buy</button>
+  </div>
 </div>

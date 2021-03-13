@@ -1,5 +1,11 @@
-.buttonDiv {
+.buttonRow {
   padding-left: 10px;
+}
+.buttonCell {
+  display: inline-block;
+  vertical-align: top;
+  padding: 0;
+  width: 75px;
 }
 button {
   width: 75px;

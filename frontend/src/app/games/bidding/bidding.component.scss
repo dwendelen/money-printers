@@ -18,7 +18,7 @@ $widthRight: 50px;
 
 $buttonDivWidth: $widthLeft + $padding + $padding + $widthRight;
 $buttonWidth: $buttonDivWidth / 2;
-.buttonDiv {
+.buttonRow {
   width: $buttonDivWidth;
   padding: 0 $padding;
 }

@@ -60,8 +60,10 @@
       <app-buy-this-space
         *ngIf="game.canBuyThis()"
         [space]="game.getMyOwnable()"
+        [price]="game.getMyOwnable().getInitialPrice()"
         [maxCash]="game.getMyCash()"
         [disabled]="commandInFlight"
+        [canDecline]="true"
         (buy)="buyThis($event.cash, $event.borrowed)"
         (dontBuy)="dontBuyThis()">
       </app-buy-this-space>
@@ -76,9 +78,17 @@
         [bidding]="getBidding()"
         [disabled]="commandInFlight"
         (pass)="passBid()"
-        (bid)="placeBid($event)"
-      >
+        (bid)="placeBid($event)">
       </app-bidding>
+      <app-buy-this-space
+        *ngIf="game.hasWonBid()"
+        [space]="getBidding().space"
+        [price]="getBidding().bid"
+        [maxCash]="game.getMyCash()"
+        [disabled]="commandInFlight"
+        [canDecline]="false"
+        (buy)="buyWonBid($event.cash, $event.borrowed)">
+      </app-buy-this-space>
     </div>
   </div>
 </div>

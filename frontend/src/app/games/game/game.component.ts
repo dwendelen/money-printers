@@ -43,9 +43,7 @@ export class GameComponent implements OnInit, OnDestroy {
   spaceInfo: Space | null = null;
 
   ngOnInit(): void {
-    this.game = new Game(this.user.getId(), amount => {
-      setTimeout(() =>this.sendCmd(new BuyWonBid(this.game.myId, 0, amount)), 0)
-    });
+    this.game = new Game(this.user.getId());
     this.eventLoop(this.gameInfo.events, 0);
   }
 
@@ -160,6 +158,14 @@ export class GameComponent implements OnInit, OnDestroy {
     this.sendCmd(new PlaceBid(this.game.myId, amount));
   }
 
+  buyWonBid(cash: number, borrowed: number) {
+    this.sendCmd(new BuyWonBid(
+      this.game.myId,
+      cash,
+      borrowed
+    ));
+  }
+
   private sendCmd(cmd: Command): void {
     if (this.commandInFlight) {
       console.log('Another command is already in flight');
@@ -228,6 +234,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const bidInfo = this.game.getBidInfo()!!;
 
     return new Bidding(
+      bidInfo.space,
       bidInfo.player.name,
       bidInfo.bid,
       bidInfo.players.filter(p => p.id !== this.game.myId).length,

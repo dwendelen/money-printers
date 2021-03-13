@@ -11,9 +11,13 @@ export class BuyThisSpaceComponent implements OnInit {
   @Input()
   space!: Ownable;
   @Input()
+  price!: number;
+  @Input()
   maxCash!: number;
   @Input()
   disabled!: boolean;
+  @Input()
+  canDecline!: boolean;
   @Output()
   buy = new EventEmitter<MoneyAllocation>();
   @Output()

@@ -26,8 +26,7 @@ export class Game {
   returnRate!: number;
 
   constructor(
-    public myId: string,
-    private tmpBuy: (amount:number) => void // TODO delete
+    public myId: string
   ) {
   }
 
@@ -195,8 +194,8 @@ export class Game {
 
   private applyBidStarted(event: BidStarted): void {
     const player = this.getPlayer(event.defaultWinner);
-    const ground = this.getSpace(event.ground);
-    this.state = new Bidding(ground, new BidInfo(player, 0, this.players), this.state);
+    const ground = this.getOwnable(event.ground);
+    this.state = new Bidding(ground, new BidInfo(ground, player, 0, this.players), this.state);
   }
 
   private applyBidPlaced(event: BidPlaced): void {
@@ -211,9 +210,6 @@ export class Game {
   private applyBidWon(event: BidWon): void {
     const won = event.player === this.myId;
     this.state = this.state.applyBidWon(event, won);
-    if(won) {
-      this.tmpBuy(event.bid);
-    }
   }
 
   private applyLandedOnHostileSpace(event: LandedOnHostileSpace): void {
@@ -333,11 +329,15 @@ export class Game {
   }
 
   isBidding(): boolean {
-    return this.state.getBidInfo() != null;
+    return this.state.isBidding();
   }
 
   getBidInfo(): BidInfo | null {
     return this.state.getBidInfo();
+  }
+
+  hasWonBid() {
+    return this.state.hasWonBid();
   }
 }
 
@@ -423,6 +423,10 @@ interface GameState {
   canBuyGround(): boolean;
 
   getBidInfo(): BidInfo | null;
+
+  hasWonBid(): boolean;
+
+  isBidding(): boolean;
 }
 
 class WaitingForStart implements GameState {
@@ -471,6 +475,14 @@ class WaitingForStart implements GameState {
   getBidInfo(): BidInfo | null {
     return null;
   }
+
+  hasWonBid(): boolean {
+    return false;
+  }
+
+  isBidding(): boolean {
+    return false;
+  }
 }
 
 class NotMyTurn implements GameState {
@@ -518,6 +530,14 @@ class NotMyTurn implements GameState {
 
   getBidInfo(): BidInfo | null {
     return null;
+  }
+
+  hasWonBid(): boolean {
+    return false;
+  }
+
+  isBidding(): boolean {
+    return false;
   }
 }
 
@@ -573,6 +593,14 @@ class MyTurn implements GameState {
   getBidInfo(): BidInfo | null {
     return null;
   }
+
+  hasWonBid(): boolean {
+    return false;
+  }
+
+  isBidding(): boolean {
+    return false;
+  }
 }
 
 class RentDemandedNotForMe implements GameState {
@@ -625,6 +653,14 @@ class RentDemandedNotForMe implements GameState {
 
   getBidInfo(): BidInfo | null {
     return null;
+  }
+
+  hasWonBid(): boolean {
+    return false;
+  }
+
+  isBidding(): boolean {
+    return false;
   }
 }
 
@@ -680,6 +716,14 @@ class RentDemandedForMe implements GameState {
   getBidInfo(): BidInfo | null {
     return null;
   }
+
+  hasWonBid(): boolean {
+    return false;
+  }
+
+  isBidding(): boolean {
+    return false;
+  }
 }
 
 class Bidding implements GameState {
@@ -706,7 +750,7 @@ class Bidding implements GameState {
 
   applyBidWon(event: BidWon, won: boolean): GameState {
     if(won ) {
-      return new BuyingWonBid(this.space, this.previousState);
+      return new BuyingWonBid(this.space, this.bidInfo, this.previousState);
     } else {
       return new WaitingForAnotherToBuyBid(this.space, this.previousState)
     }
@@ -744,12 +788,21 @@ class Bidding implements GameState {
   getBidInfo(): BidInfo | null {
     return this.bidInfo;
   }
+
+  hasWonBid(): boolean {
+    return false;
+  }
+
+  isBidding(): boolean {
+    return true;
+  }
 }
 
 
 class BuyingWonBid implements GameState {
   constructor(
     public space: Space,
+    public bidInfo: BidInfo,
     public previousState: GameState,
   ) {
   }
@@ -797,7 +850,15 @@ class BuyingWonBid implements GameState {
   }
 
   getBidInfo(): BidInfo | null {
-    return null;
+    return this.bidInfo;
+  }
+
+  hasWonBid(): boolean {
+    return true;
+  }
+
+  isBidding(): boolean {
+    return false;
   }
 }
 
@@ -852,6 +913,14 @@ class WaitingForAnotherToBuyBid implements GameState {
 
   getBidInfo(): BidInfo | null {
     return null;
+  }
+
+  hasWonBid(): boolean {
+    return false;
+  }
+
+  isBidding(): boolean {
+    return false;
   }
 }
 
@@ -1345,6 +1414,7 @@ export class FreeParking implements Space {
 
 export class BidInfo {
   public constructor(
+    public space: Ownable,
     public player: Player,
     public bid: number,
     public players: Player[],
