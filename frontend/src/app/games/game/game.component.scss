@@ -1,5 +1,6 @@
 .game {
   width: 960px;
+  height: 960px;
 }
 
 .column1 {
@@ -10,6 +11,8 @@
 .column2 {
   display: inline-block;
   vertical-align: top;
+  position: relative;
+  height: 900px;
 }
 
 $houseMarginTop: 3px;
@@ -183,22 +186,21 @@ $playerNameCellWidth: $playerCellWidth + 50px;
   height: 32px;
 }
 
-.context {
-  height: 500px;
-}
-
+$contextWidth: 250px;
 .context1 {
   display: inline-block;
   vertical-align: top;
-  width: 250px;
+  width: $contextWidth;
 }
 
 .context2 {
   display: inline-block;
   vertical-align: top;
-  width: 250px;
+  width: $contextWidth;
 }
 
 .log {
-
+  position: absolute;
+  bottom: 0;
+  width: $contextWidth + $contextWidth;
 }
