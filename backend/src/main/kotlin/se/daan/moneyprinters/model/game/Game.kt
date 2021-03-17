@@ -372,8 +372,11 @@ class Game(
 
     private fun on(cmd: BuyWonBid): Boolean {
         val space = this.state.getBidSpace()
+        val player = this.findPlayer(cmd.player);
         return if(
             space != null &&
+            player != null &&
+            player.validate(cmd) &&
             this.state.validate(cmd)
         ) {
             newEvent(SpaceBought(
@@ -783,6 +786,10 @@ class Player(
     }
 
     fun validate(cmd: BuyThisSpace): Boolean {
+        return money >= cmd.cash
+    }
+
+    fun validate(cmd: BuyWonBid): Boolean {
         return money >= cmd.cash
     }
 
