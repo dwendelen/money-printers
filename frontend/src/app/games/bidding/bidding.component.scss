@@ -16,6 +16,13 @@ $widthRight: 50px;
   margin: 0;
 }
 
+input.right {
+  padding: 0 $padding - 1px;
+  border-width: 1px;
+  border-style: solid;
+}
+
+
 $buttonDivWidth: $widthLeft + $padding + $padding + $widthRight;
 $buttonWidth: $buttonDivWidth / 2;
 .buttonRow {

@@ -42,7 +42,7 @@
         <div class="playerTableRow" *ngFor="let player of game.players">
           <div class="playerName">
             <div class="playerColor" [style.background-color]="player.color"></div>
-            {{player.name}}
+            <app-player-name [player]="player"></app-player-name>
             <div *ngIf="player.id === game.gameMasterId" class="gameMaster"></div>
           </div>
           <div class="playerAmount">{{player.money}}</div>
@@ -75,7 +75,7 @@
           (dontBuy)="dontBuyThis()">
         </app-buy-this-space>
       <button *ngIf="game.hasMyRentDemand()" (click)="payRent()">
-        Pay {{ game.getMyRentDemand().owner}} {{game.getMyRentDemand().rent}} rent
+        Pay {{ game.getPlayer(game.getMyRentDemand().owner).name }} {{game.getMyRentDemand().rent}} rent
       </button>
       <app-bidding
         *ngIf="game.isBidding()"
