@@ -1,19 +1,18 @@
 <div class="name" [style.background-color]="space.color">{{space.text}}</div>
-<div class="box" *ngIf="isOwnable()">
+<div class="box" *ngIf="space.ownable">
   <div class="row">
     <span class="left owner">Owner</span>
-    <span class="right owner">{{getOwnerName(space)}}</span>
+    <span class="right owner">{{space.owner?.name || ''}}</span>
   </div>
   <div class="row">
     <span class="left">Asset value</span>
-    <span class="right amount">{{getAssetValue(space)}}</span>
+    <span class="right amount">{{space.assetValue}}</span>
   </div>
 </div>
-<!--<div *ngIf="isOwnable()">&nbsp;</div>-->
-<div class="box" *ngIf="isStreet()">
+<div class="box" *ngIf="space.type == 'Street'">
   <div class="row" >
     <span class="left">Rent</span>
-    <span class="right amount">{{space.getRent()}}</span>
+    <span class="right amount">{{space.rent}}</span>
   </div>
   <div class="row">
     <span class="left">Rent all</span>
@@ -37,20 +36,20 @@
   </div>
   <div class="row">
     <span class="left">Hotel</span>
-    <span class="right amount">{{space.getHotelRent()}}</span>
+    <span class="right amount">{{space.rentHotel}}</span>
   </div>
 </div>
-<div class="box" *ngIf="isUtility()">
+<div class="box" *ngIf="space.type == 'Utility'">
   <div class="row">
     <span class="left">Rent</span>
-    <span class="right amount">{{space.getRent()}}x</span>
+    <span class="right amount">{{space.rent}}x</span>
   </div>
   <div class="row">
     <span class="left">Rent all</span>
-    <span class="right amount">{{space.getRentAll()}}x</span>
+    <span class="right amount">{{space.rentAll}}x</span>
   </div>
 </div>
-<div class="box" *ngIf="isStation()">
+<div class="box" *ngIf="space.type == 'Station'">
   <div class="row">
     <span class="left">Rent</span>
     <span class="right amount">{{space.getStationRent(1)}}</span>
@@ -68,17 +67,17 @@
     <span class="right amount">{{space.getStationRent(4)}}</span>
   </div>
 </div>
-<div class="box" *ngIf="isOwnable()">
-  <div class="row" *ngIf="isStreet()">
+<div class="box" *ngIf="space.ownable">
+  <div class="row" *ngIf="space.type == 'Street'">
     <span class="left">Price House</span>
-    <span class="right amount">{{space.getHousePrice()}}</span>
+    <span class="right amount">{{space.priceHouse}}</span>
   </div>
-  <div class="row" *ngIf="isStreet()">
+  <div class="row" *ngIf="space.type == 'Street'">
     <span class="left">Price Hotel</span>
-    <span class="right amount">{{space.getHotelPrice()}}</span>
+    <span class="right amount">{{space.priceHotel}}</span>
   </div>
-  <div class="row" *ngIf="isOwnable()">
+  <div class="row">
     <span class="left">Initial price</span>
-    <span class="right amount">{{getInitialPrice(space)}}</span>
+    <span class="right amount">{{space.initialPrice}}</span>
   </div>
 </div>

@@ -9,10 +9,13 @@ export type Command =
   BuyWonBid |
   DemandRent |
   PayRent |
-  EndTurn;
+  EndTurn |
+  AddOffer |
+  UpdateOfferValue |
+  RemoveOffer;
 
 export class AddPlayer {
-  type = 'AddPlayer';
+  type: 'AddPlayer' = 'AddPlayer';
 
   constructor(
     public id: string,
@@ -23,7 +26,7 @@ export class AddPlayer {
 }
 
 export class StartGame {
-  type = 'StartGame';
+  type: 'StartGame' = 'StartGame';
 
   constructor(
     public initiator: string
@@ -32,7 +35,7 @@ export class StartGame {
 }
 
 export class RollDice {
-  type = 'RollDice';
+  type: 'RollDice' = 'RollDice';
 
   constructor(
     public player: string
@@ -41,7 +44,7 @@ export class RollDice {
 }
 
 export class BuyThisSpace {
-  type = 'BuyThisSpace';
+  type:'BuyThisSpace' = 'BuyThisSpace';
 
   constructor(
     public player: string,
@@ -52,7 +55,7 @@ export class BuyThisSpace {
 }
 
 export class DeclineThisSpace {
-  type = 'DeclineThisSpace';
+  type: 'DeclineThisSpace' = 'DeclineThisSpace';
 
   constructor(
     public player: string
@@ -61,7 +64,7 @@ export class DeclineThisSpace {
 }
 
 export class PlaceBid {
-  type = 'PlaceBid';
+  type: 'PlaceBid' = 'PlaceBid';
 
   constructor(
     public player: string,
@@ -71,7 +74,7 @@ export class PlaceBid {
 }
 
 export class PassBid {
-  type = 'PassBid';
+  type: 'PassBid' = 'PassBid';
 
   constructor(
     public player: string
@@ -80,7 +83,7 @@ export class PassBid {
 }
 
 export class BuyWonBid {
-  type = 'BuyWonBid';
+  type: 'BuyWonBid' = 'BuyWonBid';
 
   constructor(
     public player: string,
@@ -92,7 +95,7 @@ export class BuyWonBid {
 
 
 export class DemandRent {
-  type = 'DemandRent';
+  type: 'DemandRent' = 'DemandRent';
 
   constructor(
     public owner: string,
@@ -102,7 +105,7 @@ export class DemandRent {
 }
 
 export class PayRent {
-  type = 'PayRent';
+  type: 'PayRent' = 'PayRent';
 
   constructor(
     public player: string,
@@ -112,10 +115,45 @@ export class PayRent {
 }
 
 export class EndTurn {
-  type = 'EndTurn';
+  type: 'EndTurn' = 'EndTurn';
 
   constructor(
     public player: string
+  ) {
+  }
+}
+
+export class AddOffer {
+  type: 'AddOffer' = 'AddOffer';
+
+  constructor(
+    public from: string,
+    public to: string,
+    public ownable: string,
+    public value: number
+  ) {
+  }
+}
+
+export class UpdateOfferValue {
+  type: 'UpdateOfferValue' = 'UpdateOfferValue';
+
+  constructor(
+    public from: string,
+    public to: string,
+    public ownable: string,
+    public value: number
+  ) {
+  }
+}
+
+export class RemoveOffer {
+  type: 'RemoveOffer' = 'RemoveOffer';
+
+  constructor(
+    public from: string,
+    public to: string,
+    public ownable: string
   ) {
   }
 }

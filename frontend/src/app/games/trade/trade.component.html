@@ -1,0 +1,21 @@
+<div>Get:</div>
+<div *ngFor="let offer of otherPlayer.getting">
+  <app-space-name [space]="offer.ownable"></app-space-name>
+  <div>{{offer.value}}</div>
+</div>
+<div>Give:</div>
+<div *ngFor="let offer of otherPlayer.giving">
+  <input type="checkbox" checked="checked" [disabled]="disabled" (change)="removeOffer(offer)">
+  <app-space-name [space]="offer.ownable"></app-space-name>
+  <div><input type="text" [value]="offer.value"></div>
+</div>
+<div>
+  To offer:
+</div>
+<div *ngFor="let offerable of offerable">
+  <input type="checkbox" [disabled]="disabled" (change)="addOwnable(offerable)">
+  <app-space-name [space]="offerable"></app-space-name>
+</div>
+<div>
+  <button (click)="close.emit()">Close</button>
+</div>

@@ -10,7 +10,7 @@ import {
   LandedOnBuyableSpace,
   LandedOnHostileSpace,
   LandedOnSafeSpace,
-  NewTurnStarted,
+  NewTurnStarted, OfferAdded, OfferRemoved, OfferValueUpdated,
   PlayerAdded,
   RentDemanded,
   RentPaid,
@@ -89,6 +89,15 @@ export class Game {
       case 'TurnEnded':
         this.applyTurnEnded(event);
         break;
+      case 'OfferAdded':
+        this.applyOfferAdded(event);
+        break;
+      case 'OfferValueUpdated':
+        this.OfferValueUpdated(event);
+        break;
+      case 'OfferRemoved':
+        this.applyOfferRemoved(event);
+        break;
     }
     this.events.push(event);
   }
@@ -143,7 +152,8 @@ export class Game {
       event.id,
       event.name,
       event.color,
-      this.board[0]
+      this.board[0],
+      event.startDebt
     ));
   }
 
@@ -190,8 +200,8 @@ export class Game {
 
     const value = event.cash + event.borrowed;
     this.economy += value;
-    ownable.setOwner(player);
-    ownable.setAssetValue(value);
+    ownable.owner = player;
+    ownable.assetValue = value;
     player.applySpaceBought(event);
 
     this.state = this.state.applySpaceBought(event);
@@ -208,7 +218,7 @@ export class Game {
     this.state.applyBidPlaced(event, player);
   }
 
-  private applyBidPassed(event: BidPassed): void{
+  private applyBidPassed(event: BidPassed): void {
     this.state.applyBidPassed(event);
   }
 
@@ -248,6 +258,37 @@ export class Game {
 
   private applyTurnEnded(_: TurnEnded): void {
     this.state = new NotMyTurn();
+  }
+
+  private applyOfferAdded(event: OfferAdded): void {
+    const ownable = this.getOwnable(event.ownable);
+    if (event.from == this.myId) {
+      const other = this.getPlayer(event.to);
+      other.applyOfferAddedGiving(event, ownable);
+    } else {
+      const other = this.getPlayer(event.from);
+      other.applyOfferAddedGetting(event, ownable);
+    }
+  }
+
+  private OfferValueUpdated(event: OfferValueUpdated): void {
+    if (event.from == this.myId) {
+      const other = this.getPlayer(event.to);
+      other.applyOfferValueUpdatedGiving(event);
+    } else {
+      const other = this.getPlayer(event.from);
+      other.applyOfferValueUpdatedGetting(event);
+    }
+  }
+
+  private applyOfferRemoved(event: OfferRemoved): void {
+    if (event.from == this.myId) {
+      const other = this.getPlayer(event.to);
+      other.applyOfferRemovedGiving(event);
+    } else {
+      const other = this.getPlayer(event.from);
+      other.applyOfferRemovedGetting(event);
+    }
   }
 
   getPlayer(id: string): Player {
@@ -337,13 +378,18 @@ export class Player {
   debt = 0;
   assets = 0;
   lastDemandId: number | null = null;
+  giving: Offer[] = [];
+  getting: Offer[] = [];
 
   constructor(
     public id: string,
     public name: string,
     public color: string,
-    public position: Space
+    public position: Space,
+    startDebt: number
   ) {
+    this.money = startDebt;
+    this.debt = startDebt;
   }
 
   applyStartMoneyReceived(event: StartMoneyReceived): void {
@@ -381,6 +427,48 @@ export class Player {
 
   applyRentPaidPlayer(event: RentPaid): void {
     this.money -= event.rent;
+  }
+
+  applyOfferAddedGiving(event: OfferAdded, ownable: Ownable): void {
+    this.giving.push(new Offer(ownable, event.value));
+  }
+
+  applyOfferAddedGetting(event: OfferAdded, ownable: Ownable): void {
+    this.getting.push(new Offer(ownable, event.value));
+  }
+
+  applyOfferValueUpdatedGiving(event: OfferValueUpdated): void {
+    const offer = this.giving
+      .find(o => o.ownable.id == event.ownable);
+    if (offer) {
+      offer.value = event.value
+    }
+  }
+
+  applyOfferValueUpdatedGetting(event: OfferValueUpdated): void {
+    const offer = this.getting
+      .find(o => o.ownable.id == event.ownable);
+    if (offer) {
+      offer.value = event.value
+    }
+  }
+
+  applyOfferRemovedGiving(event: OfferRemoved): void {
+    this.giving = this.giving
+      .filter(o => o.ownable.id != event.ownable);
+  }
+
+  applyOfferRemovedGetting(event: OfferRemoved): void {
+    this.getting = this.getting
+      .filter(o => o.ownable.id != event.ownable);
+  }
+}
+
+export class Offer {
+  constructor(
+    public ownable: Ownable,
+    public value: number
+  ) {
   }
 }
 
@@ -427,7 +515,7 @@ class WaitingForStart implements GameState {
   applyBidPlaced(event: BidPlaced, player: Player): void {
   }
 
-  applyBidPassed(event: BidPassed): void{
+  applyBidPassed(event: BidPassed): void {
   }
 
   applyBidWon(event: BidWon, won: boolean): GameState {
@@ -471,7 +559,7 @@ class NotMyTurn implements GameState {
   applyBidPlaced(event: BidPlaced, player: Player): void {
   }
 
-  applyBidPassed(event: BidPassed): void{
+  applyBidPassed(event: BidPassed): void {
   }
 
   applyBidWon(event: BidWon, won: boolean): GameState {
@@ -520,7 +608,7 @@ class MyTurn implements GameState {
   applyBidPlaced(event: BidPlaced, player: Player): void {
   }
 
-  applyBidPassed(event: BidPassed): void{
+  applyBidPassed(event: BidPassed): void {
   }
 
   applyBidWon(event: BidWon, won: boolean): GameState {
@@ -570,7 +658,7 @@ class RentDemandedNotForMe implements GameState {
   applyBidPlaced(event: BidPlaced, player: Player): void {
   }
 
-  applyBidPassed(event: BidPassed): void{
+  applyBidPassed(event: BidPassed): void {
   }
 
   applyBidWon(event: BidWon, won: boolean): GameState {
@@ -622,7 +710,7 @@ class RentDemandedForMe implements GameState {
   applyBidPlaced(event: BidPlaced, player: Player): void {
   }
 
-  applyBidPassed(event: BidPassed): void{
+  applyBidPassed(event: BidPassed): void {
   }
 
   applyBidWon(event: BidWon, won: boolean): GameState {
@@ -675,7 +763,7 @@ class Bidding implements GameState {
   }
 
   applyBidWon(event: BidWon, won: boolean): GameState {
-    if(won ) {
+    if (won) {
       return new BuyingWonBid(this.space, this.bidInfo, this.previousState);
     } else {
       return new WaitingForAnotherToBuyBid(this.space, this.previousState)
@@ -772,6 +860,7 @@ class WaitingForAnotherToBuyBid implements GameState {
     public previousState: GameState,
   ) {
   }
+
   applyBidPassed(event: BidPassed): void {
   }
 
@@ -924,39 +1013,24 @@ export class RentDemand {
   }
 }
 
-export interface Space {
-  id: string;
-  text: string;
-  color: string | null;
+export type Space =
+  Ownable |
+  FreeParking |
+  Prison |
+  ActionSpace;
 
-  getRent(): number | undefined;
+export type Ownable =
+  Street |
+  Station |
+  Utility;
 
-  getRentAll(): number | undefined;
-
-  getHouseRent(nbOfHouses: number): number | undefined;
-
-  getHotelRent(): number | undefined;
-
-  getHousePrice(): number | undefined;
-
-  getHotelPrice(): number | undefined;
-
-  getStationRent(nbOfStations: number): number | undefined;
+abstract class AbstractOwnable {
+  owner: Player | null = null;
+  assetValue: number | null = null;
+  ownable: true = true;
 }
 
-export interface Ownable extends Space {
-  setOwner(player: Player): void;
-
-  getOwner(): Player | null;
-
-  getInitialPrice(): number;
-
-  getAssetValue(): number | null;
-
-  setAssetValue(assetValue: number): void;
-}
-
-export class Street implements Ownable {
+export class Street extends AbstractOwnable {
   constructor(
     public id: string,
     public text: string,
@@ -968,34 +1042,10 @@ export class Street implements Ownable {
     public priceHouse: number,
     public priceHotel: number
   ) {
+    super()
   }
 
-  owner: Player | null = null;
-  assetValue: number | null = null;
-
-  setOwner(player: Player): void {
-    this.owner = player;
-  }
-
-  getOwner(): Player | null {
-    return this.owner;
-  }
-
-  getInitialPrice(): number {
-    return this.initialPrice;
-  }
-
-  setAssetValue(assetValue: number): void {
-    this.assetValue = assetValue;
-  }
-
-  getAssetValue(): number | null {
-    return this.assetValue;
-  }
-
-  getRent(): number {
-    return this.rent;
-  }
+  type: 'Street' = 'Street'
 
   getRentAll(): number {
     return 2 * this.rent;
@@ -1004,63 +1054,21 @@ export class Street implements Ownable {
   getHouseRent(nbOfHouses: number): number {
     return this.rentHouse[nbOfHouses - 1];
   }
-
-  getHotelRent(): number {
-    return this.rentHotel;
-  }
-
-  getHousePrice(): number {
-    return this.priceHouse;
-  }
-
-  getHotelPrice(): number {
-    return this.priceHotel;
-  }
-
-  getStationRent(nbOfStations: number): undefined {
-    return undefined;
-  }
 }
 
-export class ActionSpace implements Space {
+export class ActionSpace {
   constructor(
     public id: string,
     public text: string
   ) {
   }
 
+  type: 'ActionSpace' = 'ActionSpace'
+  ownable: false = false;
   color = null;
-
-  getRent(): undefined {
-    return undefined;
-  }
-
-  getRentAll(): undefined {
-    return undefined;
-  }
-
-  getHouseRent(nbOfHouses: number): undefined {
-    return undefined;
-  }
-
-  getHotelRent(): undefined {
-    return undefined;
-  }
-
-  getHousePrice(): undefined {
-    return undefined;
-  }
-
-  getHotelPrice(): undefined {
-    return undefined;
-  }
-
-  getStationRent(nbOfStations: number): undefined {
-    return undefined;
-  }
 }
 
-export class Utility implements Ownable {
+export class Utility extends AbstractOwnable {
   constructor(
     public id: string,
     public text: string,
@@ -1068,197 +1076,55 @@ export class Utility implements Ownable {
     public rent: number,
     public rentAll: number
   ) {
+    super()
   }
 
-  owner: Player | null = null;
-  assetValue: number | null = null;
+  type: 'Utility' = 'Utility'
+
   color = null;
-
-  setOwner(player: Player): void {
-    this.owner = player;
-  }
-
-  getOwner(): Player | null {
-    return this.owner;
-  }
-
-  getInitialPrice(): number {
-    return this.initialPrice;
-  }
-
-  getAssetValue(): number | null {
-    return this.assetValue;
-  }
-
-  setAssetValue(assetValue: number): void {
-    this.assetValue = assetValue;
-  }
-
-  getRent(): number {
-    return this.rent;
-  }
-
-  getRentAll(): number {
-    return this.rentAll;
-  }
-
-  getHouseRent(nbOfHouses: number): undefined {
-    return undefined;
-  }
-
-  getHotelRent(): undefined {
-    return undefined;
-  }
-
-  getHousePrice(): undefined {
-    return undefined;
-  }
-
-  getHotelPrice(): undefined {
-    return undefined;
-  }
-
-  getStationRent(nbOfStations: number): undefined {
-    return undefined;
-  }
 }
 
-export class Station implements Ownable {
+export class Station extends AbstractOwnable {
   constructor(
     public id: string,
     public text: string,
     public initialPrice: number,
     public rent: number[]
   ) {
+    super()
   }
 
-  owner: Player | null = null;
-  assetValue: number | null = null;
+  type: 'Station' = 'Station'
+
   color = 'lightgrey';
-
-  setOwner(player: Player): void {
-    this.owner = player;
-  }
-
-  getOwner(): Player | null {
-    return this.owner;
-  }
-
-  getInitialPrice(): number {
-    return this.initialPrice;
-  }
-
-  getAssetValue(): number | null {
-    return this.assetValue;
-  }
-
-  setAssetValue(assetValue: number): void {
-    this.assetValue = assetValue;
-  }
-
-  getRent(): undefined {
-    return undefined;
-  }
-
-  getRentAll(): undefined {
-    return undefined;
-  }
-
-  getHouseRent(nbOfHouses: number): undefined {
-    return undefined;
-  }
-
-  getHotelRent(): undefined {
-    return undefined;
-  }
-
-  getHousePrice(): undefined {
-    return undefined;
-  }
-
-  getHotelPrice(): undefined {
-    return undefined;
-  }
 
   getStationRent(nbOfStations: number): number {
     return this.rent[nbOfStations - 1];
   }
 }
 
-export class Prison implements Space {
+export class Prison {
   constructor(
     public id: string,
     public text: string
   ) {
   }
 
+  type: 'Prison' = 'Prison'
+  ownable: false = false;
   color = null;
-
-  getRent(): undefined {
-    return undefined;
-  }
-
-  getRentAll(): undefined {
-    return undefined;
-  }
-
-  getHouseRent(nbOfHouses: number): undefined {
-    return undefined;
-  }
-
-  getHotelRent(): undefined {
-    return undefined;
-  }
-
-  getHousePrice(): undefined {
-    return undefined;
-  }
-
-  getHotelPrice(): undefined {
-    return undefined;
-  }
-
-  getStationRent(nbOfStations: number): undefined {
-    return undefined;
-  }
 }
 
-export class FreeParking implements Space {
+export class FreeParking {
   constructor(
     public id: string,
     public text: string
   ) {
   }
 
+  type: 'FreeParking' = 'FreeParking'
+  ownable: false = false;
   color = null;
-
-  getRent(): undefined {
-    return undefined;
-  }
-
-  getRentAll(): undefined {
-    return undefined;
-  }
-
-  getHouseRent(nbOfHouses: number): undefined {
-    return undefined;
-  }
-
-  getHotelRent(): undefined {
-    return undefined;
-  }
-
-  getHousePrice(): undefined {
-    return undefined;
-  }
-
-  getHotelPrice(): undefined {
-    return undefined;
-  }
-
-  getStationRent(nbOfStations: number): undefined {
-    return undefined;
-  }
 }
 
 export class BidInfo {

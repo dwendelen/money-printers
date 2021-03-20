@@ -28,6 +28,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
             JsonSubTypes.Type(value = RentDemanded::class, name = "RentDemanded"),
             JsonSubTypes.Type(value = RentPaid::class, name = "RentPaid"),
             JsonSubTypes.Type(value = TurnEnded::class, name = "TurnEnded"),
+            JsonSubTypes.Type(value = OfferAdded::class, name = "OfferAdded"),
+            JsonSubTypes.Type(value = OfferValueUpdated::class, name = "OfferValueUpdated"),
+            JsonSubTypes.Type(value = OfferRemoved::class, name = "OfferRemoved"),
         ]
 )
 sealed class Event
@@ -129,4 +132,24 @@ data class RentPaid(
 
 data class TurnEnded(
     val player: String
+): Event()
+
+data class OfferAdded(
+    val from: String,
+    val to: String,
+    val ownable: String,
+    val value: Int
+): Event()
+
+data class OfferValueUpdated(
+    val from: String,
+    val to: String,
+    val ownable: String,
+    val value: Int
+): Event()
+
+data class OfferRemoved(
+    val from: String,
+    val to: String,
+    val ownable: String
 ): Event()

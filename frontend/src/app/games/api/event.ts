@@ -16,7 +16,10 @@ export type Event =
   LandedOnHostileSpace |
   RentDemanded |
   RentPaid |
-  TurnEnded;
+  TurnEnded |
+  OfferAdded |
+  OfferValueUpdated |
+  OfferRemoved;
 
 export interface GameCreated {
   type: 'GameCreated';
@@ -32,7 +35,7 @@ export interface PlayerAdded {
   id: string;
   name: string;
   color: string;
-  startDebt: string;
+  startDebt: number;
 }
 
 export interface PromotedToGameMaster {
@@ -133,6 +136,29 @@ export interface RentPaid {
 export interface TurnEnded {
   type: 'TurnEnded';
   player: string;
+}
+
+export interface OfferAdded {
+  type: 'OfferAdded'
+  from: string,
+  to: string,
+  ownable: string,
+  value: number
+}
+
+export interface OfferValueUpdated {
+  type: 'OfferValueUpdated'
+  from: string,
+  to: string,
+  ownable: string,
+  value: number
+}
+
+export interface OfferRemoved {
+  type: 'OfferRemoved'
+  from: string,
+  to: string,
+  ownable: string
 }
 
 type Space =

@@ -16,6 +16,7 @@ import {BuySpaceComponent} from './games/buy-space/buy-space.component';
 import { LogComponent } from './games/log/log.component';
 import { PlayerNameComponent } from './games/player-name/player-name.component';
 import { SpaceNameComponent } from './games/space-name/space-name.component';
+import { TradeComponent } from './games/trade/trade.component';
 
 @NgModule({
   declarations: [
@@ -30,7 +31,8 @@ import { SpaceNameComponent } from './games/space-name/space-name.component';
     BiddingComponent,
     LogComponent,
     PlayerNameComponent,
-    SpaceNameComponent
+    SpaceNameComponent,
+    TradeComponent
   ],
   imports: [
     BrowserModule,

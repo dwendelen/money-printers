@@ -8,9 +8,9 @@
     <div class="board">
       <div class="ground" *ngFor="let ground of game.board">
         <div class="groundOwner">
-          <div *ngIf="isGroundUnBuilt(ground)"
+          <div *ngIf="ground.ownable && ground.owner"
                class="unbuilt"
-               [style.border-color]="getOwnerColor(ground)"
+               [style.border-color]="ground.owner?.color"
           ></div>
         </div>
         <div class="groundName"
@@ -40,7 +40,7 @@
           <div>Start</div>
         </div>
         <div class="playerTableRow" *ngFor="let player of game.players">
-          <div class="playerName">
+          <div class="playerName" (click)="openPlayerContext(player)">
             <div class="playerColor" [style.background-color]="player.color"></div>
             <app-player-name [player]="player"></app-player-name>
             <div *ngIf="player.id === game.gameMasterId" class="gameMaster"></div>
@@ -67,7 +67,7 @@
         <app-buy-this-space
           *ngIf="leftContext.type == 'LandedOnNewGround'"
           [space]="leftContext.ownable"
-          [price]="leftContext.ownable.getInitialPrice()"
+          [price]="leftContext.ownable.initialPrice"
           [maxCash]="game.getMyCash()"
           [disabled]="commandInFlight"
           [canDecline]="true"
@@ -97,10 +97,20 @@
       </app-buy-this-space>
       </div>
       <div class="context2">
-        <ng-container *ngIf="rightContext.type == 'viewSpace'">
+        <ng-container *ngIf="rightContext.type == 'ViewSpace'">
           <app-space-info [space]="rightContext.space"></app-space-info>
-          <button (click)="resetRightContext()">Close</button>
+          <button (click)="popRightContext()">Close</button>
         </ng-container>
+        <app-trade
+          *ngIf="rightContext.type == 'ViewTrade'"
+          [otherPlayer]="rightContext.otherParty"
+          [myOwnables]="myOwnables"
+          [disabled] = "commandInFlight"
+          (add)="addOffer($event)"
+          (remove)="removeOffer($event)"
+          (close)="popRightContext()"
+        >
+        </app-trade>
       </div>
     </div>
     <div class="log">

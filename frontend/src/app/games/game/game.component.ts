@@ -5,17 +5,19 @@ import {GameInfo} from '../api/api';
 import {BidInfo, Game, LeftContext, Ownable, Player, Space, Station, Street, Utility} from '../game';
 import {Event} from '../api/event';
 import {
+  AddOffer,
   AddPlayer,
   BuyThisSpace, BuyWonBid,
   Command,
   DeclineThisSpace,
   DemandRent,
   EndTurn, PassBid,
-  PayRent, PlaceBid,
+  PayRent, PlaceBid, RemoveOffer,
   RollDice,
   StartGame
 } from '../api/command';
 import {Bidding} from '../bidding/bidding';
+import {OfferInfo} from '../trade/trade.component';
 
 @Component({
   selector: 'app-game',
@@ -202,18 +204,6 @@ export class GameComponent implements OnInit, OnDestroy {
       .filter(p => p.position === ground);
   }
 
-  isGroundUnBuilt(ground: Space): boolean {
-    if (ground instanceof Street) {
-      return ground.owner != null;
-    } else if (ground instanceof Utility) {
-      return ground.owner != null;
-    } else if (ground instanceof Station) {
-      return ground.owner != null;
-    } else {
-      return false;
-    }
-  }
-
   copyGameIdToClipboard(): void {
     navigator.clipboard.writeText(this.gameInfo.id)
       .then();
@@ -222,11 +212,6 @@ export class GameComponent implements OnInit, OnDestroy {
   getPlayerColors(): string[] {
     return this.game.players
       .map(p => p.color);
-  }
-
-  getOwnerColor(ground: Space): string {
-    const ownable = ground as Ownable;
-    return ownable.getOwner()!.color;
   }
 
   getBidding(bidInfo: BidInfo): Bidding {
@@ -245,24 +230,66 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   viewGround(ground: Space): void {
-    this.rightContext = new ViewSpace(ground);
+    this.rightContext = new ViewSpace(ground, new NoRightContext());
   }
 
-  resetRightContext() {
-    this.rightContext = new NoRightContext();
+  popRightContext() {
+    this.rightContext = this.rightContext.previous;
+  }
+
+  get myOwnables(): Ownable[] {
+    return this.game.board
+      .filter(o => o.ownable)
+      .map(o =>  o as Ownable)
+      .filter(o => o.owner?.id == this.game.myId);
+  }
+
+  openPlayerContext(player: Player): void {
+    this.rightContext = new ViewTrade(player, new NoRightContext());
+  }
+
+  addOffer(offer: OfferInfo): void {
+    this.sendCmd(new AddOffer(
+      this.game.myId,
+      offer.otherPlayer,
+      offer.ownable,
+      offer.value
+    ));
+  }
+
+  removeOffer(offer: OfferInfo): void {
+    this.sendCmd(new RemoveOffer(
+      this.game.myId,
+      offer.otherPlayer,
+      offer.ownable
+    ));
   }
 }
 
-type RightContext = NoRightContext | ViewSpace;
+type RightContext =
+  NoRightContext |
+  ViewSpace |
+  ViewTrade;
 
 class NoRightContext {
   type: 'none' = 'none'
+  previous = this
 }
 
 class ViewSpace {
-  type: 'viewSpace' = 'viewSpace'
+  type: 'ViewSpace' = 'ViewSpace'
   constructor(
-    public space: Space
+    public space: Space,
+    public previous: RightContext
+  ) {
+  }
+}
+
+class ViewTrade {
+  type: 'ViewTrade' = 'ViewTrade'
+  constructor(
+    public otherParty: Player,
+    public previous: RightContext
   ) {
   }
 }
