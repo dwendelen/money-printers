@@ -293,21 +293,12 @@ export class Game {
     return this.state.canEndTurn();
   }
 
-  canBuyThis(): boolean {
-    return this.state.canBuyGround() &&
-      this.getMe().canBuyThis();
-  }
-
   isMyTurn(): boolean {
     return this.state instanceof MyTurn;
   }
 
   getMyCash(): number {
     return this.getMe().money;
-  }
-
-  getMyOwnable(): Ownable {
-    return this.getMe().position as Ownable;
   }
 
   private getMe(): Player {
@@ -320,25 +311,24 @@ export class Game {
     return this.fixedStartMoney + economyMoney - interest;
   }
 
-  hasMyRentDemand(): boolean {
-    return this.state instanceof RentDemandedForMe;
-  }
-
   getMyRentDemand(): RentDemand {
       return (this.state as RentDemandedForMe).rentDemand;
   }
 
-  isBidding(): boolean {
-    return this.state.isBidding();
+  getLeftContext(): LeftContext {
+    return this.state.getLeftContext();
   }
+}
 
-  getBidInfo(): BidInfo | null {
-    return this.state.getBidInfo();
-  }
+export type LeftContext =
+  NoLeftContext |
+  RentDemandedForMe |
+  Bidding |
+  BuyingWonBid |
+  LandedOnNewGround;
 
-  hasWonBid() {
-    return this.state.hasWonBid();
-  }
+class NoLeftContext {
+  type: 'none' = 'none'
 }
 
 export class Player {
@@ -384,10 +374,6 @@ export class Player {
     this.assets += event.cash + event.borrowed;
   }
 
-  canBuyThis(): boolean {
-    return this.position.canBuy();
-  }
-
   applyRentPaidOwner(event: RentPaid): void {
     this.money += event.rent;
   }
@@ -420,13 +406,7 @@ interface GameState {
 
   canEndTurn(): boolean;
 
-  canBuyGround(): boolean;
-
-  getBidInfo(): BidInfo | null;
-
-  hasWonBid(): boolean;
-
-  isBidding(): boolean;
+  getLeftContext(): LeftContext;
 }
 
 class WaitingForStart implements GameState {
@@ -460,10 +440,6 @@ class WaitingForStart implements GameState {
     return this;
   }
 
-  canBuyGround(): boolean {
-    return false;
-  }
-
   canEndTurn(): boolean {
     return false;
   }
@@ -472,16 +448,8 @@ class WaitingForStart implements GameState {
     return false;
   }
 
-  getBidInfo(): BidInfo | null {
-    return null;
-  }
-
-  hasWonBid(): boolean {
-    return false;
-  }
-
-  isBidding(): boolean {
-    return false;
+  getLeftContext(): LeftContext {
+    return new NoLeftContext();
   }
 }
 
@@ -516,10 +484,6 @@ class NotMyTurn implements GameState {
     return this;
   }
 
-  canBuyGround(): boolean {
-    return false;
-  }
-
   canEndTurn(): boolean {
     return false;
   }
@@ -528,16 +492,8 @@ class NotMyTurn implements GameState {
     return false;
   }
 
-  getBidInfo(): BidInfo | null {
-    return null;
-  }
-
-  hasWonBid(): boolean {
-    return false;
-  }
-
-  isBidding(): boolean {
-    return false;
+  getLeftContext(): LeftContext {
+    return new NoLeftContext();
   }
 }
 
@@ -578,10 +534,6 @@ class MyTurn implements GameState {
     return this;
   }
 
-  canBuyGround(): boolean {
-    return this.state.canBuyGround();
-  }
-
   canEndTurn(): boolean {
     return this.state.canEndTurn();
   }
@@ -590,16 +542,8 @@ class MyTurn implements GameState {
     return this.state.canRollDice();
   }
 
-  getBidInfo(): BidInfo | null {
-    return null;
-  }
-
-  hasWonBid(): boolean {
-    return false;
-  }
-
-  isBidding(): boolean {
-    return false;
+  getLeftContext(): LeftContext {
+    return this.state.getLeftContext();
   }
 }
 
@@ -639,10 +583,6 @@ class RentDemandedNotForMe implements GameState {
     return this.previousState;
   }
 
-  canBuyGround(): boolean {
-    return false;
-  }
-
   canEndTurn(): boolean {
     return false;
   }
@@ -651,16 +591,8 @@ class RentDemandedNotForMe implements GameState {
     return false;
   }
 
-  getBidInfo(): BidInfo | null {
-    return null;
-  }
-
-  hasWonBid(): boolean {
-    return false;
-  }
-
-  isBidding(): boolean {
-    return false;
+  getLeftContext(): LeftContext {
+    return new NoLeftContext();
   }
 }
 
@@ -670,6 +602,8 @@ class RentDemandedForMe implements GameState {
     private previousState: GameState
   ) {
   }
+
+  type: 'RentDemandedForMe' = 'RentDemandedForMe'
 
   applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): void {
   }
@@ -701,10 +635,6 @@ class RentDemandedForMe implements GameState {
     return this.previousState;
   }
 
-  canBuyGround(): boolean {
-    return false;
-  }
-
   canEndTurn(): boolean {
     return false;
   }
@@ -713,16 +643,8 @@ class RentDemandedForMe implements GameState {
     return false;
   }
 
-  getBidInfo(): BidInfo | null {
-    return null;
-  }
-
-  hasWonBid(): boolean {
-    return false;
-  }
-
-  isBidding(): boolean {
-    return false;
+  getLeftContext(): LeftContext {
+    return this;
   }
 }
 
@@ -733,6 +655,9 @@ class Bidding implements GameState {
     public previousState: GameState,
   ) {
   }
+
+  type: 'Bidding' = 'Bidding'
+
   applyBidPassed(event: BidPassed): void {
     this.bidInfo.players = this.bidInfo.players.filter(p => p.id !== event.player);
   }
@@ -773,10 +698,6 @@ class Bidding implements GameState {
     return this;
   }
 
-  canBuyGround(): boolean {
-    return false;
-  }
-
   canEndTurn(): boolean {
     return false;
   }
@@ -785,16 +706,8 @@ class Bidding implements GameState {
     return false;
   }
 
-  getBidInfo(): BidInfo | null {
-    return this.bidInfo;
-  }
-
-  hasWonBid(): boolean {
-    return false;
-  }
-
-  isBidding(): boolean {
-    return true;
+  getLeftContext(): LeftContext {
+    return this;
   }
 }
 
@@ -806,6 +719,9 @@ class BuyingWonBid implements GameState {
     public previousState: GameState,
   ) {
   }
+
+  type: 'BuyingWonBid' = 'BuyingWonBid'
+
   applyBidPassed(event: BidPassed): void {
   }
 
@@ -849,16 +765,8 @@ class BuyingWonBid implements GameState {
     return false;
   }
 
-  getBidInfo(): BidInfo | null {
-    return this.bidInfo;
-  }
-
-  hasWonBid(): boolean {
-    return true;
-  }
-
-  isBidding(): boolean {
-    return false;
+  getLeftContext(): LeftContext {
+    return this;
   }
 }
 
@@ -911,16 +819,8 @@ class WaitingForAnotherToBuyBid implements GameState {
     return false;
   }
 
-  getBidInfo(): BidInfo | null {
-    return null;
-  }
-
-  hasWonBid(): boolean {
-    return false;
-  }
-
-  isBidding(): boolean {
-    return false;
+  getLeftContext(): LeftContext {
+    return new NoLeftContext();
   }
 }
 
@@ -933,13 +833,12 @@ interface TurnState {
 
   canRollDice(): boolean;
 
-  canBuyGround(): boolean;
-
   canEndTurn(): boolean;
+
+  getLeftContext(): LeftContext;
 }
 
 class WaitingForDiceRoll implements TurnState {
-
   canRollDice(): boolean {
     return true;
   }
@@ -948,8 +847,8 @@ class WaitingForDiceRoll implements TurnState {
     return new WaitingForEndTurn();
   }
 
-  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Space): TurnState {
-    return new LandedOnNewGround();
+  applyLandedOnBuyableSpace(event: LandedOnBuyableSpace, space: Ownable): TurnState {
+    return new LandedOnNewGround(space);
   }
 
   applyLandedOnHostileSpace(event: LandedOnHostileSpace, space: Space): TurnState {
@@ -962,10 +861,21 @@ class WaitingForDiceRoll implements TurnState {
 
   canEndTurn(): boolean {
     return false;
+  }
+
+  getLeftContext(): LeftContext {
+    return new NoLeftContext();
   }
 }
 
 class LandedOnNewGround implements TurnState {
+  type: 'LandedOnNewGround' = 'LandedOnNewGround'
+
+  constructor(
+    public ownable: Ownable
+  ) {
+  }
+
   canBuyGround(): boolean {
     return true;
   }
@@ -988,6 +898,10 @@ class LandedOnNewGround implements TurnState {
 
   canRollDice(): boolean {
     return false;
+  }
+
+  getLeftContext(): LeftContext {
+    return this;
   }
 }
 
@@ -1017,6 +931,9 @@ class WaitingForEndTurn implements TurnState {
     return false;
   }
 
+  getLeftContext(): LeftContext {
+    return new NoLeftContext();
+  }
 }
 
 class RentDemand {
@@ -1032,8 +949,6 @@ export interface Space {
   id: string;
   text: string;
   color: string | null;
-
-  canBuy(): boolean;
 
   getRent(): number | undefined;
 
@@ -1085,10 +1000,6 @@ export class Street implements Ownable {
 
   getOwner(): Player | null {
     return this.owner;
-  }
-
-  canBuy(): boolean {
-    return this.owner === null;
   }
 
   getInitialPrice(): number {
@@ -1148,10 +1059,6 @@ export class ActionSpace implements Space {
     return null;
   }
 
-  canBuy(): boolean {
-    return false;
-  }
-
   getRent(): undefined {
     return undefined;
   }
@@ -1201,10 +1108,6 @@ export class Utility implements Ownable {
 
   getOwner(): Player | null {
     return this.owner;
-  }
-
-  canBuy(): boolean {
-    return this.owner == null;
   }
 
   getInitialPrice(): number {
@@ -1269,10 +1172,6 @@ export class Station implements Ownable {
     return this.owner;
   }
 
-  canBuy(): boolean {
-    return this.owner === null;
-  }
-
   getInitialPrice(): number {
     return this.initialPrice;
   }
@@ -1330,10 +1229,6 @@ export class Prison implements Space {
     return null;
   }
 
-  canBuy(): boolean {
-    return false;
-  }
-
   getRent(): undefined {
     return undefined;
   }
@@ -1377,10 +1272,6 @@ export class FreeParking implements Space {
 
   getOwner(): Player | null {
     return null;
-  }
-
-  canBuy(): boolean {
-    return false;
   }
 
   getRent(): undefined {

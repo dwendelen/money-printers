@@ -15,7 +15,7 @@
         </div>
         <div class="groundName"
              [style.background-color]="ground.color"
-             (click)="spaceInfo = ground">
+             (click)="viewGround(ground)">
           {{ground.text}}
         </div>
         <div class="groundPlayers">
@@ -65,29 +65,31 @@
     <div class="context">
       <div class="context1">
         <app-buy-this-space
-          *ngIf="game.canBuyThis()"
-          [space]="game.getMyOwnable()"
-          [price]="game.getMyOwnable().getInitialPrice()"
+          *ngIf="leftContext.type == 'LandedOnNewGround'"
+          [space]="leftContext.ownable"
+          [price]="leftContext.ownable.getInitialPrice()"
           [maxCash]="game.getMyCash()"
           [disabled]="commandInFlight"
           [canDecline]="true"
           (buy)="buyThis($event.cash, $event.borrowed)"
           (dontBuy)="dontBuyThis()">
         </app-buy-this-space>
-      <button *ngIf="game.hasMyRentDemand()" (click)="payRent()">
-        Pay {{ game.getPlayer(game.getMyRentDemand().owner).name }} {{game.getMyRentDemand().rent}} rent
+      <button
+        *ngIf="leftContext.type == 'RentDemandedForMe'"
+        (click)="payRent()">
+        Pay {{ game.getPlayer(leftContext.rentDemand.owner).name }} {{leftContext.rentDemand.rent}} rent
       </button>
       <app-bidding
-        *ngIf="game.isBidding()"
-        [bidding]="getBidding()"
+        *ngIf="leftContext.type == 'Bidding'"
+        [bidding]="getBidding(leftContext.bidInfo)"
         [disabled]="commandInFlight"
         (pass)="passBid()"
         (bid)="placeBid($event)">
       </app-bidding>
       <app-buy-this-space
-        *ngIf="game.hasWonBid()"
-        [space]="getBidding().space"
-        [price]="getBidding().bid"
+        *ngIf="leftContext.type == 'BuyingWonBid'"
+        [space]="getBidding(leftContext.bidInfo).space"
+        [price]="getBidding(leftContext.bidInfo).bid"
         [maxCash]="game.getMyCash()"
         [disabled]="commandInFlight"
         [canDecline]="false"
@@ -95,8 +97,10 @@
       </app-buy-this-space>
       </div>
       <div class="context2">
-        <app-space-info *ngIf="spaceInfo" [space]="spaceInfo"></app-space-info>
-        <button *ngIf="spaceInfo" (click)="spaceInfo = null">Close</button>
+        <ng-container *ngIf="rightContext.type == 'viewSpace'">
+          <app-space-info [space]="rightContext.space"></app-space-info>
+          <button (click)="resetRightContext()">Close</button>
+        </ng-container>
       </div>
     </div>
     <div class="log">

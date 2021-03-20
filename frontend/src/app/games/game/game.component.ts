@@ -2,7 +2,7 @@ import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angula
 import {LoggedInUser, LoginService} from '../../login/login.service';
 import {GameService} from '../game.service';
 import {GameInfo} from '../api/api';
-import {Game, Ownable, Player, Space, Station, Street, Utility} from '../game';
+import {BidInfo, Game, LeftContext, Ownable, Player, Space, Station, Street, Utility} from '../game';
 import {Event} from '../api/event';
 import {
   AddPlayer,
@@ -40,7 +40,7 @@ export class GameComponent implements OnInit, OnDestroy {
   open = true;
   commandInFlight = false;
   playerColor!: string;
-  spaceInfo: Space | null = null;
+  rightContext: RightContext = new NoRightContext();
 
   ngOnInit(): void {
     this.game = new Game(this.user.getId());
@@ -230,9 +230,7 @@ export class GameComponent implements OnInit, OnDestroy {
     return ownable.getOwner()!.color;
   }
 
-  getBidding(): Bidding {
-    const bidInfo = this.game.getBidInfo()!!;
-
+  getBidding(bidInfo: BidInfo): Bidding {
     return new Bidding(
       bidInfo.space,
       bidInfo.player.name,
@@ -241,5 +239,31 @@ export class GameComponent implements OnInit, OnDestroy {
       bidInfo.player.id === this.game.myId,
       bidInfo.players.some(p => p.id === this.game.myId)
     );
+  }
+
+  get leftContext(): LeftContext {
+    return this.game.getLeftContext();
+  }
+
+  viewGround(ground: Space): void {
+    this.rightContext = new ViewSpace(ground);
+  }
+
+  resetRightContext() {
+    this.rightContext = new NoRightContext();
+  }
+}
+
+type RightContext = NoRightContext | ViewSpace;
+
+class NoRightContext {
+  type: 'none' = 'none'
+}
+
+class ViewSpace {
+  type: 'viewSpace' = 'viewSpace'
+  constructor(
+    public space: Space
+  ) {
   }
 }
