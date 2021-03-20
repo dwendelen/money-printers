@@ -129,12 +129,11 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
-  payRent(): void {
+  payRent(demandId: number): void {
     // TODO this ain't gonna work when there is not enough money
-    const myRentDemand = this.game.getMyRentDemand();
     this.sendCmd(new PayRent(
       this.game.myId,
-      myRentDemand.demandEventId
+      demandId
     ));
   }
 

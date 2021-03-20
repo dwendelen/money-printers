@@ -1,5 +1,5 @@
-import {AfterViewInit, Component, Output, EventEmitter} from '@angular/core';
-import {GoogleLoginService, LoginService} from './login.service';
+import {AfterViewInit, Component} from '@angular/core';
+import {GoogleLoginService} from './login.service';
 
 @Component({
   selector: 'app-login',

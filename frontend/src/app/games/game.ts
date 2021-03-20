@@ -1,14 +1,19 @@
 import {
   BidPassed,
   BidPlaced,
-  BidStarted, BidWon,
+  BidStarted,
+  BidWon,
   DiceRolled,
   Event,
   GameCreated,
   GameStarted,
-  LandedOnBuyableSpace, LandedOnHostileSpace, LandedOnSafeSpace,
+  LandedOnBuyableSpace,
+  LandedOnHostileSpace,
+  LandedOnSafeSpace,
   NewTurnStarted,
-  PlayerAdded, RentDemanded, RentPaid,
+  PlayerAdded,
+  RentDemanded,
+  RentPaid,
   SpaceBought,
   StartMoneyReceived,
   TurnEnded
@@ -142,7 +147,7 @@ export class Game {
     ));
   }
 
-  private applyGameStarted(event: GameStarted): void {
+  private applyGameStarted(_: GameStarted): void {
     this.state = new NotMyTurn();
   }
 
@@ -154,7 +159,7 @@ export class Game {
     }
   }
 
-  private applyDiceRolled(event: DiceRolled): void {
+  private applyDiceRolled(_: DiceRolled): void {
   }
 
   private applyStartMoneyReceived(event: StartMoneyReceived): void {
@@ -241,7 +246,7 @@ export class Game {
     this.state = this.state.applyRentPaid(event);
   }
 
-  private applyTurnEnded(event: TurnEnded): void {
+  private applyTurnEnded(_: TurnEnded): void {
     this.state = new NotMyTurn();
   }
 
@@ -309,10 +314,6 @@ export class Game {
     const interest = Math.floor(this.interestRate * player.debt);
     const economyMoney = Math.ceil(this.returnRate * this.economy);
     return this.fixedStartMoney + economyMoney - interest;
-  }
-
-  getMyRentDemand(): RentDemand {
-      return (this.state as RentDemandedForMe).rentDemand;
   }
 
   getLeftContext(): LeftContext {
@@ -749,12 +750,7 @@ class BuyingWonBid implements GameState {
   }
 
   applySpaceBought(event: SpaceBought): GameState {
-    const state = this.previousState;
-    return state.applySpaceBought(event)
-  }
-
-  canBuyGround(): boolean {
-    return false;
+    return this.previousState.applySpaceBought(event)
   }
 
   canEndTurn(): boolean {
@@ -803,12 +799,7 @@ class WaitingForAnotherToBuyBid implements GameState {
   }
 
   applySpaceBought(event: SpaceBought): GameState {
-    const state = this.previousState;// TODO something is fucked somewhere
-    return state.applySpaceBought(event)
-  }
-
-  canBuyGround(): boolean {
-    return false;
+    return this.previousState.applySpaceBought(event)
   }
 
   canEndTurn(): boolean {
@@ -855,10 +846,6 @@ class WaitingForDiceRoll implements TurnState {
     return new WaitingForEndTurn();
   }
 
-  canBuyGround(): boolean {
-    return false;
-  }
-
   canEndTurn(): boolean {
     return false;
   }
@@ -874,10 +861,6 @@ class LandedOnNewGround implements TurnState {
   constructor(
     public ownable: Ownable
   ) {
-  }
-
-  canBuyGround(): boolean {
-    return true;
   }
 
   applyLandedOnSafeSpace(event: LandedOnSafeSpace, space: Space): TurnState {
@@ -923,10 +906,6 @@ class WaitingForEndTurn implements TurnState {
     return this;
   }
 
-  canBuyGround(): boolean {
-    return false;
-  }
-
   canRollDice(): boolean {
     return false;
   }
@@ -936,7 +915,7 @@ class WaitingForEndTurn implements TurnState {
   }
 }
 
-class RentDemand {
+export class RentDemand {
   constructor(
     public owner: string,
     public rent: number,
@@ -1051,13 +1030,6 @@ export class ActionSpace implements Space {
   }
 
   color = null;
-
-  setOwner(player: Player): void {
-  }
-
-  getOwner(): Player | null {
-    return null;
-  }
 
   getRent(): undefined {
     return undefined;
@@ -1222,13 +1194,6 @@ export class Prison implements Space {
 
   color = null;
 
-  setOwner(player: Player): void {
-  }
-
-  getOwner(): Player | null {
-    return null;
-  }
-
   getRent(): undefined {
     return undefined;
   }
@@ -1266,13 +1231,6 @@ export class FreeParking implements Space {
   }
 
   color = null;
-
-  setOwner(player: Player): void {
-  }
-
-  getOwner(): Player | null {
-    return null;
-  }
 
   getRent(): undefined {
     return undefined;

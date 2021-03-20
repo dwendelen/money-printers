@@ -1,5 +1,5 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {Ownable, Space} from '../game';
+import {Space} from '../game';
 
 @Component({
   selector: 'app-space-name',

@@ -1,4 +1,4 @@
-import {Component, DoCheck, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
+import {Component, DoCheck, EventEmitter, Input, Output} from '@angular/core';
 
 @Component({
   selector: 'app-color-selector',

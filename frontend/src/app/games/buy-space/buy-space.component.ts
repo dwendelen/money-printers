@@ -1,5 +1,4 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {Ownable, Space} from '../game';
 import {MoneyAllocation} from './buy-space';
 
 @Component({

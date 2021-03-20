@@ -76,7 +76,7 @@
         </app-buy-this-space>
       <button
         *ngIf="leftContext.type == 'RentDemandedForMe'"
-        (click)="payRent()">
+        (click)="payRent(leftContext.rentDemand.demandEventId)">
         Pay {{ game.getPlayer(leftContext.rentDemand.owner).name }} {{leftContext.rentDemand.rent}} rent
       </button>
       <app-bidding
