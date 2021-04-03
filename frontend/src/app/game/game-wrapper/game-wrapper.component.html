@@ -1,0 +1,9 @@
+<div>
+  Welcome {{(gameInfo$ | async)?.user?.getName() }}
+  <button (click)="exitGame()">Exit</button>
+  <button (click)="logout()">Logout</button>
+</div>
+<app-game *ngIf="(gameInfo$ | async) as gameInfo" [gameId]="gameInfo.gameId" [user]="gameInfo.user" [initialEvents]="gameInfo.initialEvents"></app-game>
+<ng-container *ngIf="!(gameInfo$ | async)">
+  Loading ...
+</ng-container>

@@ -10,7 +10,6 @@ import se.daan.moneyprinters.model.game.config.*
 import se.daan.moneyprinters.web.game.api.CommandResult
 import se.daan.moneyprinters.web.game.api.CreateGame
 import se.daan.moneyprinters.web.game.api.Events
-import se.daan.moneyprinters.web.game.api.GameInfo
 import se.daan.moneyprinters.model.game.api.ActionSpace as ApiActionSpace
 import se.daan.moneyprinters.model.game.api.CreateGame as ApiCreateGame
 import se.daan.moneyprinters.model.game.api.FreeParking as ApiFreeParking
@@ -27,10 +26,8 @@ class GameController(
     @GetMapping("/{gameId}")
     fun getGame(
             @PathVariable("gameId") gameId: String
-    ): GameInfo {
-        val game = gameService.getGame(gameId)
-                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-        return mapGame(gameId, game)
+    ) {
+        gameService.getGame(gameId) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
     @GetMapping("/{gameId}/events")
@@ -70,7 +67,7 @@ class GameController(
     fun createGame(
             @PathVariable("gameId") gameId: String,
             @RequestBody createGame: CreateGame
-    ): GameInfo {
+    ) {
         val gameConfig = gameService.gameConfig
         val board = gameConfig.board.map {
             when (it) {
@@ -118,13 +115,5 @@ class GameController(
         if (!result) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST)
         }
-        return mapGame(gameId, gameService.getGame(gameId)!!)
-    }
-
-    private fun mapGame(gameId: String, game: Game): GameInfo {
-        return GameInfo(
-                gameId,
-                game.getNewEvents(0, Int.MAX_VALUE, 0)
-        )
     }
 }

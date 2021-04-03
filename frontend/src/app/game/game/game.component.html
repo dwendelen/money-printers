@@ -1,9 +1,4 @@
 <div class="game">
-  <div>
-    Welcome {{user.getName()}} to game <span (click)="copyGameIdToClipboard()">{{gameInfo.id}} (click to copy)</span>
-    <button (click)="exitGame()">Exit</button>
-    <button (click)="logout()">Logout</button>
-  </div>
   <div class="column1">
     <div class="board">
       <div class="ground" *ngFor="let ground of game.board">

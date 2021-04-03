@@ -4,11 +4,6 @@ export interface Events {
   events: Event[];
 }
 
-export interface GameInfo {
-  id: string;
-  events: Event[];
-}
-
 export interface CreateGame {
   gameMaster: string;
 }

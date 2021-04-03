@@ -1,6 +1,1 @@
-<ul class="errors" *ngFor="let error of errors">
-  <li>{{error}}</li>
-</ul>
-<app-login *ngIf="getLoginPage()"></app-login>
-<app-games *ngIf="getGamesPage()" [user]="user!" (gameToJoin)="joinGame($event)"></app-games>
-<app-game *ngIf="getGamePage()" [user]="user!" (exit)="exit()" [gameInfo]="getGamePage()!.gameInfo"></app-game>
+<router-outlet></router-outlet>

@@ -1,7 +1,6 @@
 import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {LoggedInUser, LoginService} from '../../login/login.service';
 import {GameService} from '../game.service';
-import {GameInfo} from '../api/api';
 import {BidInfo, Game, LeftContext, Ownable, Player, Space, Station, Street, Utility} from '../game';
 import {Event} from '../api/event';
 import {
@@ -27,17 +26,16 @@ import {OfferInfo} from '../trade/trade.component';
 export class GameComponent implements OnInit, OnDestroy {
 
   constructor(
-    private readonly loginService: LoginService,
     private readonly gameService: GameService
   ) {
   }
 
-  @Output()
-  exit = new EventEmitter<void>();
   @Input()
   user!: LoggedInUser;
   @Input()
-  gameInfo!: GameInfo;
+  gameId!: string;
+  @Input()
+  initialEvents!: Event[];
   game!: Game;
   open = true;
   commandInFlight = false;
@@ -46,7 +44,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.game = new Game(this.user.getId());
-    this.eventLoop(this.gameInfo.events, 0);
+    this.eventLoop(this.initialEvents, 0);
   }
 
   private eventLoop(events: Event[], expectedVersion: number): void {
@@ -55,13 +53,13 @@ export class GameComponent implements OnInit, OnDestroy {
     const currentVersion = this.game.events.length;
 
     this.gameService.getEvents(
-      this.gameInfo.id,
+      this.gameId,
       currentVersion
-    ).then(e => {
+    ).subscribe(e => {
       if (this.open) {
         this.eventLoop(e, currentVersion);
       }
-    }).catch(err => {
+    },err => {
       console.error('Could not get more events, trying again in 10 seconds', err);
       setTimeout(() => {
         if (this.open) {
@@ -175,7 +173,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const currentVersion = this.game.events.length;
     this.commandInFlight = true;
     this.gameService.sendCommand(
-      this.gameInfo.id,
+      this.gameId,
       cmd,
       currentVersion
     ).then(events => {
@@ -187,14 +185,6 @@ export class GameComponent implements OnInit, OnDestroy {
     });
   }
 
-  exitGame(): void {
-    this.exit.emit();
-  }
-
-  logout(): void {
-    this.loginService.logout();
-  }
-
   ngOnDestroy(): void {
     this.open = false;
   }
@@ -202,11 +192,6 @@ export class GameComponent implements OnInit, OnDestroy {
   getPlayersOn(ground: Space): Player[] {
     return this.game.players
       .filter(p => p.position === ground);
-  }
-
-  copyGameIdToClipboard(): void {
-    navigator.clipboard.writeText(this.gameInfo.id)
-      .then();
   }
 
   getPlayerColors(): string[] {

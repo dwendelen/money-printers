@@ -1,12 +1,16 @@
-import {Injectable, NgZone} from '@angular/core';
-import {Config, ConfigService} from '../config/config.service';
-import {Observable, from, BehaviorSubject} from 'rxjs';
-import {map, mergeMap, shareReplay} from 'rxjs/operators';
+import {Injectable, NgZone, OnInit} from '@angular/core';
+import {ConfigService} from '../config/config.service';
 import GoogleAuth = gapi.auth2.GoogleAuth;
 import GoogleUser = gapi.auth2.GoogleUser;
+import {ActivatedRoute} from '@angular/router';
+import {ConnectableObservable, Observable, ReplaySubject, zip} from 'rxjs';
+import {map, mergeMap, publishReplay} from 'rxjs/operators';
+import * as $ from 'jquery';
 
 export abstract class LoginService {
-  abstract getLoggedInUser(): Observable<LoggedInUser | null>;
+  abstract getLoggedInUser(): LoggedInUser | null;
+  abstract getLoggedInUser$(): Observable<LoggedInUser | null>;
+  abstract renderButton(id: string): void
   abstract logout(): void;
 }
 
@@ -20,62 +24,41 @@ export interface LoggedInUser {
   providedIn: 'root'
 })
 export class GoogleLoginService implements LoginService {
+  private readonly googleAuth: ConnectableObservable<GoogleAuth>;
+  private readonly user$: ConnectableObservable<GoogleLoggedInUser | null>
+  private user: GoogleLoggedInUser | null = null;
+
   constructor(configService: ConfigService, private ngZone: NgZone) {
-    this.googleAuth = Promise.all([configService.getConfig(), GoogleLoginService.apiLoaded()])
-      .then(arr => GoogleLoginService.initAuth(arr[0]))
-      .catch(() => Promise.reject('Could not load google api'));
-
-    this.user = from(this.googleAuth).pipe(
-      mergeMap(ga => GoogleLoginService.loggedInUser(ga, ngZone)),
-      map(gu => gu ? new GoogleLoggedInUser(gu) : null),
-      shareReplay()
-    );
+    this.googleAuth = zip(configService.getConfig(), GoogleService.apiLoaded()).pipe(
+      mergeMap(arr => GoogleService.getAuth2$(arr[0].googleClientId)),
+      publishReplay(1)
+    ) as ConnectableObservable<GoogleAuth>;
+    this.googleAuth.connect();
+    this.user$ = this.googleAuth.pipe(
+      mergeMap(ga => GoogleService.getUser$(ga, ngZone)),
+      map(gu => gu.isSignedIn()? new GoogleLoggedInUser(gu): null),
+      publishReplay(1)
+    ) as ConnectableObservable<GoogleLoggedInUser | null>;
+    this.user$.connect();
+    this.user$.subscribe(usr => this.user = usr);
   }
 
-  private readonly googleAuth: Promise<GoogleAuth>;
-  private readonly user: Observable<GoogleLoggedInUser | null>;
-
-  private static initAuth(config: Config): Promise<GoogleAuth> {
-    return gapi.auth2.init({
-      client_id: config.googleClientId
-    }).then(
-      ga => ga,
-        err => Promise.reject(err.error)
-    );
-  }
-
-  private static loggedInUser(auth: GoogleAuth, ngZone: NgZone): Observable<GoogleUser | null> {
-    return new Observable<GoogleUser>(sub => {
-        auth.currentUser.listen(usr => {
-          ngZone.run(() => {
-            sub.next(usr);
-          });
-        });
-        sub.next(auth.currentUser.get());
-    }).pipe(
-      map(user => user.isSignedIn() ? user : null)
-    );
-  }
-
-  private static apiLoaded(): Promise<void> {
-    return new Promise((res, rej) => {
-        gapi.load('auth2', {
-          callback: () => res(),
-          onerror: () => rej('Could not load google api')
-        });
-    });
-  }
-
-  getGoogleAuth(): Promise<GoogleAuth> {
-    return this.googleAuth;
-  }
-
-  getLoggedInUser(): Observable<LoggedInUser | null> {
+  getLoggedInUser(): LoggedInUser | null {
     return this.user;
   }
 
+  getLoggedInUser$(): Observable<LoggedInUser | null> {
+    return this.user$;
+  }
+
+  renderButton(id: string): void {
+    this.googleAuth.subscribe(_ => {
+      gapi.signin2.render('googleSignIn', {});
+    })
+  }
+
   logout(): void {
-    this.googleAuth.then(ga => ga.signOut());
+    this.googleAuth.subscribe(ga => ga.signOut());
   }
 }
 
@@ -95,30 +78,85 @@ class GoogleLoggedInUser implements LoggedInUser {
   }
 }
 
+class GoogleService {
+  static apiLoaded(): Observable<void> {
+    return new Observable(sub => {
+      gapi.load('auth2', {
+        callback: () => {
+          sub.next();
+          sub.complete()
+        },
+        onerror: () => sub.error('Could not load google api')
+      });
+    });
+  }
+
+  static getAuth2$(clientId: string): Observable<GoogleAuth> {
+    return new Observable(gapi.auth2.init({
+      client_id: clientId
+    }).then(
+      ga => ga,
+      err => Promise.reject(err.error)
+    ));
+  }
+
+  static getUser$(googleAuth: GoogleAuth, ngZone: NgZone): Observable<GoogleUser> {
+    return new Observable(sub => {
+      googleAuth.currentUser.listen(usr => {
+        ngZone.run(() => {
+          sub.next(usr);
+        });
+      });
+      if (googleAuth.isSignedIn.get()) {
+        googleAuth.signIn();
+      }
+    });
+  }
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class TestLoginService implements LoginService {
-  private readonly user!: TestLoggedInUser;
-  private readonly subject!: BehaviorSubject<TestLoggedInUser | null>;
+  private readonly userName!: string;
+  private readonly user$ = new ReplaySubject<TestLoggedInUser | null>(1);
+  private user: TestLoggedInUser | null = null;
 
   constructor() {
     const urlParams = new URLSearchParams(window.location.search);
-    const usr = urlParams.get('user');
-    if (!usr) {
-      throw new Error('Invalid user param');
+    this.userName = urlParams.get('user') || '';
+    if(!this.userName) {
+      this.user$.error("Invalid user parameter");
+    } else {
+      this.user$.next(new TestLoggedInUser(this.userName));
     }
-    this.user = new TestLoggedInUser(usr);
-    this.subject = new BehaviorSubject<TestLoggedInUser | null>(this.user);
+    this.user$.subscribe(usr => this.user = usr);
   }
 
-  getLoggedInUser(): Observable<LoggedInUser | null> {
-    return this.subject;
+  getLoggedInUser(): LoggedInUser | null {
+    return this.user;
+  }
+
+  getLoggedInUser$(): Observable<LoggedInUser | null> {
+    return this.user$;
   }
 
   logout(): void {
-    this.subject.next(null);
+    this.user$.next(null);
   }
+
+  renderButton(id: string): void {
+    $(`#${id}`)
+      .css('width', '100px')
+      .css('height', '18px')
+      .css('border-style', 'solid')
+      .text('Log In')
+      .on('click', () => {
+      this.user$.next(new TestLoggedInUser(this.userName));
+    });
+  }
+
+
 }
 
 class TestLoggedInUser implements LoggedInUser {
@@ -139,3 +177,4 @@ class TestLoggedInUser implements LoggedInUser {
     return this.name;
   }
 }
+
