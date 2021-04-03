@@ -20,6 +20,7 @@ import {RouterModule} from '@angular/router';
 import {AppComponent} from './app.component';
 import {LoginGuard} from './login/login-guard';
 import {GameWrapperComponent} from './game/game-wrapper/game-wrapper.component';
+import {AmountComponent} from './game/amount/amount.component';
 
 @NgModule({
   declarations: [
@@ -36,7 +37,8 @@ import {GameWrapperComponent} from './game/game-wrapper/game-wrapper.component';
     LogComponent,
     PlayerNameComponent,
     SpaceNameComponent,
-    TradeComponent
+    TradeComponent,
+    AmountComponent
   ],
   imports: [
     BrowserModule,

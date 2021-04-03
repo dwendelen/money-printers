@@ -12,7 +12,13 @@
 </div>
 <div>
   <label class="left" for="bidAmount">My bid</label>
-  <input class="right" id="bidAmount" type="text" [(ngModel)]="bidField" onClick="this.select();" (blur)="bidChanged()">
+  <app-amount
+    id="bidAmount"
+    [value]="bidAmount"
+    [min]="0"
+    [max]="9007199254740991"
+    (changed)="bidAmount = $event"
+    ></app-amount>
 </div>
 <div class="buttonRow">
   <button [disabled]="!canPass()" (click)="triggerPass()">Pass</button>

@@ -4,9 +4,21 @@
 </div>
 <div>
   <label for="borrowed" class="left">Borrowed</label>
-  <input id="borrowed" class="right" onClick="this.select();" (blur)="borrowedChanged()" type="text" [(ngModel)]="borrowedField">
+  <app-amount
+    id="borrowed"
+    [value]="borrowed"
+    [min]="borrowMin()"
+    [max]="borrowMax()"
+    (changed)="updateBorrowed($event)">
+  </app-amount>
 </div>
 <div>
   <label for="cash" class="left">Cash</label>
-  <input id="cash" class="right" onClick="this.select();" (blur)="cashChanged()" type="text" [(ngModel)]="cashField">
+  <app-amount
+    id="cash"
+    [value]="cash"
+    [min]="cashMin()"
+    [max]="cashMax()"
+    (changed)="updateCash($event)">
+  </app-amount>
 </div>

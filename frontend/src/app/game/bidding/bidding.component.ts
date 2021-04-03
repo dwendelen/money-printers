@@ -19,23 +19,10 @@ export class BiddingComponent {
   @Output()
   bid = new EventEmitter<number>();
 
-  bidField = '';
-  bidAmount: number | null = null;
-
-  bidChanged(): void {
-    const num = parseInt(this.bidField, 10);
-    if (isNaN(num)) {
-      this.bidAmount = null;
-      this.bidField = '';
-    } else {
-      this.bidAmount = num;
-      this.bidField = num.toString();
-    }
-  }
+  bidAmount: number = 0;
 
   canBid(): boolean {
     return !this.disabled &&
-      this.bidAmount != null &&
       this.bidAmount > this.bidding.bid;
   }
 
@@ -47,13 +34,9 @@ export class BiddingComponent {
 
   triggerBid(): void {
     this.bid.emit(this.bidAmount!!);
-    this.bidField = '';
-    this.bidChanged();
   }
 
   triggerPass(): void {
     this.pass.emit();
-    this.bidField = '';
-    this.bidChanged();
   }
 }

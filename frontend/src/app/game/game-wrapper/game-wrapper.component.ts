@@ -26,8 +26,7 @@ export class GameWrapperComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.gameInfo$ = this.route.params.pipe(
       map(p => p['id']),
-      mergeMap(gId => this.openGameOrNull(gId)),
-      mergeMap(gId => gId ? this.getEventsOrNull(gId) : of(null)),
+      mergeMap(gId => this.getGameInfoOrNull(gId)),
       withLatestFrom(this.loginService.getLoggedInUser$(), (gi, usr) => {
         if (gi == null || usr == null) {
           return null;
@@ -45,13 +44,7 @@ export class GameWrapperComponent implements OnInit, OnDestroy {
     this.gameInfoSub = this.gameInfo$.connect();
   }
 
-  private openGameOrNull(gId: string): Observable<string | null> {
-    return this.gameService.openGame(gId).pipe(
-      catchError(_ => of(null))
-    );
-  }
-
-  private getEventsOrNull(gId: string): Observable<GameInfo1 | null> {
+  private getGameInfoOrNull(gId: string): Observable<GameInfo1 | null> {
     return this.gameService.getEvents(gId, 0).pipe(
       map(e => new GameInfo1(gId, e)),
       catchError(_ => of(null))
