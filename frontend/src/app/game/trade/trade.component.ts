@@ -10,6 +10,8 @@ export class TradeComponent implements OnInit {
   @Input()
   otherPlayer!: Player
   @Input()
+  me!: Player
+  @Input()
   myOwnables!: Ownable[]
   @Input()
   disabled!: boolean
@@ -18,6 +20,8 @@ export class TradeComponent implements OnInit {
   add = new EventEmitter<OfferInfo>();
   @Output()
   remove = new EventEmitter<OfferInfo>();
+  @Output()
+  update = new EventEmitter<OfferInfo>();
   @Output()
   close = new EventEmitter<void>();
 
@@ -30,6 +34,26 @@ export class TradeComponent implements OnInit {
         .map(o => o.ownable)
         .includes(o)
       );
+  }
+
+  assetDelta(): number {
+    const minusAssets = this.otherPlayer.giving
+      .map(o => o.ownable.assetValue!)
+      .reduce((a, b) => a + b)
+    const plusValue = this.otherPlayer.getting
+      .map(o => o.value)
+      .reduce((a, b) => a + b)
+    return plusValue - minusAssets;
+  }
+
+  moneyDelta(): number {
+    const plusMoney = this.otherPlayer.giving
+      .map(o => o.value)
+      .reduce((a, b) => a + b);
+    const minusMoney = this.otherPlayer.getting
+      .map(o => o.value)
+      .reduce((a, b) => a + b);
+    return plusMoney - minusMoney;
   }
 
   addOwnable(ownable: Ownable): void {
@@ -45,6 +69,14 @@ export class TradeComponent implements OnInit {
       this.otherPlayer.id,
       offer.ownable.id,
       offer.value
+    ))
+  }
+
+  changeValue(offer: Offer, newValue: number) {
+    this.update.emit(new OfferInfo(
+      this.otherPlayer.id,
+      offer.ownable.id,
+      newValue
     ))
   }
 }

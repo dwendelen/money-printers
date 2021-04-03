@@ -13,7 +13,7 @@ import {
   EndTurn, PassBid,
   PayRent, PlaceBid, RemoveOffer,
   RollDice,
-  StartGame
+  StartGame, UpdateOfferValue
 } from '../api/command';
 import {Bidding} from '../bidding/bidding';
 import {OfferInfo} from '../trade/trade.component';
@@ -235,6 +235,15 @@ export class GameComponent implements OnInit, OnDestroy {
 
   addOffer(offer: OfferInfo): void {
     this.sendCmd(new AddOffer(
+      this.game.myId,
+      offer.otherPlayer,
+      offer.ownable,
+      offer.value
+    ));
+  }
+
+  updateOffer(offer: OfferInfo): void {
+    this.sendCmd(new UpdateOfferValue(
       this.game.myId,
       offer.otherPlayer,
       offer.ownable,

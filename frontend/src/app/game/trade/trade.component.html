@@ -1,13 +1,50 @@
-<div>Get:</div>
+<div><app-player-name [player]="otherPlayer"></app-player-name></div>
 <div *ngFor="let offer of otherPlayer.getting">
-  <app-space-name [space]="offer.ownable"></app-space-name>
-  <div>{{offer.value}}</div>
+  <div class="name" [style.background-color]="offer.ownable.color">{{offer.ownable.text}}</div>
+  <div>
+    <div class="asset">{{offer.ownable.assetValue}}</div>
+    <div class="right">{{offer.value}}</div>
+  </div>
 </div>
-<div>Give:</div>
+<div>&nbsp;</div>
+<div><app-player-name [player]="me"></app-player-name></div>
 <div *ngFor="let offer of otherPlayer.giving">
   <input type="checkbox" checked="checked" [disabled]="disabled" (change)="removeOffer(offer)">
   <app-space-name [space]="offer.ownable"></app-space-name>
-  <div><input type="text" [value]="offer.value"></div>
+  <div>
+    <div class="asset">{{offer.ownable.assetValue}}</div>
+    <app-amount
+    [value]="offer.value"
+    [min]="0"
+    [max]="9007199254740991"
+    (changed)="changeValue(offer, $event)">
+    </app-amount>
+  </div>
+</div>
+<div>&nbsp;</div>
+<div>Summary:</div>
+<div>
+  <div class="left">Assets</div>
+  <div class="right">Money</div>
+</div>
+<div>
+  <div class="asset">{{assetDelta()}}</div>
+  <div class="right">{{moneyDelta()}}</div>
+</div>
+<div>&nbsp;</div>
+<div>
+  <div class="left">Receive</div>
+  <app-amount>
+  </app-amount>
+</div>
+<div>
+  <div class="left">Borrow</div>
+  <app-amount>
+  </app-amount>
+</div>
+<div>
+  <div class="left">Unaccounted</div>
+  <div class="right">0</div>
 </div>
 <div>
   To offer:

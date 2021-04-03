@@ -99,10 +99,12 @@
         <app-trade
           *ngIf="rightContext.type == 'ViewTrade'"
           [otherPlayer]="rightContext.otherParty"
+          [me]="game.getMe()"
           [myOwnables]="myOwnables"
           [disabled] = "commandInFlight"
           (add)="addOffer($event)"
           (remove)="removeOffer($event)"
+          (update)="updateOffer($event)"
           (close)="popRightContext()"
         >
         </app-trade>

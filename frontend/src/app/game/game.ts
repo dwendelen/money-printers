@@ -350,7 +350,7 @@ export class Game {
     return this.getMe().money;
   }
 
-  private getMe(): Player {
+  getMe(): Player {
     return this.getPlayer(this.myId);
   }
 
