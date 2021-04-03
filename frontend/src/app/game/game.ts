@@ -265,7 +265,8 @@ export class Game {
     if (event.from == this.myId) {
       const other = this.getPlayer(event.to);
       other.applyOfferAddedGiving(event, ownable);
-    } else {
+    }
+    if(event.to == this.myId) {
       const other = this.getPlayer(event.from);
       other.applyOfferAddedGetting(event, ownable);
     }
@@ -275,7 +276,8 @@ export class Game {
     if (event.from == this.myId) {
       const other = this.getPlayer(event.to);
       other.applyOfferValueUpdatedGiving(event);
-    } else {
+    }
+    if(event.to == this.myId) {
       const other = this.getPlayer(event.from);
       other.applyOfferValueUpdatedGetting(event);
     }
@@ -285,7 +287,8 @@ export class Game {
     if (event.from == this.myId) {
       const other = this.getPlayer(event.to);
       other.applyOfferRemovedGiving(event);
-    } else {
+    }
+    if(event.to == this.myId) {
       const other = this.getPlayer(event.from);
       other.applyOfferRemovedGetting(event);
     }
