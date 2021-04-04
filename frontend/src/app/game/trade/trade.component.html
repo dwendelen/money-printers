@@ -24,27 +24,70 @@
 <div>&nbsp;</div>
 <div>Summary:</div>
 <div>
-  <div class="left">Assets</div>
-  <div class="right">Money</div>
+  <div *ngIf="assetDelta() >= 0" class="left">Assets gained</div>
+  <div *ngIf="assetDelta() < 0" class="left">Assets lost</div>
+  <div *ngIf="moneyDelta() >= 0" class="right">Profit</div>
+  <div *ngIf="moneyDelta() < 0" class="right">Price</div>
 </div>
 <div>
-  <div class="asset">{{assetDelta()}}</div>
-  <div class="right">{{moneyDelta()}}</div>
+  <div *ngIf="assetDelta() >= 0" class="asset">{{assetDelta()}}</div>
+  <div *ngIf="assetDelta() < 0" class="asset">{{-assetDelta()}}</div>
+  <div *ngIf="moneyDelta() >= 0" class="right">{{moneyDelta()}}</div>
+  <div *ngIf="moneyDelta() < 0" class="right">{{-moneyDelta()}}</div>
 </div>
 <div>&nbsp;</div>
 <div>
-  <div class="left">Receive</div>
-  <app-amount>
+  <div class="left">Give cash</div>
+  <app-amount
+    [value]="giveCash()"
+    [min]="giveCashMin()"
+    [max]="giveCashMax()"
+    (changed)="giveCashChanged($event)">
   </app-amount>
 </div>
 <div>
   <div class="left">Borrow</div>
-  <app-amount>
+  <app-amount
+    [value]="borrow()"
+    [min]="borrowMin()"
+    [max]="borrowMax()"
+    (changed)="borrowChanged($event)">
+  </app-amount>
+</div>
+<div>
+  <div class="left">Get cash</div>
+  <app-amount
+    [value]="getCash()"
+    [min]="getCashMin()"
+    [max]="getCashMax()"
+    (changed)="getCashChanged($event)">
+  </app-amount>
+</div>
+<div>
+  <div class="left">Pay back</div>
+  <app-amount
+    [value]="payBack()"
+    [min]="payBackMin()"
+    [max]="payBackMax()"
+    (changed)="payBackChanged($event)">
   </app-amount>
 </div>
 <div>
   <div class="left">Unaccounted</div>
-  <div class="right">0</div>
+  <div class="right">{{unaccounted()}}</div>
+</div>
+<div>&nbsp;</div>
+<div>
+  <div class="left">Projected cash</div>
+  <div class="right">{{projectedCash()}}</div>
+</div>
+<div>
+  <div class="left">Projected assets</div>
+  <div class="right">{{projectedAssets()}}</div>
+</div>
+<div>
+  <div class="left">Projected debt</div>
+  <div class="right">{{projectedDebt()}}</div>
 </div>
 <div>
   To offer:

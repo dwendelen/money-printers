@@ -21,6 +21,9 @@ export class AmountComponent implements OnChanges {
   field!: string
 
   ngOnChanges(changes: SimpleChanges): void {
+    if(this.min > this.max) {
+      throw new Error(`${this.min} is greater than ${this.max}`)
+    }
     if(this.value < this.min) {
       this.set(this.min)
     } else if(this.value > this.max) {
