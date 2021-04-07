@@ -12,9 +12,9 @@ export class AmountComponent implements OnChanges {
   @Input()
   value!: number
   @Input()
-  min!: number
+  min: number = 0
   @Input()
-  max!: number
+  max: number = Number.MAX_SAFE_INTEGER
   @Output()
   changed = new EventEmitter<number>()
 

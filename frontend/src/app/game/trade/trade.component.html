@@ -7,6 +7,26 @@
   </div>
 </div>
 <div>&nbsp;</div>
+<div>
+  <div class="left">Give cash</div>
+  <app-amount
+    [value]="giveCash"
+    (changed)="giveCashChanged($event)">
+  </app-amount>
+</div>
+<div>
+  <div class="left">Borrow</div>
+  <app-amount
+    [value]="borrow"
+    [max]="gettingPrice()"
+    (changed)="borrowChanged($event)">
+  </app-amount>
+</div>
+<div [class.error]="invalidUnaccountedGetting()">
+  <div class="left">Unaccounted</div>
+  <div class="right">{{unaccountedGetting()}}</div>
+</div>
+<div>&nbsp;</div>
 <div><app-player-name [player]="me"></app-player-name></div>
 <div *ngFor="let offer of otherPlayer.giving">
   <input type="checkbox" checked="checked" [disabled]="disabled" (change)="removeOffer(offer)">
@@ -15,11 +35,36 @@
     <div class="asset">{{offer.ownable.assetValue}}</div>
     <app-amount
     [value]="offer.value"
-    [min]="0"
-    [max]="9007199254740991"
     (changed)="changeValue(offer, $event)">
     </app-amount>
   </div>
+</div>
+<div>&nbsp;</div>
+<div>
+  <div class="left">Get cash</div>
+  <app-amount
+    [value]="getCash"
+    (changed)="getCashChanged($event)">
+  </app-amount>
+</div>
+<div>
+  <div class="left">Pay back</div>
+  <app-amount
+    [value]="payBack"
+    (changed)="payBackChanged($event)">
+  </app-amount>
+</div>
+<div [class.error]="invalidUnaccountedGiving()">
+  <div class="left">Unaccounted</div>
+  <div class="right">{{unaccountedGiving()}}</div>
+</div>
+<div>&nbsp;</div>
+<div>
+  To offer:
+</div>
+<div *ngFor="let offerable of offerable">
+  <input type="checkbox" [disabled]="disabled" (change)="addOwnable(offerable)">
+  <app-space-name [space]="offerable"></app-space-name>
 </div>
 <div>&nbsp;</div>
 <div>Summary:</div>
@@ -36,65 +81,17 @@
   <div *ngIf="moneyDelta() < 0" class="right">{{-moneyDelta()}}</div>
 </div>
 <div>&nbsp;</div>
-<div>
-  <div class="left">Give cash</div>
-  <app-amount
-    [value]="giveCash()"
-    [min]="giveCashMin()"
-    [max]="giveCashMax()"
-    (changed)="giveCashChanged($event)">
-  </app-amount>
-</div>
-<div>
-  <div class="left">Borrow</div>
-  <app-amount
-    [value]="borrow()"
-    [min]="borrowMin()"
-    [max]="borrowMax()"
-    (changed)="borrowChanged($event)">
-  </app-amount>
-</div>
-<div>
-  <div class="left">Get cash</div>
-  <app-amount
-    [value]="getCash()"
-    [min]="getCashMin()"
-    [max]="getCashMax()"
-    (changed)="getCashChanged($event)">
-  </app-amount>
-</div>
-<div>
-  <div class="left">Pay back</div>
-  <app-amount
-    [value]="payBack()"
-    [min]="payBackMin()"
-    [max]="payBackMax()"
-    (changed)="payBackChanged($event)">
-  </app-amount>
-</div>
-<div>
-  <div class="left">Unaccounted</div>
-  <div class="right">{{unaccounted()}}</div>
-</div>
-<div>&nbsp;</div>
-<div>
+<div [class.error]="invalidMoney()">
   <div class="left">Projected cash</div>
   <div class="right">{{projectedCash()}}</div>
 </div>
-<div>
+<div [class.error]="invalidDebt()">
   <div class="left">Projected assets</div>
   <div class="right">{{projectedAssets()}}</div>
 </div>
-<div>
+<div [class.error]="invalidDebt()">
   <div class="left">Projected debt</div>
   <div class="right">{{projectedDebt()}}</div>
-</div>
-<div>
-  To offer:
-</div>
-<div *ngFor="let offerable of offerable">
-  <input type="checkbox" [disabled]="disabled" (change)="addOwnable(offerable)">
-  <app-space-name [space]="offerable"></app-space-name>
 </div>
 <div>
   <button (click)="close.emit()">Close</button>
