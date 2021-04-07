@@ -31,6 +31,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
             JsonSubTypes.Type(value = OfferAdded::class, name = "OfferAdded"),
             JsonSubTypes.Type(value = OfferValueUpdated::class, name = "OfferValueUpdated"),
             JsonSubTypes.Type(value = OfferRemoved::class, name = "OfferRemoved"),
+            JsonSubTypes.Type(value = TradeAccepted::class, name = "TradeAccepted"),
+            JsonSubTypes.Type(value = TradeAcceptanceRevoked::class, name = "TradeAcceptanceRevoked"),
         ]
 )
 sealed class Event
@@ -152,4 +154,14 @@ data class OfferRemoved(
     val from: String,
     val to: String,
     val ownable: String
+): Event()
+
+data class TradeAccepted(
+        val by: String,
+        val with: String,
+): Event()
+
+data class TradeAcceptanceRevoked(
+        val by: String,
+        val with: String,
 ): Event()

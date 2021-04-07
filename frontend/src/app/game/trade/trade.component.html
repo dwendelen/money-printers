@@ -1,5 +1,5 @@
 <div><app-player-name [player]="otherPlayer"></app-player-name></div>
-<div *ngFor="let offer of otherPlayer.getting">
+<div *ngFor="let offer of otherParty.offers">
   <div class="name" [style.background-color]="offer.ownable.color">{{offer.ownable.text}}</div>
   <div>
     <div class="asset">{{offer.ownable.assetValue}}</div>
@@ -8,14 +8,14 @@
 </div>
 <div>&nbsp;</div>
 <div>
-  <div class="left">Give cash</div>
+  <div class="left" (click)="spillToGiveCash()">Give cash</div>
   <app-amount
     [value]="giveCash"
     (changed)="giveCashChanged($event)">
   </app-amount>
 </div>
 <div>
-  <div class="left">Borrow</div>
+  <div class="left" (click)="spillToBorrow()">Borrow</div>
   <app-amount
     [value]="borrow"
     [max]="gettingPrice()"
@@ -28,7 +28,7 @@
 </div>
 <div>&nbsp;</div>
 <div><app-player-name [player]="me"></app-player-name></div>
-<div *ngFor="let offer of otherPlayer.giving">
+<div *ngFor="let offer of myParty.offers">
   <input type="checkbox" checked="checked" [disabled]="disabled" (change)="removeOffer(offer)">
   <app-space-name [space]="offer.ownable"></app-space-name>
   <div>
@@ -41,14 +41,14 @@
 </div>
 <div>&nbsp;</div>
 <div>
-  <div class="left">Get cash</div>
+  <div class="left" (click)="spillToGetCash()">Get cash</div>
   <app-amount
     [value]="getCash"
     (changed)="getCashChanged($event)">
   </app-amount>
 </div>
 <div>
-  <div class="left">Pay back</div>
+  <div class="left" (click)="spillToPayBack()">Pay back</div>
   <app-amount
     [value]="payBack"
     (changed)="payBackChanged($event)">
@@ -85,7 +85,7 @@
   <div class="left">Projected cash</div>
   <div class="right">{{projectedCash()}}</div>
 </div>
-<div [class.error]="invalidDebt()">
+<div [class.error]="invalidAssets()">
   <div class="left">Projected assets</div>
   <div class="right">{{projectedAssets()}}</div>
 </div>
@@ -93,40 +93,21 @@
   <div class="left">Projected debt</div>
   <div class="right">{{projectedDebt()}}</div>
 </div>
+<div>&nbsp;</div>
+<div>
+  <input *ngIf="myParty.accepted"
+         type="checkbox"
+         checked=""
+         [disabled]="acceptDisabled()"
+         (change)="revokeAcceptance()">
+  <input *ngIf="!myParty.accepted"
+         type="checkbox"
+         [disabled]="acceptDisabled()"
+         (change)="accept()">
+  Accept
+</div>
 <div>
   <button (click)="close.emit()">Close</button>
 </div>
 
-
-<!--
-
-Getting
-[ naam ]
-100         100
-[ naam ]
-200         200
-
-Giving
-[ naam ]
-300         200
-[ naam ]
-100	     300
-
-Summary
-Asset       Price
--100         200
-
-Receive Money  xxx
-Pay money      xxx
-Take Debt      xxx
-Pay off debt   xxx
-Unaccounted    xxx
-
-[x] Accept
-
-To give
-[ naam ]
-155
-[ naam ]
-
--->
+<!--TODO disable stuff when needed-->

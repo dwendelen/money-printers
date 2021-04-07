@@ -69,6 +69,8 @@ class Game(
                 is AddOffer -> on(cmd)
                 is UpdateOfferValue -> on(cmd)
                 is RemoveOffer -> on(cmd)
+                is AcceptTrade -> on(cmd)
+                is RevokeTradeAcceptance -> on(cmd)
             }
 
             if (events.size != expectedVersion) {
@@ -105,8 +107,10 @@ class Game(
             is RentPaid -> apply(event)
             is TurnEnded -> Unit
             is OfferAdded -> apply(event)
-            is OfferValueUpdated -> Unit
+            is OfferValueUpdated -> apply(event)
             is OfferRemoved -> apply(event)
+            is TradeAccepted -> apply(event)
+            is TradeAcceptanceRevoked -> apply(event)
         }
     }
 
@@ -397,7 +401,7 @@ class Game(
 
     private fun on(cmd: BuyWonBid): Boolean {
         val space = this.state.getBidSpace()
-        val player = this.findPlayer(cmd.player);
+        val player = this.findPlayer(cmd.player)
         return if (
             space != null &&
             player != null &&
@@ -514,7 +518,7 @@ class Game(
         return if (
             ground != null &&
             ground.validate(cmd) &&
-            (trade == null || trade.validate(cmd))
+            trade.validate(cmd)
         ) {
             newEvent(OfferAdded(cmd.from, cmd.to, cmd.ownable, cmd.value))
             true
@@ -525,20 +529,19 @@ class Game(
 
     private fun apply(event: OfferAdded) {
         val trade1 = findTrade(event.from, event.to)
-        val trade2 = if(trade1 != null) {
-            trade1
-        } else {
-            val trade = Trade(event.from, event.to)
-            trades.add(trade)
-            trade
+        val ownable = findSpace(event.ownable) as? Ownable
+        if(ownable != null) {
+            trade1.apply(event, ownable)
         }
-        trade2.apply(event)
+    }
+
+    private fun apply(event: OfferValueUpdated) {
+        findTrade(event.from, event.to).apply(event)
     }
 
     private fun on(cmd: UpdateOfferValue): Boolean {
         val trade = findTrade(cmd.from, cmd.to)
         return if (
-            trade != null &&
             trade.validate(cmd)
         ) {
             newEvent(OfferValueUpdated(cmd.from, cmd.to, cmd.ownable, cmd.value))
@@ -551,7 +554,6 @@ class Game(
     private fun on(cmd: RemoveOffer): Boolean {
         val trade = findTrade(cmd.from, cmd.to)
         return if (
-            trade != null &&
             trade.validate(cmd)
         ) {
             newEvent(OfferRemoved(cmd.from, cmd.to, cmd.ownable))
@@ -563,7 +565,42 @@ class Game(
 
     private fun apply(event: OfferRemoved) {
         findTrade(event.from, event.to)
-            ?.apply(event)
+                .apply(event)
+    }
+
+    private fun on(cmd: AcceptTrade): Boolean {
+        val trade = findTrade(cmd.from, cmd.to)
+        val player = findPlayer(cmd.from)
+        return if(
+            player != null &&
+            trade.validate(cmd) &&
+            player.validate(cmd,trade.getAssetDelta(cmd.from))
+        ) {
+            newEvent(TradeAccepted(cmd.from, cmd.to))
+            true
+        } else {
+            false
+        }
+    }
+
+    private fun apply(event: TradeAccepted) {
+        findTrade(event.by, event.with).apply(event)
+    }
+
+    private fun on(cmd: RevokeTradeAcceptance): Boolean {
+        val trade = findTrade(cmd.from, cmd.to)
+        return if(
+            trade.validate(cmd)
+        ) {
+            newEvent(TradeAcceptanceRevoked(cmd.from, cmd.to))
+            true
+        } else {
+            false
+        }
+    }
+
+    private fun apply(event: TradeAcceptanceRevoked) {
+        findTrade(event.by, event.with).apply(event)
     }
 
     private fun findPlayer(id: String): Player? {
@@ -581,9 +618,16 @@ class Game(
             .find { it.id == id }
     }
 
-    private fun findTrade(id1: String, id2: String): Trade? {
-        return trades
-            .find { it.matches(id1, id2) }
+    private fun findTrade(id1: String, id2: String): Trade {
+        val find = trades
+                .find { it.matches(id1, id2) }
+        return if(find == null) {
+            val trade = Trade(id1, id2)
+            trades.add(trade)
+            trade
+        } else {
+            find
+        }
     }
 
     fun getNewEvents(skip: Int, limit: Int, timeout: Int): List<Event> {
@@ -855,7 +899,6 @@ class Game(
         override fun getBidSpace(): String {
             return space
         }
-
     }
 
     private class WaitingForEndTurn : TurnState {
@@ -871,6 +914,8 @@ class Player(
     var debt: Int,
     var gameMaster: Boolean = false
 ) {
+    var assets: Int = 0
+
     fun validate(cmd: AddPlayer): Boolean {
         return cmd.id != this.id && cmd.color != this.color
     }
@@ -906,6 +951,7 @@ class Player(
     fun apply(event: SpaceBought) {
         money -= event.cash
         debt += event.borrowed
+        assets += event.cash + event.borrowed
     }
 
     fun applyOwner(event: RentPaid) {
@@ -914,6 +960,15 @@ class Player(
 
     fun applyPlayer(event: RentPaid) {
         money -= event.rent
+    }
+
+    fun validate(cmd: AcceptTrade, assetDelta: Int): Boolean {
+        val newMoney = this.money + cmd.cashDelta
+        val newDebt = this.debt + cmd.debtDelta
+        val newAssetValue = this.assets + assetDelta
+
+        return 0 <= newMoney &&
+                0 <= newDebt && newDebt <= newAssetValue
     }
 }
 
@@ -937,7 +992,9 @@ sealed class Space {
 }
 
 interface Ownable {
+    val id: String
     val initialPrice: Int
+    var value: Int
     var owner: String?
 
     fun validate(cmd: BuyThisSpace): Boolean {
@@ -947,6 +1004,7 @@ interface Ownable {
 
     fun apply(event: SpaceBought) {
         owner = event.player
+        value = event.borrowed + event.cash
     }
 
     fun validate(cmd: AddOffer): Boolean {
@@ -965,6 +1023,7 @@ class Street(
     var hotel: Boolean = false
 ) : Space(), Ownable {
     override var owner: String? = null
+    override var value: Int = 0
 
     fun getRent(fullStreet: Boolean): Int {
         val houses = this.houses
@@ -990,6 +1049,7 @@ class Utility(
     val rentAll: Int
 ) : Space(), Ownable {
     override var owner: String? = null
+    override var value: Int = 0
 
     fun getRent(allUtilities: Boolean, diceRoll: Int): Int {
         val factor = if (allUtilities) {
@@ -1007,6 +1067,7 @@ class Station(
     val rent: List<Int>
 ) : Space(), Ownable {
     override var owner: String? = null
+    override var value: Int = 0
 
     fun getRent(nbOfStations: Int): Int {
         return rent[nbOfStations - 1]
@@ -1023,12 +1084,15 @@ class Prison(
 ) : Space() {
 }
 
+// TODO revoke acceptance when money/debt/asset situation changes
+// TODO remove offer when street sold / houses built
+// TODO maybe some sort of validate/correction method or something
 class Trade(
     private val player1: String,
     private val player2: String
 ) {
-    private val package1 = TradePackage()
-    private val package2 = TradePackage()
+    private val party1 = TradeParty()
+    private val party2 = TradeParty()
 
     fun matches(id1: String, id2: String): Boolean {
         return id1 == player1 && id2 == player2 ||
@@ -1036,60 +1100,146 @@ class Trade(
     }
 
     fun validate(cmd: AddOffer): Boolean {
-        return getPackage(cmd.from)
+        return getParty(cmd.from)
             ?.validate(cmd)
             ?: false
     }
 
-    fun apply(event: OfferAdded) {
-        getPackage(event.from)?.apply(event)
+    fun apply(event: OfferAdded, ownable: Ownable) {
+        getParty(event.from)?.apply(event, ownable)
     }
 
     fun validate(cmd: UpdateOfferValue): Boolean {
-        return getPackage(cmd.from)
+        return getParty(cmd.from)
             ?.validate(cmd)
             ?: false
     }
 
+    fun apply(event: OfferValueUpdated) {
+        getParty(event.from)?.apply(event)
+    }
+
     fun validate(cmd: RemoveOffer): Boolean {
-        return getPackage(cmd.from)
+        return getParty(cmd.from)
             ?.validate(cmd)
             ?: false
     }
 
     fun apply(event: OfferRemoved) {
-        getPackage(event.from)?.apply(event)
+        getParty(event.from)?.apply(event)
     }
 
-    private fun getPackage(id: String): TradePackage? {
+    fun validate(cmd: AcceptTrade): Boolean {
+        val validParty = getParty(cmd.from)
+                ?.validate(cmd)
+                ?: false
+
+        val validPrice = if(cmd.from == player1) {
+            party1.getPrice() - party2.getPrice() == cmd.cashDelta - cmd.debtDelta
+        } else {
+            party2.getPrice() - party1.getPrice() == cmd.cashDelta - cmd.debtDelta
+        }
+
+        return validParty && validPrice
+    }
+
+    fun apply(event: TradeAccepted) {
+        getParty(event.by)?.apply(event)
+    }
+
+    fun validate(cmd: RevokeTradeAcceptance): Boolean {
+        return getParty(cmd.from)
+                ?.validate(cmd)
+                ?: false
+    }
+
+    fun apply(event: TradeAcceptanceRevoked) {
+        getParty(event.by)?.apply(event)
+    }
+
+    private fun getParty(id: String): TradeParty? {
         return when(id) {
-            player1 -> package1
-            player2 -> package2
+            player1 -> party1
+            player2 -> party2
             else -> null
+        }
+    }
+
+    fun getAssetDelta(from: String): Int {
+        return if(from == player1) {
+            party2.getPrice() - party1.getTotalAssetValue()
+        } else {
+            party1.getPrice() - party2.getTotalAssetValue()
         }
     }
 }
 
-class TradePackage {
-    var ownables: MutableList<String> = ArrayList()
+class TradeParty {
+    var offers: MutableList<Offer> = ArrayList()
+    var accepted: Boolean = false
 
     fun validate(cmd: AddOffer): Boolean {
-        return !ownables.contains(cmd.ownable)
+        return !hasOffer(cmd.ownable)
     }
 
-    fun apply(event: OfferAdded) {
-        ownables.add(event.ownable)
+    fun apply(event: OfferAdded, ownable: Ownable) {
+        offers.add(Offer(ownable, event.value))
     }
 
     fun validate(cmd: UpdateOfferValue): Boolean {
-        return ownables.contains(cmd.ownable)
+        return hasOffer(cmd.ownable)
+    }
+
+    fun apply(event: OfferValueUpdated) {
+        findOffer(event.ownable)?.apply(event)
     }
 
     fun validate(cmd: RemoveOffer): Boolean {
-        return ownables.contains(cmd.ownable)
+        return hasOffer(cmd.ownable)
     }
 
     fun apply(event: OfferRemoved) {
-        ownables.remove(event.ownable)
+        offers.removeIf{it.ownable.id == event.ownable}
+    }
+
+    fun validate(cmd: AcceptTrade): Boolean {
+        return !accepted // TODO maybe more
+    }
+
+    fun apply(event: TradeAccepted) {
+        this.accepted = true
+    }
+
+    fun validate(cmd: RevokeTradeAcceptance): Boolean {
+        return accepted // TODO maybe more
+    }
+
+    fun apply(event: TradeAcceptanceRevoked) {
+        this.accepted = false
+    }
+
+    private fun findOffer(ownable: String): Offer? {
+        return offers.firstOrNull { it.ownable.id == ownable }
+    }
+
+    private fun hasOffer(ownable: String): Boolean {
+        return offers.any { it.ownable.id == ownable }
+    }
+
+    fun getPrice(): Int {
+        return offers.sumOf { it.value }
+    }
+
+    fun getTotalAssetValue(): Int {
+        return offers.sumBy { it.ownable.value }
+    }
+}
+
+class Offer(
+        val ownable: Ownable,
+        var value: Int
+) {
+    fun apply(event: OfferValueUpdated) {
+        this.value = event.value
     }
 }

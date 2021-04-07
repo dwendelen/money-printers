@@ -102,11 +102,12 @@
           [me]="game.getMe()"
           [myOwnables]="myOwnables"
           [disabled] = "commandInFlight"
-          (add)="addOffer($event)"
-          (remove)="removeOffer($event)"
-          (update)="updateOffer($event)"
-          (close)="popRightContext()"
-        >
+          (add)="addOffer(rightContext.otherParty.id, $event)"
+          (update)="updateOffer(rightContext.otherParty.id, $event)"
+          (remove)="removeOffer(rightContext.otherParty.id, $event)"
+          (onAccept)="acceptTrade(rightContext.otherParty.id, $event)"
+          (onRevokeAcceptance)="revokeTradeAcceptance(rightContext.otherParty.id)"
+          (close)="popRightContext()">
         </app-trade>
       </div>
     </div>

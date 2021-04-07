@@ -4,6 +4,7 @@ import {GameService} from '../game.service';
 import {BidInfo, Game, LeftContext, Ownable, Player, Space, Station, Street, Utility} from '../game';
 import {Event} from '../api/event';
 import {
+  AcceptTrade,
   AddOffer,
   AddPlayer,
   BuyThisSpace, BuyWonBid,
@@ -11,12 +12,12 @@ import {
   DeclineThisSpace,
   DemandRent,
   EndTurn, PassBid,
-  PayRent, PlaceBid, RemoveOffer,
+  PayRent, PlaceBid, RemoveOffer, RevokeTradeAcceptance,
   RollDice,
   StartGame, UpdateOfferValue
 } from '../api/command';
 import {Bidding} from '../bidding/bidding';
-import {OfferInfo} from '../trade/trade.component';
+import {Acceptance, OfferInfo} from '../trade/trade.component';
 
 @Component({
   selector: 'app-game',
@@ -230,32 +231,50 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   openPlayerContext(player: Player): void {
-    this.rightContext = new ViewTrade(player, new NoRightContext());
+    if(player.id != this.game.myId) {
+      this.rightContext = new ViewTrade(player, new NoRightContext());
+    }
   }
 
-  addOffer(offer: OfferInfo): void {
+  addOffer(playerId: string, offer: OfferInfo): void {
     this.sendCmd(new AddOffer(
       this.game.myId,
-      offer.otherPlayer,
+      playerId,
       offer.ownable,
       offer.value
     ));
   }
 
-  updateOffer(offer: OfferInfo): void {
+  updateOffer(playerId: string, offer: OfferInfo): void {
     this.sendCmd(new UpdateOfferValue(
       this.game.myId,
-      offer.otherPlayer,
+      playerId,
       offer.ownable,
       offer.value
     ));
   }
 
-  removeOffer(offer: OfferInfo): void {
+  removeOffer(playerId: string, ownable: string): void {
     this.sendCmd(new RemoveOffer(
       this.game.myId,
-      offer.otherPlayer,
-      offer.ownable
+      playerId,
+      ownable
+    ));
+  }
+
+  acceptTrade(playerId: string, acceptance: Acceptance): void {
+    this.sendCmd(new AcceptTrade(
+      this.game.myId,
+      playerId,
+      acceptance.getCash - acceptance.giveCash,
+      acceptance.borrow - acceptance.payBack
+    ))
+  }
+
+  revokeTradeAcceptance(playerId: string): void {
+    this.sendCmd(new RevokeTradeAcceptance(
+      this.game.myId,
+      playerId
     ));
   }
 }

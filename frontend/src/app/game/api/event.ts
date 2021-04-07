@@ -19,7 +19,9 @@ export type Event =
   TurnEnded |
   OfferAdded |
   OfferValueUpdated |
-  OfferRemoved;
+  OfferRemoved |
+  TradeAccepted |
+  TradeAcceptanceRevoked;
 
 export interface GameCreated {
   type: 'GameCreated';
@@ -159,6 +161,18 @@ export interface OfferRemoved {
   from: string,
   to: string,
   ownable: string
+}
+
+export interface TradeAccepted {
+    type: 'TradeAccepted';
+    by: string
+    with: string
+}
+
+export interface TradeAcceptanceRevoked {
+  type: 'TradeAcceptanceRevoked' ;
+  by: string
+  with: string
 }
 
 type Space =

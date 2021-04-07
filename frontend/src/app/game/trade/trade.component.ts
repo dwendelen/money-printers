@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {Offer, Ownable, Player} from '../game';
+import {Offer, Ownable, Player, TradeParty} from '../game';
 
 @Component({
   selector: 'app-trade',
@@ -19,9 +19,13 @@ export class TradeComponent implements OnInit {
   @Output()
   add = new EventEmitter<OfferInfo>();
   @Output()
-  remove = new EventEmitter<OfferInfo>();
-  @Output()
   update = new EventEmitter<OfferInfo>();
+  @Output()
+  remove = new EventEmitter<string>();
+  @Output()
+  onAccept = new EventEmitter<Acceptance>();
+  @Output()
+  onRevokeAcceptance = new EventEmitter<void>();
   @Output()
   close = new EventEmitter<void>();
 
@@ -33,18 +37,34 @@ export class TradeComponent implements OnInit {
   ngOnInit(): void {
   }
 
+  get myParty(): TradeParty {
+    return this.otherPlayer.trade.me;
+  }
+
+  get otherParty(): TradeParty {
+    return this.otherPlayer.trade.other;
+  }
+
   gettingPrice(): number {
-    return this.otherPlayer.getting
-      .map(o => o.value)
-      .reduce((a, b) => a + b, 0);
+    return TradeComponent.totalPrice(this.otherParty);
   }
 
   giveCashChanged(cash: number) {
     this.giveCash = cash;
+    this.revokeAcceptance()
+  }
+
+  spillToGiveCash(): void {
+    this.giveCashChanged(this.giveCash + this.unaccountedGetting());
   }
 
   borrowChanged(debt: number) {
     this.borrow = debt;
+    this.revokeAcceptance()
+  }
+
+  spillToBorrow(): void {
+    this.borrowChanged(this.borrow + this.unaccountedGetting());
   }
 
   unaccountedGetting(): number {
@@ -56,17 +76,25 @@ export class TradeComponent implements OnInit {
   }
 
   givingProfit(): number {
-    return this.otherPlayer.giving
-      .map(o => o.value)
-      .reduce((a, b) => a + b, 0);
+    return TradeComponent.totalPrice(this.myParty);
   }
 
   getCashChanged(cash: number) {
     this.getCash = cash;
+    this.revokeAcceptance()
+  }
+
+  spillToGetCash(): void {
+    this.getCashChanged(this.getCash + this.unaccountedGiving());
   }
 
   payBackChanged(debt: number) {
     this.payBack = debt;
+    this.revokeAcceptance()
+  }
+
+  spillToPayBack(): void {
+    this.payBackChanged(this.payBack + this.unaccountedGiving());
   }
 
   unaccountedGiving(): number {
@@ -79,20 +107,24 @@ export class TradeComponent implements OnInit {
 
   get offerable(): Ownable[] {
     return this.myOwnables
-      .filter(o => !this.otherPlayer.giving
+      .filter(o => !this.myParty.offers
         .map(o => o.ownable)
         .includes(o)
       );
   }
 
   assetDelta(): number {
-    const minusAssets = this.otherPlayer.giving
+    const minusAssets = this.myParty.offers
       .map(o => o.ownable.assetValue!)
       .reduce((a, b) => a + b, 0)
-    const plusValue = this.otherPlayer.getting
+    const plusValue = TradeComponent.totalPrice(this.otherParty);
+    return plusValue - minusAssets;
+  }
+
+  private static totalPrice(party: TradeParty): number {
+    return party.offers
       .map(o => o.value)
       .reduce((a, b) => a + b, 0)
-    return plusValue - minusAssets;
   }
 
   moneyDelta(): number {
@@ -119,33 +151,56 @@ export class TradeComponent implements OnInit {
     return this.me.debt + this.debtDelta();
   }
 
-  invalidDebt(): boolean {
-    return this.projectedDebt() > this.projectedAssets();
-  }
-
   invalidMoney(): boolean {
     return this.projectedCash() < 0;
   }
 
+  invalidAssets(): boolean {
+    return this.projectedDebt() > this.projectedAssets();
+  }
+
+  invalidDebt(): boolean {
+    return this.projectedDebt() > this.projectedAssets() || this.projectedDebt() < 0;
+  }
+
+  accept() {
+    if(!this.myParty.accepted) {
+      this.onAccept.emit(new Acceptance(
+        this.giveCash,
+        this.borrow,
+        this.getCash,
+        this.payBack
+      ))
+    }
+  }
+
+  revokeAcceptance() {
+    if(this.myParty.accepted) {
+      this.onRevokeAcceptance.emit()
+    }
+  }
+
+  acceptDisabled(): boolean {
+    return this.disabled ||
+      this.invalidDebt() ||
+      this.invalidMoney() ||
+      this.invalidUnaccountedGetting() ||
+      this.invalidUnaccountedGiving();
+  }
+
   addOwnable(ownable: Ownable): void {
     this.add.emit(new OfferInfo(
-      this.otherPlayer.id,
       ownable.id,
       ownable.assetValue!
     ))
   }
 
   removeOffer(offer: Offer): void {
-    this.remove.emit(new OfferInfo(
-      this.otherPlayer.id,
-      offer.ownable.id,
-      offer.value
-    ))
+    this.remove.emit(offer.ownable.id)
   }
 
   changeValue(offer: Offer, newValue: number) {
     this.update.emit(new OfferInfo(
-      this.otherPlayer.id,
       offer.ownable.id,
       newValue
     ))
@@ -154,9 +209,18 @@ export class TradeComponent implements OnInit {
 
 export class OfferInfo {
   constructor(
-    public otherPlayer: string,
     public ownable: string,
     public value: number
+  ) {
+  }
+}
+
+export class Acceptance {
+  constructor(
+    public giveCash: number,
+    public borrow: number,
+    public getCash: number,
+    public payBack: number
   ) {
   }
 }

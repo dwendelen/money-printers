@@ -15,7 +15,7 @@ import {
   RentDemanded,
   RentPaid,
   SpaceBought,
-  StartMoneyReceived,
+  StartMoneyReceived, TradeAcceptanceRevoked, TradeAccepted,
   TurnEnded
 } from './api/event';
 
@@ -97,6 +97,12 @@ export class Game {
         break;
       case 'OfferRemoved':
         this.applyOfferRemoved(event);
+        break;
+      case 'TradeAccepted':
+        this.applyTradeAccepted(event);
+        break;
+      case 'TradeAcceptanceRevoked':
+        this.applyTraceAcceptanceRevoked(event);
         break;
     }
     this.events.push(event);
@@ -262,35 +268,53 @@ export class Game {
 
   private applyOfferAdded(event: OfferAdded): void {
     const ownable = this.getOwnable(event.ownable);
-    if (event.from == this.myId) {
-      const other = this.getPlayer(event.to);
-      other.applyOfferAddedGiving(event, ownable);
-    }
-    if(event.to == this.myId) {
-      const other = this.getPlayer(event.from);
-      other.applyOfferAddedGetting(event, ownable);
-    }
+    this.applyToTradeParty(
+      event.from,
+      event.to,
+      t => t.applyOfferAdded(event, ownable)
+    );
   }
 
   private OfferValueUpdated(event: OfferValueUpdated): void {
-    if (event.from == this.myId) {
-      const other = this.getPlayer(event.to);
-      other.applyOfferValueUpdatedGiving(event);
-    }
-    if(event.to == this.myId) {
-      const other = this.getPlayer(event.from);
-      other.applyOfferValueUpdatedGetting(event);
-    }
+    this.applyToTradeParty(
+      event.from,
+      event.to,
+      t => t.applyOfferValueUpdated(event)
+    );
   }
 
   private applyOfferRemoved(event: OfferRemoved): void {
-    if (event.from == this.myId) {
-      const other = this.getPlayer(event.to);
-      other.applyOfferRemovedGiving(event);
+    this.applyToTradeParty(
+      event.from,
+      event.to,
+        t => t.applyOfferRemoved(event)
+    );
+  }
+
+  private applyTradeAccepted(event: TradeAccepted): void {
+    this.applyToTradeParty(
+      event.by,
+      event.with,
+      t => t.applyTradeAccepted(event)
+    );
+  }
+
+  private applyTraceAcceptanceRevoked(event: TradeAcceptanceRevoked): void {
+    this.applyToTradeParty(
+      event.by,
+      event.with,
+      t => t.applyTraceAcceptanceRevoked(event)
+    );
+  }
+
+  private applyToTradeParty(from: string, to: string, fn: (party: TradeParty) => void) {
+    if(from == this.myId) {
+      const other = this.getPlayer(to);
+      fn(other.trade.me);
     }
-    if(event.to == this.myId) {
-      const other = this.getPlayer(event.from);
-      other.applyOfferRemovedGetting(event);
+    if(to == this.myId) {
+      const other = this.getPlayer(from);
+      fn(other.trade.other);
     }
   }
 
@@ -381,8 +405,7 @@ export class Player {
   debt = 0;
   assets = 0;
   lastDemandId: number | null = null;
-  giving: Offer[] = [];
-  getting: Offer[] = [];
+  trade = new Trade()
 
   constructor(
     public id: string,
@@ -431,39 +454,40 @@ export class Player {
   applyRentPaidPlayer(event: RentPaid): void {
     this.money -= event.rent;
   }
+}
 
-  applyOfferAddedGiving(event: OfferAdded, ownable: Ownable): void {
-    this.giving.push(new Offer(ownable, event.value));
+export class Trade {
+  me: TradeParty = new TradeParty()
+  other: TradeParty = new TradeParty();
+}
+
+export class TradeParty {
+  offers: Offer[] = []
+  accepted: boolean = false
+
+  applyOfferAdded(event: OfferAdded, ownable: Ownable): void {
+    this.offers.push(new Offer(ownable, event.value));
   }
 
-  applyOfferAddedGetting(event: OfferAdded, ownable: Ownable): void {
-    this.getting.push(new Offer(ownable, event.value));
-  }
-
-  applyOfferValueUpdatedGiving(event: OfferValueUpdated): void {
-    const offer = this.giving
+  applyOfferValueUpdated(event: OfferValueUpdated): void {
+    const offer = this.offers
       .find(o => o.ownable.id == event.ownable);
     if (offer) {
       offer.value = event.value
     }
   }
 
-  applyOfferValueUpdatedGetting(event: OfferValueUpdated): void {
-    const offer = this.getting
-      .find(o => o.ownable.id == event.ownable);
-    if (offer) {
-      offer.value = event.value
-    }
-  }
-
-  applyOfferRemovedGiving(event: OfferRemoved): void {
-    this.giving = this.giving
+  applyOfferRemoved(event: OfferRemoved): void {
+    this.offers = this.offers
       .filter(o => o.ownable.id != event.ownable);
   }
 
-  applyOfferRemovedGetting(event: OfferRemoved): void {
-    this.getting = this.getting
-      .filter(o => o.ownable.id != event.ownable);
+  applyTradeAccepted(event: TradeAccepted): void {
+    this.accepted = true
+  }
+
+  applyTraceAcceptanceRevoked(event: TradeAcceptanceRevoked): void {
+    this.accepted = false
   }
 }
 

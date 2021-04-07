@@ -12,7 +12,9 @@ export type Command =
   EndTurn |
   AddOffer |
   UpdateOfferValue |
-  RemoveOffer;
+  RemoveOffer |
+  AcceptTrade |
+  RevokeTradeAcceptance;
 
 export class AddPlayer {
   type: 'AddPlayer' = 'AddPlayer';
@@ -154,6 +156,28 @@ export class RemoveOffer {
     public from: string,
     public to: string,
     public ownable: string
+  ) {
+  }
+}
+
+export class AcceptTrade {
+  type: 'AcceptTrade' = 'AcceptTrade';
+
+  constructor(
+    public from: string,
+    public to: string,
+    public cashDelta: number,
+    public debtDelta: number
+  ) {
+  }
+}
+
+export class RevokeTradeAcceptance {
+  type: 'RevokeTradeAcceptance' = 'RevokeTradeAcceptance';
+
+  constructor(
+    public from: string,
+    public to: string
   ) {
   }
 }

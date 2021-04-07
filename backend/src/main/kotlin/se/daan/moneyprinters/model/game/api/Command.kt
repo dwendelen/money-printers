@@ -25,6 +25,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
             JsonSubTypes.Type(value = AddOffer::class, name = "AddOffer"),
             JsonSubTypes.Type(value = UpdateOfferValue::class, name = "UpdateOfferValue"),
             JsonSubTypes.Type(value = RemoveOffer::class, name = "RemoveOffer"),
+            JsonSubTypes.Type(value = AcceptTrade::class, name = "AcceptTrade"),
+            JsonSubTypes.Type(value = RevokeTradeAcceptance::class, name = "RevokeTradeAcceptance"),
         ]
 )
 sealed class Command
@@ -108,4 +110,16 @@ data class RemoveOffer(
     val from: String,
     val to: String,
     val ownable: String
+): Command()
+
+data class AcceptTrade(
+    val from: String,
+    val to: String,
+    val cashDelta: Int,
+    val debtDelta: Int
+): Command()
+
+data class RevokeTradeAcceptance(
+    val from: String,
+    val to: String
 ): Command()
