@@ -21,7 +21,8 @@ export type Event =
   OfferValueUpdated |
   OfferRemoved |
   TradeAccepted |
-  TradeAcceptanceRevoked;
+  TradeAcceptanceRevoked |
+  TradeCompleted;
 
 export interface GameCreated {
   type: 'GameCreated';
@@ -173,6 +174,28 @@ export interface TradeAcceptanceRevoked {
   type: 'TradeAcceptanceRevoked' ;
   by: string
   with: string
+}
+
+export interface TradeCompleted {
+  type: 'TradeCompleted'
+  party1: string
+  party2: string
+  payments: Payment[]
+  transfers: Transfer[]
+}
+
+
+export interface Payment {
+  player: string,
+  cashDelta: number,
+  debtDelta: number
+}
+
+export interface Transfer {
+  ownable: string
+  from: string
+  to: string
+  value: number
 }
 
 type Space =

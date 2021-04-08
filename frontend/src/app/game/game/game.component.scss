@@ -203,4 +203,5 @@ $contextWidth: 250px;
   position: absolute;
   bottom: 0;
   width: $contextWidth + $contextWidth;
+  z-index: -1;
 }

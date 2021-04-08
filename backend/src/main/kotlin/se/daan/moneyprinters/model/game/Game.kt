@@ -111,6 +111,7 @@ class Game(
             is OfferRemoved -> apply(event)
             is TradeAccepted -> apply(event)
             is TradeAcceptanceRevoked -> apply(event)
+            is TradeCompleted -> apply(event)
         }
     }
 
@@ -576,7 +577,8 @@ class Game(
             trade.validate(cmd) &&
             player.validate(cmd,trade.getAssetDelta(cmd.from))
         ) {
-            newEvent(TradeAccepted(cmd.from, cmd.to))
+            val event = trade.on(cmd)
+            newEvent(event)
             true
         } else {
             false
@@ -585,6 +587,21 @@ class Game(
 
     private fun apply(event: TradeAccepted) {
         findTrade(event.by, event.with).apply(event)
+    }
+
+    private fun apply(event: TradeCompleted) {
+        trades.removeIf { it.matches(event.party1, event.party2) }
+        event.payments.forEach {
+            findPlayer(it.player)?.apply(it)
+        }
+        event.transfers.forEach { t ->
+            (findSpace(t.ownable) as? Ownable)?.let {
+                findPlayer(t.to)?.applyTo(t)
+                // This needs to happen before the asset value of the ownable is updated
+                findPlayer(t.from)?.applyFrom(t, it)
+                it.apply(t)
+            }
+        }
     }
 
     private fun on(cmd: RevokeTradeAcceptance): Boolean {
@@ -970,6 +987,19 @@ class Player(
         return 0 <= newMoney &&
                 0 <= newDebt && newDebt <= newAssetValue
     }
+
+    fun apply(payment: Payment) {
+        this.money += payment.cashDelta
+        this.debt += payment.debtDelta
+    }
+
+    fun applyTo(transfer: Transfer) {
+        this.assets += transfer.value
+    }
+
+    fun applyFrom(transfer: Transfer, ownable: Ownable) {
+        this.assets -= ownable.value
+    }
 }
 
 data class OpenRentDemand(
@@ -1009,6 +1039,11 @@ interface Ownable {
 
     fun validate(cmd: AddOffer): Boolean {
         return owner == cmd.from
+    }
+
+    fun apply(event: Transfer) {
+        this.owner = event.to
+        this.value = event.value
     }
 }
 
@@ -1172,11 +1207,52 @@ class Trade(
             party1.getPrice() - party2.getTotalAssetValue()
         }
     }
+
+    fun on(cmd: AcceptTrade): Event {
+        return if(isCompleted(cmd.from)) {
+            // TODO maybe validate ownership of transfers
+            // TODO remove transfer from other trades
+            val payments = if(cmd.from == player1) {
+                listOf(
+                        Payment(player1, cmd.cashDelta, cmd.debtDelta),
+                        Payment(player2, party2.cashDelta, party2.debtDelta)
+                )
+            } else {
+                listOf(
+                        Payment(player2, cmd.cashDelta, cmd.debtDelta),
+                        Payment(player1, party1.cashDelta, party1.debtDelta)
+                )
+            }
+            val transfers1 = party1.offers
+                    .map { Transfer(it.ownable.id, player1, player2, it.value) }
+            val transfers2 = party2.offers
+                    .map { Transfer(it.ownable.id, player2, player1, it.value) }
+
+            TradeCompleted(
+                    player1,
+                    player2,
+                    payments,
+                    transfers1 + transfers2
+            )
+        } else {
+            TradeAccepted(cmd.from, cmd.to, cmd.cashDelta, cmd.debtDelta)
+        }
+    }
+
+    private fun isCompleted(from: String): Boolean {
+        return if(from == player1) {
+            party2.accepted
+        } else {
+            party1.accepted
+        }
+    }
 }
 
 class TradeParty {
     var offers: MutableList<Offer> = ArrayList()
     var accepted: Boolean = false
+    var cashDelta: Int = 0
+    var debtDelta: Int = 0
 
     fun validate(cmd: AddOffer): Boolean {
         return !hasOffer(cmd.ownable)
@@ -1208,6 +1284,8 @@ class TradeParty {
 
     fun apply(event: TradeAccepted) {
         this.accepted = true
+        this.cashDelta = event.cashDelta
+        this.debtDelta = event.debtDelta
     }
 
     fun validate(cmd: RevokeTradeAcceptance): Boolean {
@@ -1216,6 +1294,8 @@ class TradeParty {
 
     fun apply(event: TradeAcceptanceRevoked) {
         this.accepted = false
+        this.cashDelta = 0
+        this.debtDelta = 0
     }
 
     private fun findOffer(ownable: String): Offer? {

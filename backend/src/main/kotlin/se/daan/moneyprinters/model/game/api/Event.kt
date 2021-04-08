@@ -33,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
             JsonSubTypes.Type(value = OfferRemoved::class, name = "OfferRemoved"),
             JsonSubTypes.Type(value = TradeAccepted::class, name = "TradeAccepted"),
             JsonSubTypes.Type(value = TradeAcceptanceRevoked::class, name = "TradeAcceptanceRevoked"),
+            JsonSubTypes.Type(value = TradeCompleted::class, name = "TradeCompleted"),
         ]
 )
 sealed class Event
@@ -43,125 +44,147 @@ data class GameCreated(
         val fixedStartMoney: Int,
         val interestRate: Double,
         val returnRate: Double
-): Event()
+) : Event()
 
 data class PromotedToGameMaster(
-    val player: String
-): Event()
+        val player: String
+) : Event()
 
 data class PlayerAdded(
         val id: String,
         val name: String,
         val color: String,
         val startDebt: Int
-): Event()
+) : Event()
 
 data class GameStarted(
-    val initiator: String
-): Event()
+        val initiator: String
+) : Event()
 
 data class NewTurnStarted(
         val player: String
-): Event()
+) : Event()
 
 data class DiceRolled(
         val player: String,
         val dice1: Int,
         val dice2: Int
-): Event()
+) : Event()
 
 data class StartMoneyReceived(
         val player: String,
         val amount: Int
-): Event()
+) : Event()
 
 data class LandedOnSafeSpace(
-    val player: String,
-    val ground: String
-): Event()
+        val player: String,
+        val ground: String
+) : Event()
 
 data class LandedOnBuyableSpace(
         val player: String,
         val ground: String
-): Event()
+) : Event()
 
 data class SpaceBought(
-    val ground: String,
-    val player: String,
-    val cash: Int,
-    val borrowed: Int,
-): Event()
+        val ground: String,
+        val player: String,
+        val cash: Int,
+        val borrowed: Int,
+) : Event()
 
 data class BidStarted(
-    val ground: String,
-    val defaultWinner: String
-): Event()
+        val ground: String,
+        val defaultWinner: String
+) : Event()
 
 data class BidPlaced(
-    val player: String,
-    val bid: Int
-): Event()
+        val player: String,
+        val bid: Int
+) : Event()
 
 data class BidPassed(
-    val player: String
-): Event()
+        val player: String
+) : Event()
 
 data class BidWon(
-    val player: String,
-    val bid: Int
-): Event()
+        val player: String,
+        val bid: Int
+) : Event()
 
 data class LandedOnHostileSpace(
         val player: String,
         val ground: String,
         val owner: String,
         val demandId: Int
-): Event()
+) : Event()
 
 data class RentDemanded(
         val owner: String,
         val player: String,
         val rent: Int,
         val demandId: Int
-): Event()
+) : Event()
 
 data class RentPaid(
-    val player: String,
-    val owner: String,
-    val rent: Int,
-    val demandId: Int
-): Event()
+        val player: String,
+        val owner: String,
+        val rent: Int,
+        val demandId: Int
+) : Event()
 
 data class TurnEnded(
-    val player: String
-): Event()
+        val player: String
+) : Event()
 
 data class OfferAdded(
-    val from: String,
-    val to: String,
-    val ownable: String,
-    val value: Int
-): Event()
+        val from: String,
+        val to: String,
+        val ownable: String,
+        val value: Int
+) : Event()
 
 data class OfferValueUpdated(
-    val from: String,
-    val to: String,
-    val ownable: String,
-    val value: Int
-): Event()
+        val from: String,
+        val to: String,
+        val ownable: String,
+        val value: Int
+) : Event()
 
 data class OfferRemoved(
-    val from: String,
-    val to: String,
-    val ownable: String
-): Event()
+        val from: String,
+        val to: String,
+        val ownable: String
+) : Event()
 
 data class TradeAccepted(
         val by: String,
         val with: String,
-): Event()
+        val cashDelta: Int,
+        val debtDelta: Int
+) : Event()
 
 data class TradeAcceptanceRevoked(
         val by: String,
         val with: String,
-): Event()
+) : Event()
+
+data class TradeCompleted(
+        val party1: String,
+        val party2: String,
+        val payments: List<Payment>,
+        val transfers: List<Transfer>
+) : Event()
+
+data class Payment(
+        val player: String,
+        val cashDelta: Int,
+        val debtDelta: Int
+)
+
+data class Transfer(
+        val ownable: String,
+        val from: String,
+        val to: String,
+        val value: Int
+)

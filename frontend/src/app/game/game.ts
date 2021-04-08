@@ -10,12 +10,12 @@ import {
   LandedOnBuyableSpace,
   LandedOnHostileSpace,
   LandedOnSafeSpace,
-  NewTurnStarted, OfferAdded, OfferRemoved, OfferValueUpdated,
+  NewTurnStarted, OfferAdded, OfferRemoved, OfferValueUpdated, Payment,
   PlayerAdded,
   RentDemanded,
   RentPaid,
   SpaceBought,
-  StartMoneyReceived, TradeAcceptanceRevoked, TradeAccepted,
+  StartMoneyReceived, TradeAcceptanceRevoked, TradeAccepted, TradeCompleted, Transfer,
   TurnEnded
 } from './api/event';
 
@@ -103,6 +103,9 @@ export class Game {
         break;
       case 'TradeAcceptanceRevoked':
         this.applyTraceAcceptanceRevoked(event);
+        break;
+      case 'TradeCompleted':
+        this.applyTradeCompleted(event);
         break;
     }
     this.events.push(event);
@@ -307,6 +310,28 @@ export class Game {
     );
   }
 
+  private applyTradeCompleted(event: TradeCompleted): void {
+    this.applyToTradeParty(event.party1, event.party2, p => {
+      p.applyTradeCompleted(event)
+    })
+    this.applyToTradeParty(event.party2, event.party1, p => {
+      p.applyTradeCompleted(event)
+    })
+    event.payments.forEach(p => {
+      this.getPlayer(p.player).applyPayment(p)
+    })
+    event.transfers.forEach(t => {
+      const to = this.getPlayer(t.to);
+      const from = this.getPlayer(t.from);
+      const ownable = this.getOwnable(t.ownable);
+      to.applyTransferTo(t)
+      // This needs to happen before the asset value is updated
+      from.applyTransferFrom(t, ownable)
+      ownable.owner = to
+      ownable.assetValue = t.value
+    })
+  }
+
   private applyToTradeParty(from: string, to: string, fn: (party: TradeParty) => void) {
     if(from == this.myId) {
       const other = this.getPlayer(to);
@@ -454,6 +479,19 @@ export class Player {
   applyRentPaidPlayer(event: RentPaid): void {
     this.money -= event.rent;
   }
+
+  applyPayment(payment: Payment): void {
+    this.money += payment.cashDelta
+    this.debt += payment.debtDelta
+  }
+
+  applyTransferTo(t: Transfer): void {
+    this.assets += t.value
+  }
+
+  applyTransferFrom(t: Transfer, ownable: Ownable) {
+    this.assets -= ownable.assetValue!
+  }
 }
 
 export class Trade {
@@ -488,6 +526,11 @@ export class TradeParty {
 
   applyTraceAcceptanceRevoked(event: TradeAcceptanceRevoked): void {
     this.accepted = false
+  }
+
+  applyTradeCompleted(event: TradeCompleted): void {
+    this.accepted = false
+    this.offers = []
   }
 }
 
