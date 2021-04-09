@@ -297,7 +297,7 @@ export class Game {
   private applyTradeAccepted(event: TradeAccepted): void {
     this.applyToTradeParty(
       event.by,
-      event.with,
+      event.other,
       t => t.applyTradeAccepted(event)
     );
   }
@@ -305,7 +305,7 @@ export class Game {
   private applyTraceAcceptanceRevoked(event: TradeAcceptanceRevoked): void {
     this.applyToTradeParty(
       event.by,
-      event.with,
+      event.other,
       t => t.applyTraceAcceptanceRevoked(event)
     );
   }

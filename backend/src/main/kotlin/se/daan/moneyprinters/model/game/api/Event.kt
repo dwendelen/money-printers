@@ -159,14 +159,14 @@ data class OfferRemoved(
 
 data class TradeAccepted(
         val by: String,
-        val with: String,
+        val other: String,
         val cashDelta: Int,
         val debtDelta: Int
 ) : Event()
 
 data class TradeAcceptanceRevoked(
         val by: String,
-        val with: String,
+        val other: String,
 ) : Event()
 
 data class TradeCompleted(

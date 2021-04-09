@@ -529,15 +529,14 @@ class Game(
     }
 
     private fun apply(event: OfferAdded) {
-        val trade1 = findTrade(event.from, event.to)
         val ownable = findSpace(event.ownable) as? Ownable
         if(ownable != null) {
-            trade1.apply(event, ownable)
+            updateTrade(event.from, event.to) {t -> t.apply(event, ownable)}
         }
     }
 
     private fun apply(event: OfferValueUpdated) {
-        findTrade(event.from, event.to).apply(event)
+        updateTrade(event.from, event.to) {t -> t.apply(event)}
     }
 
     private fun on(cmd: UpdateOfferValue): Boolean {
@@ -557,7 +556,8 @@ class Game(
         return if (
             trade.validate(cmd)
         ) {
-            newEvent(OfferRemoved(cmd.from, cmd.to, cmd.ownable))
+            trade.removeOffersBy(cmd.from, cmd.ownable)
+                    .forEach(this::newEvent)
             true
         } else {
             false
@@ -565,20 +565,25 @@ class Game(
     }
 
     private fun apply(event: OfferRemoved) {
-        findTrade(event.from, event.to)
-                .apply(event)
+        updateTrade(event.from, event.to) {t -> t.apply(event)}
     }
 
     private fun on(cmd: AcceptTrade): Boolean {
-        val trade = findTrade(cmd.from, cmd.to)
-        val player = findPlayer(cmd.from)
+        val trade = findTrade(cmd.by, cmd.other)
+        val player = findPlayer(cmd.by)
         return if(
             player != null &&
             trade.validate(cmd) &&
-            player.validate(cmd,trade.getAssetDelta(cmd.from))
+            player.validate(cmd,trade.getAssetDelta(cmd.by))
         ) {
             val event = trade.on(cmd)
             newEvent(event)
+            if(event is TradeCompleted) {
+                event.transfers.forEach { t ->
+                    trades.flatMap { it.removeOffersBy(t.from, t.ownable) }
+                            .forEach (this::newEvent)
+                }
+            }
             true
         } else {
             false
@@ -586,7 +591,7 @@ class Game(
     }
 
     private fun apply(event: TradeAccepted) {
-        findTrade(event.by, event.with).apply(event)
+        updateTrade(event.by, event.other) {t -> t.apply(event)}
     }
 
     private fun apply(event: TradeCompleted) {
@@ -605,11 +610,11 @@ class Game(
     }
 
     private fun on(cmd: RevokeTradeAcceptance): Boolean {
-        val trade = findTrade(cmd.from, cmd.to)
+        val trade = findTrade(cmd.by, cmd.other)
         return if(
             trade.validate(cmd)
         ) {
-            newEvent(TradeAcceptanceRevoked(cmd.from, cmd.to))
+            newEvent(TradeAcceptanceRevoked(cmd.by, cmd.other))
             true
         } else {
             false
@@ -617,7 +622,7 @@ class Game(
     }
 
     private fun apply(event: TradeAcceptanceRevoked) {
-        findTrade(event.by, event.with).apply(event)
+        updateTrade(event.by, event.other) {t -> t.apply(event)}
     }
 
     private fun findPlayer(id: String): Player? {
@@ -644,6 +649,13 @@ class Game(
             trade
         } else {
             find
+        }
+    }
+
+    private fun updateTrade(id1: String, id2: String, fn: (Trade) -> Trade) {
+        val i = trades.indexOfFirst { it.matches(id1, id2) }
+        if(i >= 0) {
+            trades[i] = fn(trades[i])
         }
     }
 
@@ -1122,16 +1134,18 @@ class Prison(
 // TODO revoke acceptance when money/debt/asset situation changes
 // TODO remove offer when street sold / houses built
 // TODO maybe some sort of validate/correction method or something
-class Trade(
-    private val player1: String,
-    private val player2: String
+data class Trade(
+        private val party1: TradeParty,
+        private val party2: TradeParty
 ) {
-    private val party1 = TradeParty()
-    private val party2 = TradeParty()
+    constructor(player1: String, player2: String):
+            this(TradeParty(player1), TradeParty(player2))
+
+    private val parties = listOf(party1, party2)
 
     fun matches(id1: String, id2: String): Boolean {
-        return id1 == player1 && id2 == player2 ||
-                id1 == player2 && id2 == player1
+        return id1 == party1.player && id2 == party2.player ||
+                id1 == party2.player && id2 == party1.player
     }
 
     fun validate(cmd: AddOffer): Boolean {
@@ -1140,8 +1154,8 @@ class Trade(
             ?: false
     }
 
-    fun apply(event: OfferAdded, ownable: Ownable) {
-        getParty(event.from)?.apply(event, ownable)
+    fun apply(event: OfferAdded, ownable: Ownable): Trade {
+        return applyToParty(event.from) { p -> p.apply(event, ownable)}
     }
 
     fun validate(cmd: UpdateOfferValue): Boolean {
@@ -1150,8 +1164,8 @@ class Trade(
             ?: false
     }
 
-    fun apply(event: OfferValueUpdated) {
-        getParty(event.from)?.apply(event)
+    fun apply(event: OfferValueUpdated): Trade {
+        return applyToParty(event.from) { p -> p.apply(event)}
     }
 
     fun validate(cmd: RemoveOffer): Boolean {
@@ -1160,166 +1174,198 @@ class Trade(
             ?: false
     }
 
-    fun apply(event: OfferRemoved) {
-        getParty(event.from)?.apply(event)
+    fun apply(event: OfferRemoved): Trade {
+        return applyToParty(event.from) { p -> p.apply(event)}
     }
 
     fun validate(cmd: AcceptTrade): Boolean {
-        val validParty = getParty(cmd.from)
+        val validParty = getParty(cmd.by)
                 ?.validate(cmd)
                 ?: false
 
-        val validPrice = if(cmd.from == player1) {
-            party1.getPrice() - party2.getPrice() == cmd.cashDelta - cmd.debtDelta
-        } else {
-            party2.getPrice() - party1.getPrice() == cmd.cashDelta - cmd.debtDelta
-        }
+        val pricesPlus = offers()
+                .filter { it.from == cmd.by }
+                .sumBy { it.value }
+        val pricesMinus = offers()
+                .filter { it.to == cmd.by }
+                .sumBy { it.value }
+        val validPrice = pricesPlus - pricesMinus == cmd.cashDelta - cmd.debtDelta
 
         return validParty && validPrice
     }
 
-    fun apply(event: TradeAccepted) {
-        getParty(event.by)?.apply(event)
+    fun apply(event: TradeAccepted): Trade {
+        return applyToParty(event.by) { p -> p.apply(event)}
     }
 
     fun validate(cmd: RevokeTradeAcceptance): Boolean {
-        return getParty(cmd.from)
+        return getParty(cmd.by)
                 ?.validate(cmd)
                 ?: false
     }
 
-    fun apply(event: TradeAcceptanceRevoked) {
-        getParty(event.by)?.apply(event)
+    fun apply(event: TradeAcceptanceRevoked): Trade {
+        return applyToParty(event.by) { p -> p.apply(event)}
     }
 
     private fun getParty(id: String): TradeParty? {
-        return when(id) {
-            player1 -> party1
-            player2 -> party2
-            else -> null
+        return parties
+                .find { it.player == id }
+    }
+
+    private fun applyToParty(player: String, fn: (TradeParty) -> TradeParty): Trade {
+        return if(player == party1.player) {
+            this.copy(party1 = fn(party1))
+        } else {
+            this.copy( party2 = fn(party2))
         }
     }
 
     fun getAssetDelta(from: String): Int {
-        return if(from == player1) {
-            party2.getPrice() - party1.getTotalAssetValue()
-        } else {
-            party1.getPrice() - party2.getTotalAssetValue()
-        }
+        val assetPlus = offers()
+                .filter { it.to == from }
+                .sumBy { it.value }
+        val assetMinus = offers()
+                .filter { it.from == from }
+                .sumBy { it.ownable.value }
+        return assetPlus - assetMinus
     }
 
     fun on(cmd: AcceptTrade): Event {
-        return if(isCompleted(cmd.from)) {
-            // TODO maybe validate ownership of transfers
-            // TODO remove transfer from other trades
-            val payments = if(cmd.from == player1) {
-                listOf(
-                        Payment(player1, cmd.cashDelta, cmd.debtDelta),
-                        Payment(player2, party2.cashDelta, party2.debtDelta)
-                )
-            } else {
-                listOf(
-                        Payment(player2, cmd.cashDelta, cmd.debtDelta),
-                        Payment(player1, party1.cashDelta, party1.debtDelta)
-                )
-            }
-            val transfers1 = party1.offers
-                    .map { Transfer(it.ownable.id, player1, player2, it.value) }
-            val transfers2 = party2.offers
-                    .map { Transfer(it.ownable.id, player2, player1, it.value) }
+        val acceptedEvent = TradeAccepted(cmd.by, cmd.other, cmd.cashDelta, cmd.debtDelta)
 
-            TradeCompleted(
-                    player1,
-                    player2,
+        val simulatedTrade = this.apply(acceptedEvent)
+
+        return if(simulatedTrade.isCompleted()) {
+            val payments = simulatedTrade.parties
+                    .map { Payment(it.player, it.acceptance!!.cashDelta, it.acceptance.debtDelta) }
+
+            val transfers = simulatedTrade.offers()
+                    .map { Transfer(it.ownable.id, it.from, it.to, it.value) }
+
+            val completedEvent = TradeCompleted(
+                    party1.player,
+                    party2.player,
                     payments,
-                    transfers1 + transfers2
+                    transfers
             )
+
+            completedEvent
         } else {
-            TradeAccepted(cmd.from, cmd.to, cmd.cashDelta, cmd.debtDelta)
+            acceptedEvent
         }
     }
 
-    private fun isCompleted(from: String): Boolean {
-        return if(from == player1) {
-            party2.accepted
-        } else {
-            party1.accepted
-        }
+    fun removeOffersBy(by: String, ownable: String): List<Event> {
+        return parties
+                .filter { it.player == by }
+                .flatMap { it.removeOffer(ownable) }
+    }
+
+    private fun offers() = parties.flatMap { it.offers }
+
+    private fun isCompleted(): Boolean {
+        return parties
+                .all { it.acceptance != null }
     }
 }
 
-class TradeParty {
-    var offers: MutableList<Offer> = ArrayList()
-    var accepted: Boolean = false
-    var cashDelta: Int = 0
-    var debtDelta: Int = 0
-
+data class TradeParty(
+        val player: String,
+        val offers: List<Offer> = ArrayList(),
+        val acceptance: Acceptance? = null
+) {
     fun validate(cmd: AddOffer): Boolean {
         return !hasOffer(cmd.ownable)
     }
 
-    fun apply(event: OfferAdded, ownable: Ownable) {
-        offers.add(Offer(ownable, event.value))
+    fun apply(event: OfferAdded, ownable: Ownable): TradeParty {
+        return this.copy(
+                offers = offers + Offer(event.from, event.to, ownable, event.value)
+        )
     }
 
     fun validate(cmd: UpdateOfferValue): Boolean {
         return hasOffer(cmd.ownable)
     }
 
-    fun apply(event: OfferValueUpdated) {
-        findOffer(event.ownable)?.apply(event)
+    fun apply(event: OfferValueUpdated): TradeParty {
+        return copy(
+                offers = offers.map {
+                    if(it.matches(event.from, event.to, event.ownable)) {
+                        it.apply(event)
+                    } else {
+                        it
+                    }
+                }
+        )
     }
 
     fun validate(cmd: RemoveOffer): Boolean {
         return hasOffer(cmd.ownable)
     }
 
-    fun apply(event: OfferRemoved) {
-        offers.removeIf{it.ownable.id == event.ownable}
+    fun apply(event: OfferRemoved): TradeParty {
+        return this.copy(
+                offers = offers.filterNot { it.matches(event.from, event.to, event.ownable)}
+        )
     }
 
     fun validate(cmd: AcceptTrade): Boolean {
-        return !accepted // TODO maybe more
+        return acceptance == null // TODO maybe more
     }
 
-    fun apply(event: TradeAccepted) {
-        this.accepted = true
-        this.cashDelta = event.cashDelta
-        this.debtDelta = event.debtDelta
+    fun apply(event: TradeAccepted): TradeParty {
+        return copy(
+                acceptance = Acceptance(event.cashDelta, event.debtDelta)
+        )
     }
 
     fun validate(cmd: RevokeTradeAcceptance): Boolean {
-        return accepted // TODO maybe more
+        return acceptance != null // TODO maybe more
     }
 
-    fun apply(event: TradeAcceptanceRevoked) {
-        this.accepted = false
-        this.cashDelta = 0
-        this.debtDelta = 0
-    }
-
-    private fun findOffer(ownable: String): Offer? {
-        return offers.firstOrNull { it.ownable.id == ownable }
+    fun apply(event: TradeAcceptanceRevoked): TradeParty {
+        return copy(
+                acceptance = null
+        )
     }
 
     private fun hasOffer(ownable: String): Boolean {
         return offers.any { it.ownable.id == ownable }
     }
 
-    fun getPrice(): Int {
-        return offers.sumOf { it.value }
-    }
-
-    fun getTotalAssetValue(): Int {
-        return offers.sumBy { it.ownable.value }
+    fun removeOffer(ownable: String): List<Event> {
+        val offer = offers.find { it.ownable.id == ownable }
+        return if(offer != null) {
+            val remove = OfferRemoved(offer.from, offer.to, offer.ownable.id)
+            if(acceptance == null) {
+                listOf(remove)
+            } else {
+                listOf(TradeAcceptanceRevoked(offer.from, offer.to),remove)
+            }
+        } else {
+            emptyList()
+        }
     }
 }
 
-class Offer(
+data class Offer(
+        val from: String,
+        val to : String,
         val ownable: Ownable,
-        var value: Int
+        val value: Int
 ) {
-    fun apply(event: OfferValueUpdated) {
-        this.value = event.value
+    fun apply(event: OfferValueUpdated): Offer {
+        return this.copy(value = event.value)
+    }
+
+    fun matches(from: String, to: String, ownable: String): Boolean {
+        return from == this.from && to == this.to && ownable == this.ownable.id
     }
 }
+
+data class Acceptance(
+        val cashDelta: Int,
+        val debtDelta: Int
+)

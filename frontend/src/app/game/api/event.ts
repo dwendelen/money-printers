@@ -167,13 +167,13 @@ export interface OfferRemoved {
 export interface TradeAccepted {
     type: 'TradeAccepted';
     by: string
-    with: string
+    other: string
 }
 
 export interface TradeAcceptanceRevoked {
   type: 'TradeAcceptanceRevoked' ;
   by: string
-  with: string
+  other: string
 }
 
 export interface TradeCompleted {

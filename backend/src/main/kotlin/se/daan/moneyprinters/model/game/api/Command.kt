@@ -113,13 +113,13 @@ data class RemoveOffer(
 ): Command()
 
 data class AcceptTrade(
-    val from: String,
-    val to: String,
-    val cashDelta: Int,
-    val debtDelta: Int
+        val by: String,
+        val other: String,
+        val cashDelta: Int,
+        val debtDelta: Int
 ): Command()
 
 data class RevokeTradeAcceptance(
-    val from: String,
-    val to: String
+        val by: String,
+        val other: String
 ): Command()

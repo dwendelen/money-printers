@@ -164,8 +164,8 @@ export class AcceptTrade {
   type: 'AcceptTrade' = 'AcceptTrade';
 
   constructor(
-    public from: string,
-    public to: string,
+    public by: string,
+    public other: string,
     public cashDelta: number,
     public debtDelta: number
   ) {
@@ -176,8 +176,8 @@ export class RevokeTradeAcceptance {
   type: 'RevokeTradeAcceptance' = 'RevokeTradeAcceptance';
 
   constructor(
-    public from: string,
-    public to: string
+    public by: string,
+    public other: string
   ) {
   }
 }
