@@ -576,10 +576,11 @@ class Game(
             trade.validate(cmd) &&
             player.validate(cmd,trade.getAssetDelta(cmd.by))
         ) {
-            val event = trade.on(cmd)
-            newEvent(event)
-            if(event is TradeCompleted) {
-                event.transfers.forEach { t ->
+            newEvent(TradeAccepted(cmd.by, cmd.other, cmd.cashDelta, cmd.debtDelta))
+            val completedEvent = trade.createCompletedEventIfComplete()
+            if(completedEvent != null) {
+                newEvent(completedEvent)
+                completedEvent.transfers.forEach { t ->
                     trades.flatMap { it.removeOffersBy(t.from, t.ownable) }
                             .forEach (this::newEvent)
                 }
@@ -1231,16 +1232,12 @@ data class Trade(
         return assetPlus - assetMinus
     }
 
-    fun on(cmd: AcceptTrade): Event {
-        val acceptedEvent = TradeAccepted(cmd.by, cmd.other, cmd.cashDelta, cmd.debtDelta)
-
-        val simulatedTrade = this.apply(acceptedEvent)
-
-        return if(simulatedTrade.isCompleted()) {
-            val payments = simulatedTrade.parties
+    fun createCompletedEventIfComplete(): TradeCompleted? {
+        return if(isCompleted()) {
+            val payments = parties
                     .map { Payment(it.player, it.acceptance!!.cashDelta, it.acceptance.debtDelta) }
 
-            val transfers = simulatedTrade.offers()
+            val transfers = offers()
                     .map { Transfer(it.ownable.id, it.from, it.to, it.value) }
 
             val completedEvent = TradeCompleted(
@@ -1252,7 +1249,7 @@ data class Trade(
 
             completedEvent
         } else {
-            acceptedEvent
+            null
         }
     }
 
