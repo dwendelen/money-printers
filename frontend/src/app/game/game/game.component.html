@@ -3,10 +3,31 @@
     <div class="board">
       <div class="ground" *ngFor="let ground of game.board">
         <div class="groundOwner">
-          <div *ngIf="ground.ownable && ground.owner"
+          <div *ngIf="ground.type == 'Street' && ground.owner && ground.buildState.type == 'Unbuilt'"
+               class ="unbuilt"
+               [style.border-color]="ground.owner.color">
+          </div>
+          <div *ngIf="ground.type == 'Street' && ground.owner && ground.buildState.type == 'Houses'"
                class="unbuilt"
-               [style.border-color]="ground.owner?.color"
-          ></div>
+               [style.border-color]="ground.owner.color">
+            <div *ngFor="let i of cheat(ground.buildState.nbOfHouses)"
+                 class="house"
+                 [style.background-color]="ground.owner.color">
+            </div>
+          </div>
+          <div *ngIf="ground.type == 'Street' && ground.owner && ground.buildState.type == 'Hotel'"
+               class ="hotel"
+               [style.background-color]="ground.owner.color">
+          </div>
+          <div *ngIf="ground.type == 'Station' && ground.owner"
+               [className]="'unbuilt'"
+               [style.border-color]="ground.owner?.color">
+          </div>
+          <div *ngIf="ground.type == 'Utility' && ground.owner"
+               [className]="'unbuilt'"
+               [style.border-color]="ground.owner?.color">
+          </div>
+
         </div>
         <div class="groundName"
              [style.background-color]="ground.color"
@@ -50,12 +71,14 @@
         <app-color-selector *ngIf="showJoin()" [disabled]="disableJoin()" [exclude]="getPlayerColors()"
                             (selectedColorChange)="playerColor = $event"></app-color-selector>
         <button class="actionButton" *ngIf="showJoin()" [disabled]="disableJoin()" (click)="join()">Join game</button>
-        <button class="actionButton" *ngIf="showStart()" [disabled]="disableStart()" (click)="start()">Start game</button>
+        <button class="actionButton" *ngIf="showStart()" [disabled]="disableStart()" (click)="start()">Start game
+        </button>
       </div>
     </div>
     <div class="actions">
       <button class="actionButton" *ngIf="showRoll()" [disabled]="disableRoll()" (click)="roll()">Roll dice</button>
-      <button class="actionButton" *ngIf="showEndTurn()" [disabled]="disableEndTurn()" (click)="endTurn()">End turn</button>
+      <button class="actionButton" *ngIf="showEndTurn()" [disabled]="disableEndTurn()" (click)="endTurn()">End turn
+      </button>
     </div>
     <div class="context">
       <div class="context1">
@@ -69,27 +92,27 @@
           (buy)="buyThis($event.cash, $event.borrowed)"
           (dontBuy)="dontBuyThis()">
         </app-buy-this-space>
-      <button
-        *ngIf="leftContext.type == 'RentDemandedForMe'"
-        (click)="payRent(leftContext.rentDemand.demandEventId)">
-        Pay {{ game.getPlayer(leftContext.rentDemand.owner).name }} {{leftContext.rentDemand.rent}} rent
-      </button>
-      <app-bidding
-        *ngIf="leftContext.type == 'Bidding'"
-        [bidding]="getBidding(leftContext.bidInfo)"
-        [disabled]="commandInFlight"
-        (pass)="passBid()"
-        (bid)="placeBid($event)">
-      </app-bidding>
-      <app-buy-this-space
-        *ngIf="leftContext.type == 'BuyingWonBid'"
-        [space]="getBidding(leftContext.bidInfo).space"
-        [price]="getBidding(leftContext.bidInfo).bid"
-        [maxCash]="game.getMyCash()"
-        [disabled]="commandInFlight"
-        [canDecline]="false"
-        (buy)="buyWonBid($event.cash, $event.borrowed)">
-      </app-buy-this-space>
+        <button
+          *ngIf="leftContext.type == 'RentDemandedForMe'"
+          (click)="payRent(leftContext.rentDemand.demandEventId)">
+          Pay {{ game.getPlayer(leftContext.rentDemand.owner).name }} {{leftContext.rentDemand.rent}} rent
+        </button>
+        <app-bidding
+          *ngIf="leftContext.type == 'Bidding'"
+          [bidding]="getBidding(leftContext.bidInfo)"
+          [disabled]="commandInFlight"
+          (pass)="passBid()"
+          (bid)="placeBid($event)">
+        </app-bidding>
+        <app-buy-this-space
+          *ngIf="leftContext.type == 'BuyingWonBid'"
+          [space]="getBidding(leftContext.bidInfo).space"
+          [price]="getBidding(leftContext.bidInfo).bid"
+          [maxCash]="game.getMyCash()"
+          [disabled]="commandInFlight"
+          [canDecline]="false"
+          (buy)="buyWonBid($event.cash, $event.borrowed)">
+        </app-buy-this-space>
       </div>
       <div class="context2">
         <ng-container *ngIf="rightContext.type == 'ViewSpace'">
@@ -101,7 +124,7 @@
           [otherPlayer]="rightContext.otherParty"
           [me]="game.getMe()"
           [myOwnables]="myOwnables"
-          [disabled] = "commandInFlight"
+          [disabled]="commandInFlight"
           (add)="addOffer(rightContext.otherParty.id, $event)"
           (update)="updateOffer(rightContext.otherParty.id, $event)"
           (remove)="removeOffer(rightContext.otherParty.id, $event)"

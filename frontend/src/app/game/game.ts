@@ -1110,7 +1110,8 @@ export class Street extends AbstractOwnable {
     public rentHouse: number[],
     public rentHotel: number,
     public priceHouse: number,
-    public priceHotel: number
+    public priceHotel: number,
+    public buildState: BuildState = new Unbuilt()
   ) {
     super()
   }
@@ -1124,6 +1125,27 @@ export class Street extends AbstractOwnable {
   getHouseRent(nbOfHouses: number): number {
     return this.rentHouse[nbOfHouses - 1];
   }
+}
+
+type BuildState =
+  Unbuilt |
+  Houses |
+  Hotel
+
+export class Unbuilt {
+  type: 'Unbuilt' = 'Unbuilt'
+}
+
+export class Houses {
+  constructor(
+    public nbOfHouses: number
+  ) {
+  }
+  type: 'Houses' = 'Houses'
+}
+
+export class Hotel {
+  type: 'Hotel' = 'Hotel'
 }
 
 export class ActionSpace {

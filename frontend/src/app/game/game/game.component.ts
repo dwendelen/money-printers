@@ -277,6 +277,10 @@ export class GameComponent implements OnInit, OnDestroy {
       playerId
     ));
   }
+
+  cheat(num: number) : number[]{
+    return Array(num);
+  }
 }
 
 type RightContext =

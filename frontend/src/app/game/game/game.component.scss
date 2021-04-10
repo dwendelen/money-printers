@@ -8,6 +8,7 @@
   vertical-align: top;
   margin-right: 50px;
 }
+
 .column2 {
   display: inline-block;
   vertical-align: top;
@@ -16,10 +17,10 @@
 }
 
 $houseMarginTop: 3px;
-$houseMarginLeft: 3px;
+$houseMargin: 3px;
 $houseHeight: 12px;
 $houseWidth: 12px;
-$hotelWidth: 4 * $houseWidth + 3 * $houseMarginLeft;
+$hotelWidth: 4 * $houseWidth + 3 * $houseMargin;
 $unbuiltBorderWidth: 3px;
 
 $boardOwnerWidth: $hotelWidth;
@@ -45,6 +46,31 @@ $groundHeight: 18px;
     border-style: solid;
     box-sizing: border-box;
     margin-top: $houseMarginTop;
+  }
+
+  .house {
+    display: inline-block;
+    vertical-align: top;
+    height: $houseHeight - 2 * $unbuiltBorderWidth;
+    width: $houseWidth;
+    margin: 0 $houseMargin 0 0;
+  }
+
+  .house:first-child {
+    width: $houseWidth - $unbuiltBorderWidth;
+  }
+
+  .house:nth-child(4) {
+    margin-right: 0;
+    width: $houseWidth - $unbuiltBorderWidth;
+  }
+
+  .hotel {
+    height: $houseHeight;
+    width: $hotelWidth;
+    margin: $houseMarginTop 0 0 0;
+    border-style: none;
+    border-width: 0;
   }
 
   .playerColor {
