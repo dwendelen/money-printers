@@ -497,6 +497,10 @@ export class Player {
 export class Trade {
   me: TradeParty = new TradeParty()
   other: TradeParty = new TradeParty();
+  getCash = 0
+  giveCash = 0
+  borrow = 0
+  payBack = 0
 }
 
 export class TradeParty {

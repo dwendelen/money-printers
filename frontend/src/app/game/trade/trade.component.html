@@ -10,14 +10,14 @@
 <div>
   <div class="left" (click)="spillToGiveCash()">Give cash</div>
   <app-amount
-    [value]="giveCash"
+    [value]="otherPlayer.trade.giveCash"
     (changed)="giveCashChanged($event)">
   </app-amount>
 </div>
 <div>
   <div class="left" (click)="spillToBorrow()">Borrow</div>
   <app-amount
-    [value]="borrow"
+    [value]="otherPlayer.trade.borrow"
     [max]="gettingPrice()"
     (changed)="borrowChanged($event)">
   </app-amount>
@@ -43,14 +43,14 @@
 <div>
   <div class="left" (click)="spillToGetCash()">Get cash</div>
   <app-amount
-    [value]="getCash"
+    [value]="otherPlayer.trade.getCash"
     (changed)="getCashChanged($event)">
   </app-amount>
 </div>
 <div>
   <div class="left" (click)="spillToPayBack()">Pay back</div>
   <app-amount
-    [value]="payBack"
+    [value]="otherPlayer.trade.payBack"
     (changed)="payBackChanged($event)">
   </app-amount>
 </div>
