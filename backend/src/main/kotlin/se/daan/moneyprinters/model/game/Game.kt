@@ -17,10 +17,10 @@ import se.daan.moneyprinters.model.game.api.Street as ApiStreet
 import se.daan.moneyprinters.model.game.api.Prison as ApiPrison
 
 class Game(
-    createGame: CreateGame,
-    private val id: String,
-    private val random: Random,
-    private val clock: Clock
+        createGame: CreateGame,
+        private val id: String,
+        private val random: Random,
+        private val clock: Clock
 ) {
     private val eventsLock = ReentrantLock()
     private val dataAvailable = eventsLock.newCondition()
@@ -37,13 +37,13 @@ class Game(
 
     init {
         newEvent(
-            GameCreated(
-                createGame.gameMaster,
-                createGame.board,
-                createGame.fixedStartMoney,
-                createGame.interestRate,
-                createGame.returnRate
-            )
+                GameCreated(
+                        createGame.gameMaster,
+                        createGame.board,
+                        createGame.fixedStartMoney,
+                        createGame.interestRate,
+                        createGame.returnRate
+                )
         )
     }
 
@@ -120,12 +120,12 @@ class Game(
         board = event.board.map {
             when (it) {
                 is ApiStreet -> Street(
-                    it.id,
-                    it.initialPrice,
-                    it.color,
-                    it.rent,
-                    it.rentHouse,
-                    it.rentHotel
+                        it.id,
+                        it.initialPrice,
+                        it.color,
+                        it.rent,
+                        it.rentHouse,
+                        it.rentHotel
                 )
                 is ApiActionSpace -> ActionSpace(it.id)
                 is ApiFreeParking -> FreeParking(it.id)
@@ -141,16 +141,16 @@ class Game(
 
     private fun on(cmd: AddPlayer): Boolean {
         return if (
-            players.all { it.validate(cmd) } &&
-            this.state.validate(cmd)
+                players.all { it.validate(cmd) } &&
+                this.state.validate(cmd)
         ) {
             newEvent(
-                PlayerAdded(
-                    cmd.id,
-                    cmd.name,
-                    cmd.color,
-                    0
-                )
+                    PlayerAdded(
+                            cmd.id,
+                            cmd.name,
+                            cmd.color,
+                            0
+                    )
             )
             true
         } else {
@@ -160,13 +160,13 @@ class Game(
 
     private fun apply(event: PlayerAdded) {
         players.add(
-            Player(
-                event.id,
-                event.color,
-                board[0].id,
-                event.startDebt,
-                event.startDebt
-            )
+                Player(
+                        event.id,
+                        event.color,
+                        board[0].id,
+                        event.startDebt,
+                        event.startDebt
+                )
         )
     }
 
@@ -176,9 +176,9 @@ class Game(
 
     private fun on(cmd: StartGame): Boolean {
         return if (
-            cmd.initiator == gameMaster &&
-            players.size >= 2 &&
-            this.state.validate(cmd)
+                cmd.initiator == gameMaster &&
+                players.size >= 2 &&
+                this.state.validate(cmd)
         ) {
             newEvent(GameStarted(cmd.initiator))
             newEvent(NewTurnStarted(players[0].id))
@@ -195,8 +195,8 @@ class Game(
     private fun on(cmd: RollDice): Boolean {
         val player = findPlayer(cmd.player)
         return if (
-            player != null &&
-            this.state.validate(cmd)
+                player != null &&
+                this.state.validate(cmd)
         ) {
             val dice1 = random.nextInt(1, 7)
             val dice2 = random.nextInt(1, 7)
@@ -210,18 +210,19 @@ class Game(
                 val economyMoney = ceil(economy * returnRate).toInt()
                 val startMoney = fixedStartMoney + economyMoney - interest
                 newEvent(StartMoneyReceived(player.id, startMoney))
+                validateTrades(player)
             }
             val space = board[newPosition]
             newEvent(
-                if (space is Ownable) {
-                    when (val owner = space.owner) {
-                        null -> LandedOnBuyableSpace(cmd.player, space.id)
-                        cmd.player -> LandedOnSafeSpace(cmd.player, space.id)
-                        else -> LandedOnHostileSpace(cmd.player, space.id, owner, events.size)
+                    if (space is Ownable) {
+                        when (val owner = space.owner) {
+                            null -> LandedOnBuyableSpace(cmd.player, space.id)
+                            cmd.player -> LandedOnSafeSpace(cmd.player, space.id)
+                            else -> LandedOnHostileSpace(cmd.player, space.id, owner, events.size)
+                        }
+                    } else {
+                        LandedOnSafeSpace(cmd.player, space.id)
                     }
-                } else {
-                    LandedOnSafeSpace(cmd.player, space.id)
-                }
             )
             true
         } else {
@@ -268,42 +269,43 @@ class Game(
 
     private fun isFullStreet(street: Street): Boolean {
         return board
-            .filterIsInstance<Street>()
-            .filter { it.color == street.color }
-            .all { it.owner == street.owner }
+                .filterIsInstance<Street>()
+                .filter { it.color == street.color }
+                .all { it.owner == street.owner }
     }
 
     private fun getNumberOfStations(owner: String): Int {
         return board
-            .filterIsInstance<Station>()
-            .count { it.owner == owner }
+                .filterIsInstance<Station>()
+                .count { it.owner == owner }
     }
 
 
     private fun hasAllUtilities(owner: String): Boolean {
         return board
-            .filterIsInstance<Utility>()
-            .all { it.owner == owner }
+                .filterIsInstance<Utility>()
+                .all { it.owner == owner }
     }
 
     private fun on(cmd: BuyThisSpace): Boolean {
         val player = findPlayer(cmd.player)
         val space = player?.let { findSpace(it.position) }
         return if (
-            player != null &&
-            space is Ownable &&
-            player.validate(cmd) &&
-            space.validate(cmd) &&
-            this.state.validate(cmd)
+                player != null &&
+                space is Ownable &&
+                player.validate(cmd) &&
+                space.validate(cmd) &&
+                this.state.validate(cmd)
         ) {
             newEvent(
-                SpaceBought(
-                    player.position,
-                    player.id,
-                    cmd.cash,
-                    cmd.borrowed
-                )
+                    SpaceBought(
+                            player.position,
+                            player.id,
+                            cmd.cash,
+                            cmd.borrowed
+                    )
             )
+            validateTrades(player)
             true
         } else {
             false
@@ -327,14 +329,14 @@ class Game(
         val player = findPlayer(cmd.player)
         val space = player?.let { findSpace(it.position) }
         return if (
-            space != null &&
-            this.state.validate(cmd)
+                space != null &&
+                this.state.validate(cmd)
         ) {
             newEvent(
-                BidStarted(
-                    space.id,
-                    cmd.player
-                )
+                    BidStarted(
+                            space.id,
+                            cmd.player
+                    )
             )
             true
         } else {
@@ -348,14 +350,14 @@ class Game(
 
     private fun on(cmd: PlaceBid): Boolean {
         return if (
-            hasPlayer(cmd.player) &&
-            this.state.validate(cmd)
+                hasPlayer(cmd.player) &&
+                this.state.validate(cmd)
         ) {
             newEvent(
-                BidPlaced(
-                    cmd.player,
-                    cmd.bid
-                )
+                    BidPlaced(
+                            cmd.player,
+                            cmd.bid
+                    )
             )
             true
         } else {
@@ -369,21 +371,21 @@ class Game(
 
     private fun on(cmd: PassBid): Boolean {
         return if (
-            state.validate(cmd)
+                state.validate(cmd)
         ) {
             newEvent(
-                BidPassed(
-                    cmd.player
-                )
+                    BidPassed(
+                            cmd.player
+                    )
             )
             val winner = state.getBidWinner()
             val bid = state.getBestBid()
             if (winner != null && bid != null) {
                 newEvent(
-                    BidWon(
-                        winner,
-                        bid
-                    )
+                        BidWon(
+                                winner,
+                                bid
+                        )
                 )
             }
             true
@@ -404,19 +406,20 @@ class Game(
         val space = this.state.getBidSpace()
         val player = this.findPlayer(cmd.player)
         return if (
-            space != null &&
-            player != null &&
-            player.validate(cmd) &&
-            this.state.validate(cmd)
+                space != null &&
+                player != null &&
+                player.validate(cmd) &&
+                this.state.validate(cmd)
         ) {
             newEvent(
-                SpaceBought(
-                    space,
-                    cmd.player,
-                    cmd.cash,
-                    cmd.borrowed
-                )
+                    SpaceBought(
+                            space,
+                            cmd.player,
+                            cmd.cash,
+                            cmd.borrowed
+                    )
             )
+            validateTrades(player)
             true
         } else {
             false
@@ -438,16 +441,16 @@ class Game(
         val rentDemand = state.findOpenRentDemand(cmd.demandId)
 
         return if (
-            hasPlayer(cmd.owner) &&
-            rentDemand != null
+                hasPlayer(cmd.owner) &&
+                rentDemand != null
         ) {
             newEvent(
-                RentDemanded(
-                    rentDemand.owner,
-                    rentDemand.player,
-                    rentDemand.rent,
-                    rentDemand.demandId
-                )
+                    RentDemanded(
+                            rentDemand.owner,
+                            rentDemand.player,
+                            rentDemand.rent,
+                            rentDemand.demandId
+                    )
             )
             true
         } else {
@@ -457,10 +460,10 @@ class Game(
 
     private fun apply(event: RentDemanded) {
         val demand = RentDemand(
-            events.size,
-            event.player,
-            event.owner,
-            event.rent
+                events.size,
+                event.player,
+                event.owner,
+                event.rent
         )
         this.state.apply(event)
         this.state = WaitingForRentPayment(demand, this.state)
@@ -470,23 +473,39 @@ class Game(
         val rentDemand = this.state.findRentDemand(cmd.demandId)
         val player = findPlayer(cmd.player)
         return if (
-            rentDemand != null &&
-            player != null &&
-            player.money >= rentDemand.rent &&
-            state.canPayRent(rentDemand)
+                rentDemand != null &&
+                player != null &&
+                player.money >= rentDemand.rent &&
+                state.canPayRent(rentDemand)
         ) {
             newEvent(
-                RentPaid(
-                    rentDemand.player,
-                    rentDemand.owner,
-                    rentDemand.rent,
-                    rentDemand.demandId
-                )
+                    RentPaid(
+                            rentDemand.player,
+                            rentDemand.owner,
+                            rentDemand.rent,
+                            rentDemand.demandId
+                    )
             )
+            validateTrades(player)
             true
         } else {
             false
         }
+    }
+
+    private fun validateTrades(playerId: String) {
+        findPlayer(playerId)?.let {
+            validateTrades(it)
+        }
+    }
+
+    private fun validateTrades(player: Player) {
+        trades
+                .filter { it.matches(player.id) }
+                .forEach { trade ->
+                    trade.revalidate(player)
+                            ?.let { newEvent(it) }
+                }
     }
 
     private fun apply(event: RentPaid) {
@@ -501,7 +520,7 @@ class Game(
 
     private fun on(cmd: EndTurn): Boolean {
         return if (
-            this.state.validate(cmd)
+                this.state.validate(cmd)
         ) {
             val idx = players.indexOfFirst { it.id == cmd.player }
             val newPlayer = players[(idx + 1) % players.size]
@@ -517,9 +536,9 @@ class Game(
         val ground = findSpace(cmd.ownable) as? Ownable
         val trade = findTrade(cmd.from, cmd.to)
         return if (
-            ground != null &&
-            ground.validate(cmd) &&
-            trade.validate(cmd)
+                ground != null &&
+                ground.validate(cmd) &&
+                trade.validate(cmd)
         ) {
             newEvent(OfferAdded(cmd.from, cmd.to, cmd.ownable, cmd.value))
             true
@@ -530,19 +549,19 @@ class Game(
 
     private fun apply(event: OfferAdded) {
         val ownable = findSpace(event.ownable) as? Ownable
-        if(ownable != null) {
-            updateTrade(event.from, event.to) {t -> t.apply(event, ownable)}
+        if (ownable != null) {
+            updateTrade(event.from, event.to) { t -> t.apply(event, ownable) }
         }
     }
 
     private fun apply(event: OfferValueUpdated) {
-        updateTrade(event.from, event.to) {t -> t.apply(event)}
+        updateTrade(event.from, event.to) { t -> t.apply(event) }
     }
 
     private fun on(cmd: UpdateOfferValue): Boolean {
         val trade = findTrade(cmd.from, cmd.to)
         return if (
-            trade.validate(cmd)
+                trade.validate(cmd)
         ) {
             newEvent(OfferValueUpdated(cmd.from, cmd.to, cmd.ownable, cmd.value))
             true
@@ -554,7 +573,7 @@ class Game(
     private fun on(cmd: RemoveOffer): Boolean {
         val trade = findTrade(cmd.from, cmd.to)
         return if (
-            trade.validate(cmd)
+                trade.validate(cmd)
         ) {
             trade.removeOffersBy(cmd.from, cmd.ownable)
                     .forEach(this::newEvent)
@@ -565,25 +584,28 @@ class Game(
     }
 
     private fun apply(event: OfferRemoved) {
-        updateTrade(event.from, event.to) {t -> t.apply(event)}
+        updateTrade(event.from, event.to) { t -> t.apply(event) }
     }
 
     private fun on(cmd: AcceptTrade): Boolean {
         val trade = findTrade(cmd.by, cmd.other)
         val player = findPlayer(cmd.by)
-        return if(
-            player != null &&
-            trade.validate(cmd) &&
-            player.validate(cmd,trade.getAssetDelta(cmd.by))
+        return if (
+                player != null &&
+                trade.validate(cmd) &&
+                player.validate(cmd, trade.getAssetDelta(cmd.by))
         ) {
             newEvent(TradeAccepted(cmd.by, cmd.other, cmd.cashDelta, cmd.debtDelta))
-            val completedEvent = trade.createCompletedEventIfComplete()
-            if(completedEvent != null) {
+            val tradeAfterAcceptance = findTrade(cmd.by, cmd.other)
+            val completedEvent = tradeAfterAcceptance.createCompletedEventIfComplete()
+            if (completedEvent != null) {
                 newEvent(completedEvent)
                 completedEvent.transfers.forEach { t ->
                     trades.flatMap { it.removeOffersBy(t.from, t.ownable) }
-                            .forEach (this::newEvent)
+                            .forEach(this::newEvent)
                 }
+                validateTrades(cmd.by)
+                validateTrades(cmd.other)
             }
             true
         } else {
@@ -592,7 +614,7 @@ class Game(
     }
 
     private fun apply(event: TradeAccepted) {
-        updateTrade(event.by, event.other) {t -> t.apply(event)}
+        updateTrade(event.by, event.other) { t -> t.apply(event) }
     }
 
     private fun apply(event: TradeCompleted) {
@@ -612,8 +634,8 @@ class Game(
 
     private fun on(cmd: RevokeTradeAcceptance): Boolean {
         val trade = findTrade(cmd.by, cmd.other)
-        return if(
-            trade.validate(cmd)
+        return if (
+                trade.validate(cmd)
         ) {
             newEvent(TradeAcceptanceRevoked(cmd.by, cmd.other))
             true
@@ -623,28 +645,28 @@ class Game(
     }
 
     private fun apply(event: TradeAcceptanceRevoked) {
-        updateTrade(event.by, event.other) {t -> t.apply(event)}
+        updateTrade(event.by, event.other) { t -> t.apply(event) }
     }
 
     private fun findPlayer(id: String): Player? {
         return players
-            .find { it.id == id }
+                .find { it.id == id }
     }
 
     private fun hasPlayer(id: String): Boolean {
         return players
-            .any { it.id == id }
+                .any { it.id == id }
     }
 
     private fun findSpace(id: String): Space? {
         return board
-            .find { it.id == id }
+                .find { it.id == id }
     }
 
     private fun findTrade(id1: String, id2: String): Trade {
         val find = trades
                 .find { it.matches(id1, id2) }
-        return if(find == null) {
+        return if (find == null) {
             val trade = Trade(id1, id2)
             trades.add(trade)
             trade
@@ -655,7 +677,7 @@ class Game(
 
     private fun updateTrade(id1: String, id2: String, fn: (Trade) -> Trade) {
         val i = trades.indexOfFirst { it.matches(id1, id2) }
-        if(i >= 0) {
+        if (i >= 0) {
             trades[i] = fn(trades[i])
         }
     }
@@ -666,8 +688,8 @@ class Game(
             while (true) {
                 val now = clock.millis()
                 val newEvents = events
-                    .drop(skip)
-                    .take(limit)
+                        .drop(skip)
+                        .take(limit)
                 if (newEvents.isNotEmpty() || now >= end) {
                     return newEvents
                 }
@@ -715,8 +737,8 @@ class Game(
     }
 
     private class Turn(
-        val player: String,
-        var openRentDemands: List<OpenRentDemand>
+            val player: String,
+            var openRentDemands: List<OpenRentDemand>
     ) : GameState {
         var state: TurnState = WaitingForDiceRoll()
         var lastRoll: Int? = null
@@ -727,9 +749,9 @@ class Game(
 
         override fun apply(event: DiceRolled) {
             openRentDemands
-                .forEach { it.ttl-- }
+                    .forEach { it.ttl-- }
             openRentDemands = openRentDemands
-                .filter { it.ttl > 0 }
+                    .filter { it.ttl > 0 }
             lastRoll = event.dice1 + event.dice2
             this.state = WaitingForDiceOutcome()
         }
@@ -789,7 +811,7 @@ class Game(
 
         override fun apply(event: RentDemanded) {
             openRentDemands = openRentDemands
-                .filter { it.demandId != event.demandId }
+                    .filter { it.demandId != event.demandId }
         }
 
         override fun canPayRent(rentDemand: RentDemand): Boolean {
@@ -822,8 +844,8 @@ class Game(
     }
 
     private class WaitingForRentPayment(
-        val demand: RentDemand,
-        val previousState: GameState
+            val demand: RentDemand,
+            val previousState: GameState
     ) : GameState {
         override fun canPayRent(rentDemand: RentDemand): Boolean {
             return rentDemand == demand
@@ -871,9 +893,9 @@ class Game(
     }
 
     private class BidForGround(
-        val space: String,
-        var bestPlayer: String,
-        var players: Set<String>
+            val space: String,
+            var bestPlayer: String,
+            var players: Set<String>
     ) : TurnState {
         var bid = 0
 
@@ -913,9 +935,9 @@ class Game(
     }
 
     private class BidJustWon(
-        val player: String,
-        val space: String,
-        val price: Int
+            val player: String,
+            val space: String,
+            val price: Int
     ) : TurnState {
         override fun getBidWinner(): String? {
             return null
@@ -937,12 +959,12 @@ class Game(
 }
 
 class Player(
-    val id: String,
-    val color: String,
-    var position: String,
-    var money: Int,
-    var debt: Int,
-    var gameMaster: Boolean = false
+        val id: String,
+        val color: String,
+        var position: String,
+        var money: Int,
+        var debt: Int,
+        var gameMaster: Boolean = false
 ) {
     var assets: Int = 0
 
@@ -993,8 +1015,12 @@ class Player(
     }
 
     fun validate(cmd: AcceptTrade, assetDelta: Int): Boolean {
-        val newMoney = this.money + cmd.cashDelta
-        val newDebt = this.debt + cmd.debtDelta
+        return validate(cmd.cashDelta, cmd.debtDelta, assetDelta)
+    }
+
+    fun validate(cashDelta: Int, debtDelta: Int, assetDelta: Int): Boolean {
+        val newMoney = this.money + cashDelta
+        val newDebt = this.debt + debtDelta
         val newAssetValue = this.assets + assetDelta
 
         return 0 <= newMoney &&
@@ -1016,18 +1042,18 @@ class Player(
 }
 
 data class OpenRentDemand(
-    val demandId: Int,
-    val player: String,
-    val owner: String,
-    val rent: Int,
-    var ttl: Int
+        val demandId: Int,
+        val player: String,
+        val owner: String,
+        val rent: Int,
+        var ttl: Int
 )
 
 data class RentDemand(
-    val demandId: Int,
-    val player: String,
-    val owner: String,
-    val rent: Int
+        val demandId: Int,
+        val player: String,
+        val owner: String,
+        val rent: Int
 )
 
 sealed class Space {
@@ -1061,14 +1087,14 @@ interface Ownable {
 }
 
 class Street(
-    override val id: String,
-    override val initialPrice: Int,
-    val color: String,
-    val rent: Int,
-    val rentHouse: List<Int>,
-    val rentHotel: Int,
-    var houses: Int = 0,
-    var hotel: Boolean = false
+        override val id: String,
+        override val initialPrice: Int,
+        val color: String,
+        val rent: Int,
+        val rentHouse: List<Int>,
+        val rentHotel: Int,
+        var houses: Int = 0,
+        var hotel: Boolean = false
 ) : Space(), Ownable {
     override var owner: String? = null
     override var value: Int = 0
@@ -1086,15 +1112,15 @@ class Street(
 }
 
 class ActionSpace(
-    override val id: String
+        override val id: String
 ) : Space() {
 }
 
 class Utility(
-    override val id: String,
-    override val initialPrice: Int,
-    val rent: Int,
-    val rentAll: Int
+        override val id: String,
+        override val initialPrice: Int,
+        val rent: Int,
+        val rentAll: Int
 ) : Space(), Ownable {
     override var owner: String? = null
     override var value: Int = 0
@@ -1110,9 +1136,9 @@ class Utility(
 }
 
 class Station(
-    override val id: String,
-    override val initialPrice: Int,
-    val rent: List<Int>
+        override val id: String,
+        override val initialPrice: Int,
+        val rent: List<Int>
 ) : Space(), Ownable {
     override var owner: String? = null
     override var value: Int = 0
@@ -1123,12 +1149,12 @@ class Station(
 }
 
 class FreeParking(
-    override val id: String
+        override val id: String
 ) : Space() {
 }
 
 class Prison(
-    override val id: String
+        override val id: String
 ) : Space() {
 }
 
@@ -1139,10 +1165,15 @@ data class Trade(
         private val party1: TradeParty,
         private val party2: TradeParty
 ) {
-    constructor(player1: String, player2: String):
+    constructor(player1: String, player2: String) :
             this(TradeParty(player1), TradeParty(player2))
 
     private val parties = listOf(party1, party2)
+
+    fun matches(id: String): Boolean {
+        return id == party1.player ||
+                id == party2.player
+    }
 
     fun matches(id1: String, id2: String): Boolean {
         return id1 == party1.player && id2 == party2.player ||
@@ -1151,32 +1182,32 @@ data class Trade(
 
     fun validate(cmd: AddOffer): Boolean {
         return getParty(cmd.from)
-            ?.validate(cmd)
-            ?: false
+                ?.validate(cmd)
+                ?: false
     }
 
     fun apply(event: OfferAdded, ownable: Ownable): Trade {
-        return applyToParty(event.from) { p -> p.apply(event, ownable)}
+        return applyToParty(event.from) { p -> p.apply(event, ownable) }
     }
 
     fun validate(cmd: UpdateOfferValue): Boolean {
         return getParty(cmd.from)
-            ?.validate(cmd)
-            ?: false
+                ?.validate(cmd)
+                ?: false
     }
 
     fun apply(event: OfferValueUpdated): Trade {
-        return applyToParty(event.from) { p -> p.apply(event)}
+        return applyToParty(event.from) { p -> p.apply(event) }
     }
 
     fun validate(cmd: RemoveOffer): Boolean {
         return getParty(cmd.from)
-            ?.validate(cmd)
-            ?: false
+                ?.validate(cmd)
+                ?: false
     }
 
     fun apply(event: OfferRemoved): Trade {
-        return applyToParty(event.from) { p -> p.apply(event)}
+        return applyToParty(event.from) { p -> p.apply(event) }
     }
 
     fun validate(cmd: AcceptTrade): Boolean {
@@ -1196,7 +1227,7 @@ data class Trade(
     }
 
     fun apply(event: TradeAccepted): Trade {
-        return applyToParty(event.by) { p -> p.apply(event)}
+        return applyToParty(event.by) { p -> p.apply(event) }
     }
 
     fun validate(cmd: RevokeTradeAcceptance): Boolean {
@@ -1206,7 +1237,7 @@ data class Trade(
     }
 
     fun apply(event: TradeAcceptanceRevoked): Trade {
-        return applyToParty(event.by) { p -> p.apply(event)}
+        return applyToParty(event.by) { p -> p.apply(event) }
     }
 
     private fun getParty(id: String): TradeParty? {
@@ -1215,10 +1246,10 @@ data class Trade(
     }
 
     private fun applyToParty(player: String, fn: (TradeParty) -> TradeParty): Trade {
-        return if(player == party1.player) {
+        return if (player == party1.player) {
             this.copy(party1 = fn(party1))
         } else {
-            this.copy( party2 = fn(party2))
+            this.copy(party2 = fn(party2))
         }
     }
 
@@ -1233,7 +1264,7 @@ data class Trade(
     }
 
     fun createCompletedEventIfComplete(): TradeCompleted? {
-        return if(isCompleted()) {
+        return if (isCompleted()) {
             val payments = parties
                     .map { Payment(it.player, it.acceptance!!.cashDelta, it.acceptance.debtDelta) }
 
@@ -1265,6 +1296,24 @@ data class Trade(
         return parties
                 .all { it.acceptance != null }
     }
+
+    fun revalidate(player: Player): TradeAcceptanceRevoked? {
+        val assetDelta = getAssetDelta(player.id)
+        return getParty(player.id)?.let { party ->
+            val other = if (player.id == party1.player) {
+                party2.player
+            } else {
+                party1.player
+            }
+            party.acceptance?.let { acc ->
+                if (player.validate(acc.cashDelta, acc.debtDelta, assetDelta)) {
+                    null
+                } else {
+                    TradeAcceptanceRevoked(party.player, other)
+                }
+            }
+        }
+    }
 }
 
 data class TradeParty(
@@ -1289,7 +1338,7 @@ data class TradeParty(
     fun apply(event: OfferValueUpdated): TradeParty {
         return copy(
                 offers = offers.map {
-                    if(it.matches(event.from, event.to, event.ownable)) {
+                    if (it.matches(event.from, event.to, event.ownable)) {
                         it.apply(event)
                     } else {
                         it
@@ -1304,7 +1353,7 @@ data class TradeParty(
 
     fun apply(event: OfferRemoved): TradeParty {
         return this.copy(
-                offers = offers.filterNot { it.matches(event.from, event.to, event.ownable)}
+                offers = offers.filterNot { it.matches(event.from, event.to, event.ownable) }
         )
     }
 
@@ -1334,12 +1383,12 @@ data class TradeParty(
 
     fun removeOffer(ownable: String): List<Event> {
         val offer = offers.find { it.ownable.id == ownable }
-        return if(offer != null) {
+        return if (offer != null) {
             val remove = OfferRemoved(offer.from, offer.to, offer.ownable.id)
-            if(acceptance == null) {
+            if (acceptance == null) {
                 listOf(remove)
             } else {
-                listOf(TradeAcceptanceRevoked(offer.from, offer.to),remove)
+                listOf(TradeAcceptanceRevoked(offer.from, offer.to), remove)
             }
         } else {
             emptyList()
@@ -1349,7 +1398,7 @@ data class TradeParty(
 
 data class Offer(
         val from: String,
-        val to : String,
+        val to: String,
         val ownable: Ownable,
         val value: Int
 ) {
