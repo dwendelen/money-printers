@@ -1158,9 +1158,7 @@ class Prison(
 ) : Space() {
 }
 
-// TODO revoke acceptance when money/debt/asset situation changes
 // TODO remove offer when street sold / houses built
-// TODO maybe some sort of validate/correction method or something
 data class Trade(
         private val party1: TradeParty,
         private val party2: TradeParty

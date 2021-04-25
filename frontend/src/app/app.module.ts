@@ -21,6 +21,7 @@ import {AppComponent} from './app.component';
 import {LoginGuard} from './login/login-guard';
 import {GameWrapperComponent} from './game/game-wrapper/game-wrapper.component';
 import {AmountComponent} from './game/amount/amount.component';
+import { BuyHousesComponent } from './game/buy-houses/buy-houses.component';
 
 @NgModule({
   declarations: [
@@ -38,7 +39,8 @@ import {AmountComponent} from './game/amount/amount.component';
     PlayerNameComponent,
     SpaceNameComponent,
     TradeComponent,
-    AmountComponent
+    AmountComponent,
+    BuyHousesComponent
   ],
   imports: [
     BrowserModule,

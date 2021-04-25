@@ -26,8 +26,6 @@ export class TradeComponent implements OnInit {
   onAccept = new EventEmitter<Acceptance>();
   @Output()
   onRevokeAcceptance = new EventEmitter<void>();
-  @Output()
-  close = new EventEmitter<void>();
 
   ngOnInit(): void {
   }

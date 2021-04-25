@@ -236,6 +236,16 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
+  openBuyHousesContext(color: string): void {
+    let prev
+    if(this.rightContext instanceof BuyHouses) {
+      prev = this.rightContext.previous
+    } else {
+      prev = this.rightContext
+    }
+    this.rightContext = new BuyHouses(color, prev);
+  }
+
   addOffer(playerId: string, offer: OfferInfo): void {
     this.sendCmd(new AddOffer(
       this.game.myId,
@@ -286,7 +296,8 @@ export class GameComponent implements OnInit, OnDestroy {
 type RightContext =
   NoRightContext |
   ViewSpace |
-  ViewTrade;
+  ViewTrade |
+  BuyHouses;
 
 class NoRightContext {
   type: 'none' = 'none'
@@ -306,6 +317,15 @@ class ViewTrade {
   type: 'ViewTrade' = 'ViewTrade'
   constructor(
     public otherParty: Player,
+    public previous: RightContext
+  ) {
+  }
+}
+
+class BuyHouses {
+  type: 'BuyHouses' = 'BuyHouses'
+  constructor(
+    public color: string,
     public previous: RightContext
   ) {
   }

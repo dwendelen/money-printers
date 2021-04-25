@@ -1,0 +1,10 @@
+<div *ngFor="let s of streets">
+  <app-space-name  [space]="s"></app-space-name>
+  <input *ngIf="s.buildState.type == 'Unbuilt'"
+         disabled
+         [value]="0">
+  <input *ngIf="s.buildState.type == 'Houses'"
+         disabled
+         [value]="s.buildState.nbOfHouses">
+  <app-amount [min]="0" [max]="4" [value]="3"></app-amount>
+</div>
