@@ -42,60 +42,16 @@ export class TradeComponent implements OnInit {
     return TradeComponent.totalPrice(this.otherParty);
   }
 
-  giveCashChanged(cash: number) {
-    this.otherPlayer.trade.giveCash = cash;
-    this.revokeAcceptance()
-  }
-
-  spillToGiveCash(): void {
-    this.giveCashChanged(this.otherPlayer.trade.giveCash + this.unaccountedGetting());
-  }
-
   borrowChanged(debt: number) {
     this.otherPlayer.trade.borrow = debt;
+    this.otherPlayer.trade.payBack = 0;
     this.revokeAcceptance()
-  }
-
-  spillToBorrow(): void {
-    this.borrowChanged(this.otherPlayer.trade.borrow + this.unaccountedGetting());
-  }
-
-  unaccountedGetting(): number {
-    return this.gettingPrice() - this.otherPlayer.trade.giveCash - this.otherPlayer.trade.borrow;
-  }
-
-  invalidUnaccountedGetting(): boolean {
-    return this.unaccountedGetting() != 0;
-  }
-
-  givingProfit(): number {
-    return TradeComponent.totalPrice(this.myParty);
-  }
-
-  getCashChanged(cash: number) {
-    this.otherPlayer.trade.getCash = cash;
-    this.revokeAcceptance()
-  }
-
-  spillToGetCash(): void {
-    this.getCashChanged(this.otherPlayer.trade.getCash + this.unaccountedGiving());
   }
 
   payBackChanged(debt: number) {
     this.otherPlayer.trade.payBack = debt;
+    this.otherPlayer.trade.borrow = 0;
     this.revokeAcceptance()
-  }
-
-  spillToPayBack(): void {
-    this.payBackChanged(this.otherPlayer.trade.payBack + this.unaccountedGiving());
-  }
-
-  unaccountedGiving(): number {
-    return this.givingProfit() - this.otherPlayer.trade.getCash - this.otherPlayer.trade.payBack;
-  }
-
-  invalidUnaccountedGiving(): boolean {
-    return this.unaccountedGiving() != 0;
   }
 
   get offerable(): Ownable[] {
@@ -120,12 +76,12 @@ export class TradeComponent implements OnInit {
       .reduce((a, b) => a + b, 0)
   }
 
-  moneyDelta(): number {
-    return this.givingProfit() - this.gettingPrice();
+  moneyDelta() {
+    return TradeComponent.totalPrice(this.myParty) - TradeComponent.totalPrice(this.otherParty)
   }
 
   cashDelta() {
-    return this.otherPlayer.trade.getCash - this.otherPlayer.trade.giveCash;
+    return this.debtDelta() + this.moneyDelta()
   }
 
   debtDelta() {
@@ -159,10 +115,8 @@ export class TradeComponent implements OnInit {
   accept() {
     if(!this.myParty.accepted) {
       this.onAccept.emit(new Acceptance(
-        this.otherPlayer.trade.giveCash,
-        this.otherPlayer.trade.borrow,
-        this.otherPlayer.trade.getCash,
-        this.otherPlayer.trade.payBack
+        this.cashDelta(),
+        this.debtDelta(),
       ))
     }
   }
@@ -176,9 +130,7 @@ export class TradeComponent implements OnInit {
   acceptDisabled(): boolean {
     return this.disabled ||
       this.invalidDebt() ||
-      this.invalidMoney() ||
-      this.invalidUnaccountedGetting() ||
-      this.invalidUnaccountedGiving();
+      this.invalidMoney()
   }
 
   addOwnable(ownable: Ownable): void {
@@ -210,10 +162,8 @@ export class OfferInfo {
 
 export class Acceptance {
   constructor(
-    public giveCash: number,
-    public borrow: number,
-    public getCash: number,
-    public payBack: number
+    public cashDelta: number,
+    public debtDelta: number,
   ) {
   }
 }

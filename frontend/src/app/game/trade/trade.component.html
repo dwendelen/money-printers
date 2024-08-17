@@ -1,4 +1,4 @@
-<div><app-player-name [player]="otherPlayer"></app-player-name></div>
+<div><app-player-name [player]="otherPlayer"></app-player-name> offers:</div>
 <div *ngFor="let offer of otherParty.offers">
   <div class="name" [style.background-color]="offer.ownable.color">{{offer.ownable.text}}</div>
   <div>
@@ -7,27 +7,7 @@
   </div>
 </div>
 <div>&nbsp;</div>
-<div>
-  <div class="left" (click)="spillToGiveCash()">Give cash</div>
-  <app-amount
-    [value]="otherPlayer.trade.giveCash"
-    (changed)="giveCashChanged($event)">
-  </app-amount>
-</div>
-<div>
-  <div class="left" (click)="spillToBorrow()">Borrow</div>
-  <app-amount
-    [value]="otherPlayer.trade.borrow"
-    [max]="gettingPrice()"
-    (changed)="borrowChanged($event)">
-  </app-amount>
-</div>
-<div [class.error]="invalidUnaccountedGetting()">
-  <div class="left">Unaccounted</div>
-  <div class="right">{{unaccountedGetting()}}</div>
-</div>
-<div>&nbsp;</div>
-<div><app-player-name [player]="me"></app-player-name></div>
+<div><app-player-name [player]="me"></app-player-name> offers:</div>
 <div *ngFor="let offer of myParty.offers">
   <input type="checkbox" checked="checked" [disabled]="disabled" (change)="removeOffer(offer)">
   <app-space-name [space]="offer.ownable"></app-space-name>
@@ -41,22 +21,22 @@
 </div>
 <div>&nbsp;</div>
 <div>
-  <div class="left" (click)="spillToGetCash()">Get cash</div>
+  Bank:
+</div>
+<div>
+  <div class="left">Borrow</div>
   <app-amount
-    [value]="otherPlayer.trade.getCash"
-    (changed)="getCashChanged($event)">
+    [value]="otherPlayer.trade.borrow"
+    [max]="gettingPrice()"
+    (changed)="borrowChanged($event)">
   </app-amount>
 </div>
 <div>
-  <div class="left" (click)="spillToPayBack()">Pay back</div>
+  <div class="left">Pay back</div>
   <app-amount
     [value]="otherPlayer.trade.payBack"
     (changed)="payBackChanged($event)">
   </app-amount>
-</div>
-<div [class.error]="invalidUnaccountedGiving()">
-  <div class="left">Unaccounted</div>
-  <div class="right">{{unaccountedGiving()}}</div>
 </div>
 <div>&nbsp;</div>
 <div>

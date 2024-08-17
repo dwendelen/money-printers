@@ -276,8 +276,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.sendCmd(new AcceptTrade(
       this.game.myId,
       playerId,
-      acceptance.getCash - acceptance.giveCash,
-      acceptance.borrow - acceptance.payBack
+      acceptance.cashDelta,
+      acceptance.debtDelta,
     ))
   }
 
