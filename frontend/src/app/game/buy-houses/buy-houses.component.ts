@@ -1,4 +1,4 @@
-import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
+import {Component, Input, OnChanges, SimpleChanges} from '@angular/core';
 import {Space, Street} from '../game';
 
 @Component({
@@ -12,6 +12,7 @@ export class BuyHousesComponent implements OnChanges {
   @Input()
   board!: Space[]
   streets!: Street[]
+  amounts: {[key: string]: number} = {}
 
   constructor() { }
 
@@ -20,5 +21,26 @@ export class BuyHousesComponent implements OnChanges {
       .filter(b => b.type == 'Street')
       .map(b => b as Street)
       .filter(s => s.color == this.color)
+
+    this.amounts = {}
+    this.streets.forEach(s => {
+      switch (s.buildState.type) {
+        case 'Unbuilt':
+          this.amounts[s.id] = 0
+          break
+        case 'Houses':
+          this.amounts[s.id] = s.buildState.nbOfHouses
+          break;
+        case 'Hotel':
+          this.amounts[s.id] = -1 //TODO
+          break;
+      }
+    })
   }
+
+  updateAmount(street: Street, amount: number) {
+    this.amounts[street.id] = amount;
+  }
+
+
 }

@@ -6,5 +6,10 @@
   <input *ngIf="s.buildState.type == 'Houses'"
          disabled
          [value]="s.buildState.nbOfHouses">
-  <app-amount [min]="0" [max]="4" [value]="3"></app-amount>
+  <app-amount
+    [min]="0"
+    [max]="4"
+    [value]="amounts[s.id]"
+    (changed)="updateAmount(s, $event)"
+  ></app-amount>
 </div>
